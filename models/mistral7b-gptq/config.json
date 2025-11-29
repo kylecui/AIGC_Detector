@@ -1,0 +1,39 @@
+{
+    "_name_or_path": "/workspace/process/mistralai_mistral-7b-instruct-v0.2/source",
+    "architectures": [
+        "MistralForCausalLM"
+    ],
+    "attention_dropout": 0.0,
+    "bos_token_id": 1,
+    "eos_token_id": 2,
+    "hidden_act": "silu",
+    "hidden_size": 4096,
+    "initializer_range": 0.02,
+    "intermediate_size": 14336,
+    "max_position_embeddings": 32768,
+    "model_type": "mistral",
+    "num_attention_heads": 32,
+    "num_hidden_layers": 32,
+    "num_key_value_heads": 8,
+    "pad_token_id": 0,
+    "pretraining_tp": 1,
+    "rms_norm_eps": 1e-05,
+    "rope_theta": 1000000.0,
+    "sliding_window": null,
+    "tie_word_embeddings": false,
+    "torch_dtype": "bfloat16",
+    "transformers_version": "4.36.0.dev0",
+    "use_cache": true,
+    "vocab_size": 32000,
+    "quantization_config": {
+        "bits": 4,
+        "group_size": 128,
+        "damp_percent": 0.1,
+        "desc_act": true,
+        "sym": true,
+        "true_sequential": true,
+        "model_name_or_path": null,
+        "model_file_base_name": "model",
+        "quant_method": "gptq"
+    }
+}
