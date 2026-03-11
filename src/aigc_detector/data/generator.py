@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import gc
 import json
+import os
 import uuid
 from pathlib import Path
 from typing import Any
@@ -20,6 +21,9 @@ from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
 from aigc_detector.config import settings
+
+# Prefer cached models — fall back to download if not available
+os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
 
 console = Console()
 
@@ -51,7 +55,11 @@ def load_model_and_tokenizer(
     """Load a single model + tokenizer. Handles GPTQ vs BnB loading."""
     console.print(f"[bold blue]Loading model:[/] {hf_id}")
 
-    tokenizer = AutoTokenizer.from_pretrained(hf_id, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(
+        hf_id,
+        trust_remote_code=True,
+        local_files_only=True,
+    )
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -62,6 +70,8 @@ def load_model_and_tokenizer(
             device_map="auto",
             trust_remote_code=True,
             torch_dtype=torch.float16,
+            local_files_only=True,
+            low_cpu_mem_usage=True,
         )
     else:
         # BitsAndBytes 4-bit quantization
@@ -70,6 +80,8 @@ def load_model_and_tokenizer(
             device_map="auto",
             quantization_config=_build_bnb_config(),
             trust_remote_code=True,
+            local_files_only=True,
+            low_cpu_mem_usage=True,
         )
 
     model.eval()

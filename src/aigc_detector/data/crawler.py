@@ -53,6 +53,18 @@ def _make_record(text: str, lang: str, source: str, domain: str = "general") -> 
     }
 
 
+def _make_ai_record(text: str, lang: str, source: str, domain: str = "general") -> dict:
+    """Create a JSONL record for an AI-generated text sample."""
+    return {
+        "id": f"a_{uuid.uuid4().hex[:8]}",
+        "text": text,
+        "label": "ai",
+        "lang": lang,
+        "source": source,
+        "domain": domain,
+    }
+
+
 class WikipediaCrawler:
     """Async Wikipedia article crawler using MediaWiki API.
 
@@ -225,6 +237,62 @@ class HC3Loader:
         console.print(f"[bold green]HC3 ({lang}):[/] extracted {len(records)} human answers")
         return records
 
+    def load_ai(self, lang: str) -> list[dict]:
+        """Load HC3 dataset for a language and extract ChatGPT answers.
+
+        Args:
+            lang: Language code ("en" or "zh").
+
+        Returns:
+            List of JSONL-compatible record dicts with label="ai".
+        """
+        from datasets import load_dataset
+
+        dataset_name = HC3_DATASETS.get(lang)
+        if dataset_name is None:
+            console.print(f"[yellow]No HC3 dataset for lang={lang}, skipping.[/]")
+            return []
+
+        console.print(f"[bold blue]Loading HC3 AI answers ({lang}):[/] {dataset_name}")
+
+        try:
+            ds = load_dataset(
+                dataset_name,
+                revision="refs/convert/parquet",
+            )
+        except Exception as e:
+            console.print(f"[red]Failed to load HC3 ({lang}):[/] {e}")
+            return []
+
+        records: list[dict] = []
+
+        # Find the data split
+        split_data = ds.get("train", None)
+        if split_data is None:
+            for split_name in ds:
+                split_data = ds[split_name]
+                break
+
+        if split_data is None:
+            console.print(f"[yellow]No data splits found in HC3 ({lang}).[/]")
+            return []
+
+        for row in tqdm(split_data, desc=f"HC3 AI ({lang})", unit="row"):
+            chatgpt_answers = row.get("chatgpt_answers", [])
+            source = row.get("source", "unknown")
+            domain = self.SOURCE_DOMAIN_MAP.get(source, "general")
+
+            for answer in chatgpt_answers:
+                if not isinstance(answer, str):
+                    continue
+                text = clean_text(answer)
+                if len(text) < 200:
+                    continue
+                records.append(_make_ai_record(text, lang, "chatgpt", domain))
+
+        console.print(f"[bold green]HC3 AI ({lang}):[/] extracted {len(records)} ChatGPT answers")
+        return records
+
 
 def _write_records(records: list[dict], output_path: Path) -> None:
     """Write records to JSONL file."""
@@ -288,6 +356,50 @@ async def collect_human_texts(
 
     console.print(f"Total records: {len(all_records)}")
     console.print(f"By source: {source_counts}")
+    console.print(f"By language: {lang_counts}")
+    console.print(f"Output: {output_path}")
+
+    return output_path
+
+
+def collect_ai_texts(
+    output_dir: Path | None = None,
+) -> Path:
+    """Collect AI-generated text from HC3 ChatGPT answers.
+
+    Extracts chatgpt_answers from HC3 and HC3-Chinese datasets
+    and writes them to a JSONL file with label="ai".
+
+    Args:
+        output_dir: Directory for output. Defaults to settings.dataset_dir / "raw".
+
+    Returns:
+        Path to the output JSONL file.
+    """
+    if output_dir is None:
+        output_dir = settings.dataset_dir / "raw"
+
+    output_path = output_dir / "ai_raw.jsonl"
+    all_records: list[dict] = []
+
+    console.rule("[bold]AI Text Collection Pipeline (HC3 ChatGPT Answers)")
+
+    loader = HC3Loader()
+    for lang in ["zh", "en"]:
+        ai_records = loader.load_ai(lang)
+        all_records.extend(ai_records)
+
+    # Write output
+    _write_records(all_records, output_path)
+
+    # Summary
+    console.rule("[bold]AI Collection Summary")
+    lang_counts: dict[str, int] = {}
+    for r in all_records:
+        lng = r["lang"]
+        lang_counts[lng] = lang_counts.get(lng, 0) + 1
+
+    console.print(f"Total AI records: {len(all_records)}")
     console.print(f"By language: {lang_counts}")
     console.print(f"Output: {output_path}")
 

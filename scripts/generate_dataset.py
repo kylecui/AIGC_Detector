@@ -33,7 +33,7 @@ from rich.console import Console
 from rich.table import Table
 
 from src.aigc_detector.config import settings
-from src.aigc_detector.data.crawler import collect_human_texts
+from src.aigc_detector.data.crawler import collect_ai_texts, collect_human_texts
 from src.aigc_detector.data.generator import generate_all
 from src.aigc_detector.data.processor import process_records
 from src.aigc_detector.data.splitter import print_split_stats, split_dataset
@@ -139,15 +139,17 @@ def step_generate(
     models: list[str] | None = None,
     num_per_prompt: int = 50,
 ) -> None:
-    """Step 2: Generate AI text using local LLMs."""
-    console.rule("[bold]Step 2: Generate AI Text")
+    """Step 2a: Generate AI text using local LLMs."""
+    console.rule("[bold]Step 2a: Generate AI Text (Local LLMs)")
 
     if AI_RAW.exists():
         counts = _count_jsonl(AI_RAW)
         total = sum(counts.values())
-        console.print(f"[yellow]ai_raw.jsonl already exists with {total} records.[/]")
-        console.print("[yellow]Delete it to re-generate, or skip to the next step.[/]")
-        return
+        if total > 0:
+            console.print(f"[yellow]ai_raw.jsonl already exists with {total} records.[/]")
+            console.print("[yellow]Delete it to re-generate, or skip to the next step.[/]")
+            return
+        console.print("[yellow]ai_raw.jsonl exists but is empty, regenerating...[/]")
 
     generate_all(
         output_dir=RAW_DIR,
@@ -159,6 +161,25 @@ def step_generate(
     counts = _count_jsonl(AI_RAW)
     total = sum(counts.values())
     console.print(f"[bold green]Generation complete:[/] {total} records written to {AI_RAW}")
+
+
+def step_extract_ai() -> None:
+    """Step 2b: Extract ChatGPT answers from HC3 as AI text."""
+    console.rule("[bold]Step 2b: Extract AI Text (HC3 ChatGPT Answers)")
+
+    if AI_RAW.exists():
+        counts = _count_jsonl(AI_RAW)
+        total = sum(counts.values())
+        if total > 0:
+            console.print(f"[yellow]ai_raw.jsonl already exists with {total} records.[/]")
+            console.print("[yellow]Delete it to re-extract, or skip to the next step.[/]")
+            return
+
+    collect_ai_texts(output_dir=RAW_DIR)
+
+    counts = _count_jsonl(AI_RAW)
+    total = sum(counts.values())
+    console.print(f"[bold green]Extraction complete:[/] {total} AI records written to {AI_RAW}")
 
 
 def step_process() -> None:
@@ -264,10 +285,14 @@ def step_all(
     no_hc3: bool = False,
     models: list[str] | None = None,
     num_per_prompt: int = 50,
+    use_hc3_ai: bool = True,
 ) -> None:
     """Run all steps in sequence."""
     step_crawl(num_wiki=num_wiki, no_hc3=no_hc3)
-    step_generate(models=models, num_per_prompt=num_per_prompt)
+    if use_hc3_ai:
+        step_extract_ai()
+    else:
+        step_generate(models=models, num_per_prompt=num_per_prompt)
     step_process()
     step_merge()
     step_split()
@@ -288,7 +313,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--step",
-        choices=["all", "crawl", "generate", "process", "merge", "split", "status"],
+        choices=["all", "crawl", "generate", "extract-ai", "process", "merge", "split", "status"],
         default="status",
         help="Pipeline step to run (default: status)",
     )
@@ -324,6 +349,8 @@ def main() -> int:
         step_crawl(num_wiki=args.num_wiki, no_hc3=args.no_hc3)
     elif args.step == "generate":
         step_generate(models=args.models, num_per_prompt=args.num_per_prompt)
+    elif args.step == "extract-ai":
+        step_extract_ai()
     elif args.step == "process":
         step_process()
     elif args.step == "merge":
