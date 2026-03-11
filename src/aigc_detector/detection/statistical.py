@@ -108,13 +108,40 @@ class StatisticalFeatureExtractor:
 
         load_kwargs: dict = {"trust_remote_code": True}
         if self.load_in_4bit:
-            load_kwargs["load_in_4bit"] = True
+            from transformers import BitsAndBytesConfig
+
+            load_kwargs["quantization_config"] = BitsAndBytesConfig(load_in_4bit=True)
             load_kwargs["device_map"] = "auto"
         else:
             load_kwargs["torch_dtype"] = torch.float16
             load_kwargs["device_map"] = "auto"
 
         self._model = AutoModelForCausalLM.from_pretrained(self.model_name, **load_kwargs)
+
+        # Resize embeddings to match tokenizer — prevents out-of-range token IDs
+        # crashing CUDA with unrecoverable device-side assertion failures.
+        # GPT-2 tokenizer can produce IDs beyond model's vocab_size for some
+        # byte-level fallback tokens or added special tokens.
+        if len(self._tokenizer) != self._model.config.vocab_size:
+            logger.info(
+                "Resizing embeddings: model vocab_size=%d, tokenizer len=%d",
+                self._model.config.vocab_size,
+                len(self._tokenizer),
+            )
+            self._model.resize_token_embeddings(len(self._tokenizer))
+
+        # Cap max_length to the model's positional embedding size to prevent
+        # CUDA assertion failures in nn.Embedding for position IDs.
+        # GPT-2-XL has max_position_embeddings=1024 but our default is 2048.
+        model_max_pos = getattr(self._model.config, "max_position_embeddings", None)
+        if model_max_pos and self.max_length > model_max_pos:
+            logger.info(
+                "Capping max_length from %d to model's max_position_embeddings=%d",
+                self.max_length,
+                model_max_pos,
+            )
+            self.max_length = model_max_pos
+
         self._model.eval()
         logger.info("Statistical reference model loaded")
 
@@ -126,7 +153,10 @@ class StatisticalFeatureExtractor:
             self._model = None
             self._tokenizer = None
             if self.device == "cuda":
-                torch.cuda.empty_cache()
+                try:
+                    torch.cuda.empty_cache()
+                except RuntimeError:
+                    pass  # CUDA may be in unrecoverable state
             logger.info("Statistical reference model unloaded")
 
     @property
@@ -151,6 +181,17 @@ class StatisticalFeatureExtractor:
             truncation=True,
             max_length=self.max_length,
         )
+
+        # Safety clamp: even after resize_token_embeddings, guard against any
+        # edge-case where a token ID exceeds the embedding table size.
+        try:
+            vocab_size = self._model.config.vocab_size
+            input_ids = inputs["input_ids"]
+            if isinstance(vocab_size, int) and input_ids.max().item() >= vocab_size:
+                inputs["input_ids"] = input_ids.clamp(max=vocab_size - 1)
+        except (TypeError, AttributeError):
+            pass  # skip clamp if model config is unavailable (e.g. in tests)
+
         inputs = {k: v.to(self._model.device) for k, v in inputs.items()}
 
         with torch.no_grad():
@@ -369,26 +410,82 @@ def extract_features_from_jsonl(
     Each output line is a JSON object with the original record fields plus
     a ``"features"`` dict containing the six statistical features.
 
+    Supports **resume**: if *output_path* already has partial results, counting
+    completed lines and skipping that many input records.
+
     Returns a summary dict.
     """
     input_path = Path(input_path)
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    processed = 0
-    errors = 0
+    # Count existing output lines for resume support
+    already_done = 0
+    if output_path.exists():
+        with open(output_path, encoding="utf-8") as f:
+            already_done = sum(1 for _ in f)
+        if already_done > 0:
+            logger.info("Resuming feature extraction: skipping %d already-done records", already_done)
 
-    with open(input_path, encoding="utf-8") as fin, open(output_path, "w", encoding="utf-8") as fout:
-        for line in fin:
+    # Count total input lines for progress
+    total = 0
+    with open(input_path, encoding="utf-8") as f:
+        total = sum(1 for _ in f)
+
+    processed = already_done
+    errors = 0
+    consecutive_cuda_errors = 0
+    max_consecutive_cuda_errors = 5  # abort if GPU is likely in unrecoverable state
+
+    mode = "a" if already_done > 0 else "w"
+    with open(input_path, encoding="utf-8") as fin, open(output_path, mode, encoding="utf-8") as fout:
+        for i, line in enumerate(fin):
+            # Skip already-processed records on resume
+            if i < already_done:
+                continue
+
             record = json.loads(line)
             try:
                 feats = extractor.extract(record["text"])
                 record["features"] = feats.to_dict()
                 fout.write(json.dumps(record, ensure_ascii=False) + "\n")
                 processed += 1
-            except Exception:
-                logger.warning("Failed to extract features for record %s", record.get("id", "?"), exc_info=True)
+                consecutive_cuda_errors = 0  # reset on success
+
+                # Progress logging every 500 records
+                if processed % 500 == 0:
+                    logger.info("Feature extraction progress: %d / %d (errors=%d)", processed, total, errors)
+
+            except RuntimeError as e:
+                err_msg = str(e)
+                if "CUDA" in err_msg:
+                    consecutive_cuda_errors += 1
+                    logger.warning(
+                        "CUDA error on record %d (%s): %s",
+                        i,
+                        record.get("id", "?"),
+                        err_msg[:120],
+                    )
+                    if consecutive_cuda_errors >= max_consecutive_cuda_errors:
+                        logger.error(
+                            "Aborting: %d consecutive CUDA errors — GPU likely in unrecoverable state. "
+                            "Processed %d records before failure. Output is resumable.",
+                            consecutive_cuda_errors,
+                            processed,
+                        )
+                        break
+                    # Try to recover GPU state
+                    try:
+                        torch.cuda.empty_cache()
+                    except Exception:
+                        pass
+                else:
+                    logger.warning("RuntimeError on record %d (%s): %s", i, record.get("id", "?"), err_msg[:120])
                 errors += 1
 
-    logger.info("Feature extraction complete: processed=%d, errors=%d", processed, errors)
+            except Exception:
+                logger.warning("Failed to extract features for record %d (%s)", i, record.get("id", "?"), exc_info=True)
+                errors += 1
+
+    logger.info("Feature extraction complete: processed=%d, errors=%d, total=%d", processed, errors, total)
     return {"processed": processed, "errors": errors, "output_path": str(output_path)}

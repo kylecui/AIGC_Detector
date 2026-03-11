@@ -131,18 +131,27 @@ def step_extract_features(lang: str) -> None:
             return
 
         output_path = _features_path(split, lang)
-        if output_path.exists():
-            console.print(f"[yellow]{output_path.name} already exists, skipping.[/]")
-            continue
 
         # Filter by language first
         filtered_path = PROCESSED_DIR / f"{split}_{lang}.jsonl"
-        count = _filter_by_lang(input_path, filtered_path, lang)
-        console.print(f"[dim]Filtered {split} to {count} {lang} records.[/]")
+        if not filtered_path.exists():
+            count = _filter_by_lang(input_path, filtered_path, lang)
+            console.print(f"[dim]Filtered {split} to {count} {lang} records.[/]")
+        else:
+            count = sum(1 for _ in open(filtered_path, encoding="utf-8"))
+            console.print(f"[dim]Using existing {filtered_path.name} ({count} records).[/]")
 
         if count == 0:
             console.print(f"[yellow]No {lang} records in {split}, skipping.[/]")
             continue
+
+        # Check if features are already fully extracted (resume-aware)
+        if output_path.exists():
+            done_count = sum(1 for _ in open(output_path, encoding="utf-8"))
+            if done_count >= count:
+                console.print(f"[yellow]{output_path.name} already complete ({done_count} records), skipping.[/]")
+                continue
+            console.print(f"[yellow]{output_path.name} is partial ({done_count}/{count}), resuming...[/]")
 
         # Load extractor (lazy)
         if not extractor.is_loaded:
