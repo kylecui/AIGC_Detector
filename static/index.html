@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIGC Detector</title>
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body>
+
+<header class="header">
+  <h1>AIGC Detector</h1>
+  <p>Detect AI-generated text in Chinese &amp; English</p>
+</header>
+
+<main class="container" x-data="detector()">
+
+  <!-- ── Input Card ──────────────────────────────────────── -->
+  <div class="card">
+    <div class="textarea-wrap">
+      <textarea
+        x-model="text"
+        placeholder="Paste or type text here to detect whether it was written by AI..."
+        :disabled="loading"
+      ></textarea>
+      <div class="char-count">
+        <span>Min 50 characters</span>
+        <span :class="{ 'over-limit': text.length > 10000 }">
+          <span x-text="text.length"></span> / 10,000
+        </span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button
+        class="btn btn-primary"
+        :disabled="!canSubmit"
+        @click="detect"
+      >
+        <template x-if="loading">
+          <span class="spinner"></span>
+        </template>
+        <span x-text="loading ? 'Detecting...' : 'Detect'"></span>
+      </button>
+      <button
+        class="btn btn-ghost"
+        :disabled="loading"
+        @click="reset"
+      >
+        Clear
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Error ───────────────────────────────────────────── -->
+  <div class="card error-box" x-show="error" x-cloak>
+    <span x-text="error"></span>
+  </div>
+
+  <!-- ── Result Card ─────────────────────────────────────── -->
+  <template x-if="result">
+    <div class="card">
+      <!-- Header row -->
+      <div class="result-header">
+        <span
+          class="label-badge"
+          :class="result.predicted_label === 'AI-generated' ? 'label-ai' : 'label-human'"
+          x-text="result.predicted_label"
+        ></span>
+        <div class="meta-tags">
+          <span class="tag" x-text="'Language: ' + result.detected_language.toUpperCase()"></span>
+          <span class="tag" x-text="result.processing_time_ms.toFixed(0) + ' ms'"></span>
+        </div>
+      </div>
+
+      <!-- Confidence bar -->
+      <div class="confidence-section">
+        <div class="confidence-label">
+          <span>Confidence</span>
+          <span x-text="(result.confidence * 100).toFixed(1) + '%'"></span>
+        </div>
+        <div class="confidence-bar">
+          <div
+            class="confidence-fill"
+            :class="result.predicted_label === 'AI-generated' ? 'fill-ai' : 'fill-human'"
+            :style="'width:' + (result.confidence * 100) + '%'"
+          ></div>
+        </div>
+      </div>
+
+      <!-- P(AI) score -->
+      <div class="confidence-section">
+        <div class="confidence-label">
+          <span>P(AI)</span>
+          <span x-text="(result.p_ai * 100).toFixed(1) + '%'"></span>
+        </div>
+        <div class="confidence-bar">
+          <div
+            class="confidence-fill fill-ai"
+            :style="'width:' + (result.p_ai * 100) + '%'"
+          ></div>
+        </div>
+      </div>
+
+      <!-- Stages used -->
+      <div style="margin-bottom: 1rem;">
+        <div class="confidence-label" style="margin-bottom:0.4rem;">
+          <span>Detection Stages</span>
+        </div>
+        <div class="meta-tags">
+          <template x-for="stage in result.stages_used" :key="stage">
+            <span class="tag" x-text="stage" style="text-transform:capitalize;"></span>
+          </template>
+        </div>
+      </div>
+
+      <!-- Breakdown -->
+      <template x-if="result.breakdown && Object.keys(result.breakdown).length > 0">
+        <div>
+          <div class="breakdown-title">Stage Breakdown</div>
+          <div class="breakdown-grid">
+            <template x-for="(detail, stage) in result.breakdown" :key="stage">
+              <div class="stage-card">
+                <div class="stage-name" x-text="stage"></div>
+                <div class="stage-details" x-text="formatBreakdown(detail)"></div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+  </template>
+
+</main>
+
+<footer class="footer">
+  AIGC Detector &mdash; Cascading AI text detection
+</footer>
+
+<script>
+function detector() {
+  return {
+    text: '',
+    loading: false,
+    error: null,
+    result: null,
+
+    get canSubmit() {
+      return !this.loading && this.text.length >= 50 && this.text.length <= 10000;
+    },
+
+    reset() {
+      this.text = '';
+      this.error = null;
+      this.result = null;
+    },
+
+    formatBreakdown(detail) {
+      if (typeof detail === 'string') return detail;
+      if (typeof detail === 'number') return String(detail);
+      if (detail === null || detail === undefined) return '';
+      // Object: show key=value pairs
+      return Object.entries(detail)
+        .map(([k, v]) => {
+          if (typeof v === 'number') return k + ': ' + v.toFixed(4);
+          return k + ': ' + v;
+        })
+        .join('  |  ');
+    },
+
+    async detect() {
+      this.loading = true;
+      this.error = null;
+      this.result = null;
+
+      try {
+        const resp = await fetch('/api/v1/detect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: this.text, models: ['all'] }),
+        });
+
+        if (resp.status === 429) {
+          this.error = 'Rate limited — please wait and try again.';
+          return;
+        }
+        if (resp.status === 503) {
+          this.error = 'Server busy — please try again later.';
+          return;
+        }
+        if (!resp.ok) {
+          const body = await resp.json().catch(() => null);
+          this.error = (body && body.detail) || 'Detection failed (HTTP ' + resp.status + ')';
+          return;
+        }
+
+        this.result = await resp.json();
+      } catch (e) {
+        this.error = 'Network error — could not reach the server.';
+      } finally {
+        this.loading = false;
+      }
+    },
+  };
+}
+</script>
+
+</body>
+</html>

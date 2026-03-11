@@ -1,0 +1,331 @@
+/* AIGC Detector — Custom CSS */
+
+/* ── CSS Custom Properties ─────────────────────────────────── */
+:root {
+  --bg: #f8f9fa;
+  --bg-card: #ffffff;
+  --text: #1a1a2e;
+  --text-muted: #6c757d;
+  --border: #dee2e6;
+  --primary: #4361ee;
+  --primary-hover: #3a56d4;
+  --danger: #ef476f;
+  --success: #06d6a0;
+  --warning: #ffd166;
+  --bar-bg: #e9ecef;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --radius: 10px;
+  --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f1a;
+    --bg-card: #1a1a2e;
+    --text: #e0e0e0;
+    --text-muted: #8a8a9a;
+    --border: #2a2a3e;
+    --bar-bg: #2a2a3e;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* ── Reset & Base ──────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ── Layout ────────────────────────────────────────────────── */
+.header {
+  text-align: center;
+  padding: 2rem 1rem 1rem;
+}
+
+.header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.header p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-top: 0.25rem;
+}
+
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 1rem 3rem;
+}
+
+/* ── Card ──────────────────────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+/* ── Textarea ──────────────────────────────────────────────── */
+.textarea-wrap {
+  position: relative;
+}
+
+.textarea-wrap textarea {
+  width: 100%;
+  min-height: 160px;
+  padding: 0.875rem;
+  font-family: var(--font);
+  font-size: 0.95rem;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.textarea-wrap textarea:focus {
+  border-color: var(--primary);
+}
+
+.char-count {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.char-count .over-limit {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+/* ── Button ────────────────────────────────────────────────── */
+.actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--bar-bg);
+}
+
+/* ── Spinner ───────────────────────────────────────────────── */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Result Card ───────────────────────────────────────────── */
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.label-badge {
+  display: inline-block;
+  padding: 0.3rem 0.9rem;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.label-ai {
+  background: rgba(239, 71, 111, 0.12);
+  color: var(--danger);
+}
+
+.label-human {
+  background: rgba(6, 214, 160, 0.12);
+  color: var(--success);
+}
+
+.meta-tags {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.tag {
+  font-size: 0.78rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  background: var(--bar-bg);
+  color: var(--text-muted);
+}
+
+/* ── Confidence Bar ────────────────────────────────────────── */
+.confidence-section {
+  margin-bottom: 1.25rem;
+}
+
+.confidence-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  margin-bottom: 0.35rem;
+  color: var(--text-muted);
+}
+
+.confidence-bar {
+  height: 10px;
+  background: var(--bar-bg);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.confidence-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.5s ease;
+}
+
+.fill-ai {
+  background: var(--danger);
+}
+
+.fill-human {
+  background: var(--success);
+}
+
+/* ── Breakdown Table ───────────────────────────────────────── */
+.breakdown-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.breakdown-grid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.stage-card {
+  padding: 0.75rem;
+  background: var(--bg);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.stage-card .stage-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  text-transform: capitalize;
+  margin-bottom: 0.3rem;
+}
+
+.stage-card .stage-details {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  word-break: break-all;
+}
+
+/* ── Error ─────────────────────────────────────────────────── */
+.error-box {
+  padding: 0.875rem;
+  border-radius: 8px;
+  background: rgba(239, 71, 111, 0.08);
+  border: 1px solid rgba(239, 71, 111, 0.2);
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
+/* ── Footer ────────────────────────────────────────────────── */
+.footer {
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .header h1 {
+    font-size: 1.4rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .result-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+  }
+}
