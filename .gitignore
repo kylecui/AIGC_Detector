@@ -1,2 +1,15 @@
 .venv
 dataset/
+models/
+logs/
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.egg-info/
+dist/
+build/
+.ruff_cache/
+.pytest_cache/
+*.incomplete
+_archive/
