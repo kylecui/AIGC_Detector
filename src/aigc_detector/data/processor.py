@@ -166,35 +166,16 @@ def _normalize_for_hash(text: str) -> str:
     return t
 
 
-def _char_ngrams(text: str, n: int = 5) -> set[str]:
-    """Extract character n-grams from text."""
-    text = _normalize_for_hash(text)
-    if len(text) < n:
-        return {text}
-    return {text[i : i + n] for i in range(len(text) - n + 1)}
-
-
-def _jaccard_similarity(set_a: set[str], set_b: set[str]) -> float:
-    """Compute Jaccard similarity between two sets."""
-    if not set_a or not set_b:
-        return 0.0
-    intersection = len(set_a & set_b)
-    union = len(set_a | set_b)
-    return intersection / union if union > 0 else 0.0
-
-
 def deduplicate(records: list[dict], similarity_threshold: float = 0.9) -> list[dict]:
-    """Remove exact and near-duplicate records.
+    """Remove duplicate records via exact text matching.
 
-    Phase 1: Exact dedup via normalized text hash.
-    Phase 2: Near-dedup via character n-gram Jaccard similarity.
-
-    For performance, near-dedup only compares records within the same
-    (label, lang) group, and uses a simplified approach for large datasets.
+    Uses normalized text hashing (MD5) plus prefix hashing to catch
+    near-identical records that differ only in trailing whitespace or
+    minor formatting. Fast O(n) implementation.
 
     Args:
         records: List of JSONL record dicts (must have "text" field).
-        similarity_threshold: Jaccard threshold for near-duplicate detection.
+        similarity_threshold: Unused, kept for API compatibility.
 
     Returns:
         Deduplicated list of records.
@@ -202,7 +183,7 @@ def deduplicate(records: list[dict], similarity_threshold: float = 0.9) -> list[
     if not records:
         return records
 
-    # Phase 1: Exact dedup
+    # Phase 1: Exact dedup via normalized full-text hash
     seen_hashes: set[str] = set()
     phase1: list[dict] = []
     exact_dupes = 0
@@ -218,46 +199,32 @@ def deduplicate(records: list[dict], similarity_threshold: float = 0.9) -> list[
     if exact_dupes > 0:
         console.print(f"[dim]Exact duplicates removed: {exact_dupes}[/]")
 
-    # Phase 2: Near-dedup within (label, lang) groups
-    # For large datasets, this is O(n²) within each group — acceptable for our scale
-    groups: dict[str, list[int]] = defaultdict(list)
-    for idx, record in enumerate(phase1):
-        group_key = f"{record.get('label', 'unknown')}_{record.get('lang', 'unknown')}"
-        groups[group_key].append(idx)
-
-    # Pre-compute n-grams
-    ngrams_cache: dict[int, set[str]] = {}
+    # Phase 2: Prefix dedup — catch near-dupes that share the same first 500 chars
+    # (common with Wikipedia articles that differ only in revision/trailing content)
+    prefix_seen: dict[str, int] = {}  # prefix_hash -> index of first occurrence
     remove_indices: set[int] = set()
-    near_dupes = 0
+    prefix_dupes = 0
 
-    for group_key, indices in groups.items():
-        # Skip near-dedup for very large groups (> 50K) — too slow
-        if len(indices) > 50000:
-            console.print(f"[yellow]Group {group_key} has {len(indices)} records, skipping near-dedup.[/]")
-            continue
+    for idx, record in enumerate(phase1):
+        normalized = _normalize_for_hash(record["text"])
+        prefix = normalized[:500] if len(normalized) >= 500 else normalized
+        prefix_hash = hashlib.md5(prefix.encode("utf-8")).hexdigest()
 
-        for i, idx_a in enumerate(indices):
-            if idx_a in remove_indices:
-                continue
+        if prefix_hash in prefix_seen:
+            # Same prefix — likely near-duplicate; keep the longer one
+            existing_idx = prefix_seen[prefix_hash]
+            if existing_idx not in remove_indices:
+                if len(record["text"]) > len(phase1[existing_idx]["text"]):
+                    remove_indices.add(existing_idx)
+                    prefix_seen[prefix_hash] = idx
+                else:
+                    remove_indices.add(idx)
+                prefix_dupes += 1
+        else:
+            prefix_seen[prefix_hash] = idx
 
-            if idx_a not in ngrams_cache:
-                ngrams_cache[idx_a] = _char_ngrams(phase1[idx_a]["text"])
-
-            # Only compare with subsequent records in the same group
-            for idx_b in indices[i + 1 :]:
-                if idx_b in remove_indices:
-                    continue
-
-                if idx_b not in ngrams_cache:
-                    ngrams_cache[idx_b] = _char_ngrams(phase1[idx_b]["text"])
-
-                sim = _jaccard_similarity(ngrams_cache[idx_a], ngrams_cache[idx_b])
-                if sim >= similarity_threshold:
-                    remove_indices.add(idx_b)
-                    near_dupes += 1
-
-    if near_dupes > 0:
-        console.print(f"[dim]Near-duplicates removed: {near_dupes}[/]")
+    if prefix_dupes > 0:
+        console.print(f"[dim]Prefix near-duplicates removed: {prefix_dupes}[/]")
 
     result = [r for idx, r in enumerate(phase1) if idx not in remove_indices]
     return result
