@@ -64,17 +64,26 @@ class WikipediaCrawler:
         self._semaphore = asyncio.Semaphore(max_concurrent)
         self._delay = delay_seconds
 
-    async def _fetch_batch(self, client: httpx.AsyncClient, lang: str) -> list[dict]:
+    async def _fetch_batch(self, client: httpx.AsyncClient, lang: str, max_retries: int = 3) -> list[dict]:
         """Fetch a single batch of random articles from Wikipedia API."""
         url = WIKIPEDIA_API.format(lang=lang)
+        data: dict | None = None
         async with self._semaphore:
-            try:
-                resp = await client.get(url, params=WIKIPEDIA_PARAMS, timeout=30.0)
-                resp.raise_for_status()
-                data = resp.json()
-            except (httpx.HTTPError, json.JSONDecodeError) as e:
-                console.print(f"[red]Wikipedia API error ({lang}):[/] {e}")
-                return []
+            for attempt in range(max_retries):
+                try:
+                    resp = await client.get(url, params=WIKIPEDIA_PARAMS, timeout=30.0)
+                    resp.raise_for_status()
+                    data = resp.json()
+                    break
+                except (httpx.HTTPError, json.JSONDecodeError) as e:
+                    if attempt < max_retries - 1:
+                        await asyncio.sleep(2**attempt)
+                        continue
+                    console.print(f"[red]Wikipedia API error ({lang}):[/] {e}")
+                    return []
+
+        if data is None:
+            return []
 
         pages = data.get("query", {}).get("pages", {})
         records = []
@@ -101,7 +110,7 @@ class WikipediaCrawler:
         batch_size = 10  # Wikipedia API returns up to 10 random articles per request
         num_batches = (num_articles // batch_size) + 1
         stall_count = 0
-        max_stalls = 50  # Stop if too many consecutive empty batches
+        max_stalls = 200  # Stop if too many consecutive empty batches
 
         console.print(f"[bold blue]Crawling Wikipedia ({lang}):[/] target={num_articles} articles")
 
@@ -142,15 +151,22 @@ class HC3Loader:
 
     Extracts human_answers from the dataset. Each row may have multiple
     human answers — all are extracted as separate records.
+
+    Uses the auto-converted parquet revision since the original HC3
+    loading scripts are no longer supported in datasets v3.x+.
     """
 
-    # Map HC3 source field to domain
+    # Map source field to domain
     SOURCE_DOMAIN_MAP = {
         "finance": "finance",
         "medicine": "healthcare",
         "open_qa": "general",
         "reddit_eli5": "general",
         "wiki_csai": "technology",
+        "baike": "general",
+        "law": "general",
+        "nlpcc_dbqa": "general",
+        "psychology": "healthcare",
     }
 
     def load(self, lang: str) -> list[dict]:
@@ -172,16 +188,19 @@ class HC3Loader:
         console.print(f"[bold blue]Loading HC3 ({lang}):[/] {dataset_name}")
 
         try:
-            ds = load_dataset(dataset_name, "all", trust_remote_code=True)
+            ds = load_dataset(
+                dataset_name,
+                revision="refs/convert/parquet",
+            )
         except Exception as e:
             console.print(f"[red]Failed to load HC3 ({lang}):[/] {e}")
             return []
 
         records: list[dict] = []
-        # HC3 datasets have a "train" split
-        split_data = ds.get("train", ds.get("test", None))
+
+        # Find the data split
+        split_data = ds.get("train", None)
         if split_data is None:
-            # Try iterating over the DatasetDict
             for split_name in ds:
                 split_data = ds[split_name]
                 break
