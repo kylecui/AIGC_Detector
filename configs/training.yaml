@@ -1,0 +1,60 @@
+# LoRA fine-tuning configuration for encoder classifiers
+# Reference: DESIGN.md §4.2, DEVPLAN.md Phase 3
+
+# ---- Model Selection ----
+models:
+  en:
+    base_model: microsoft/deberta-v3-large
+    num_labels: 2
+    output_dir: models/encoder-en
+  zh:
+    base_model: hfl/chinese-roberta-wwm-ext-large
+    num_labels: 2
+    output_dir: models/encoder-zh
+
+# ---- LoRA Configuration ----
+lora:
+  r: 16
+  lora_alpha: 32
+  lora_dropout: 0.1
+  bias: "none"
+  task_type: SEQ_CLS
+  # DeBERTa-v3: query_proj, value_proj
+  # RoBERTa: query, value
+  target_modules_deberta:
+    - query_proj
+    - value_proj
+  target_modules_roberta:
+    - query
+    - value
+
+# ---- Training Hyperparameters ----
+training:
+  num_epochs: 3
+  batch_size: 16
+  eval_batch_size: 32
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  max_length: 512
+  fp16: true
+  gradient_accumulation_steps: 1
+  logging_steps: 50
+  eval_steps: 500
+  save_steps: 500
+  save_total_limit: 3
+  load_best_model_at_end: true
+  metric_for_best_model: f1
+  greater_is_better: true
+  seed: 42
+
+# ---- Data ----
+data:
+  train_path: dataset/processed/train.jsonl
+  val_path: dataset/processed/val.jsonl
+  test_path: dataset/processed/test.jsonl
+  text_key: text
+  label_key: label
+  label_map:
+    human: 0
+    ai: 1
