@@ -47,12 +47,12 @@ models:
     vram_gb: 3.0
     local_path: null
 
-  qwen2.5-7b-stat:
-    hf_id: Qwen/Qwen2.5-7B-Instruct
+  wenzhong-gpt2-110m:
+    hf_id: IDEA-CCNL/Wenzhong-GPT2-110M
     purpose: statistical
     language: zh
-    quantization: bnb-4bit
-    vram_gb: 5.5
+    quantization: null
+    vram_gb: 0.3
     local_path: null
 
   chinese-roberta-large:

@@ -262,7 +262,8 @@ class TestTrainerConfig:
         assert cfg.batch_size == 16
         assert cfg.learning_rate == 2e-5
         assert cfg.num_epochs == 3
-        assert cfg.fp16 is True
+        assert cfg.fp16 is False
+        assert cfg.bf16 is True
         assert cfg.seed == 42
         assert cfg.label_map == {"human": 0, "ai": 1}
 
@@ -311,7 +312,8 @@ class TestLoadTrainerConfig:
         assert cfg.eval_batch_size == 32
         assert cfg.learning_rate == 2e-5
         assert cfg.warmup_ratio == 0.1
-        assert cfg.fp16 is True
+        assert cfg.fp16 is False
+        assert cfg.bf16 is True
         assert cfg.max_length == 512
 
     def test_data_config_from_yaml(self):

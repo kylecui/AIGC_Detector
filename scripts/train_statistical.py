@@ -1,7 +1,7 @@
 """Train the statistical (perplexity/entropy) classifier.
 
 Steps:
-  1. Load a reference language model (GPT-2-XL for EN, Qwen2.5-7B for ZH)
+  1. Load a reference language model (GPT-2-XL for EN, Wenzhong-GPT2-110M for ZH)
   2. Extract statistical features from train/val/test JSONL
   3. Train XGBoost classifier on extracted features
   4. Evaluate on validation and test sets
@@ -41,7 +41,7 @@ console = Console()
 # Reference model mapping per language
 REFERENCE_MODELS = {
     "en": {"model": "openai-community/gpt2-xl", "load_in_4bit": False},
-    "zh": {"model": "Qwen/Qwen2.5-7B-Instruct", "load_in_4bit": True},
+    "zh": {"model": "IDEA-CCNL/Wenzhong-GPT2-110M", "load_in_4bit": False},
 }
 
 # Dataset paths

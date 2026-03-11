@@ -57,7 +57,8 @@ class TrainerConfig:
     weight_decay: float = 0.01
     warmup_ratio: float = 0.1
     max_length: int = 512
-    fp16: bool = True
+    fp16: bool = False
+    bf16: bool = True
     gradient_accumulation_steps: int = 1
     logging_steps: int = 50
     eval_steps: int = 500
@@ -118,7 +119,8 @@ def load_trainer_config(
         weight_decay=train_cfg.get("weight_decay", 0.01),
         warmup_ratio=train_cfg.get("warmup_ratio", 0.1),
         max_length=train_cfg.get("max_length", 512),
-        fp16=train_cfg.get("fp16", True),
+        fp16=train_cfg.get("fp16", False),
+        bf16=train_cfg.get("bf16", True),
         gradient_accumulation_steps=train_cfg.get("gradient_accumulation_steps", 1),
         logging_steps=train_cfg.get("logging_steps", 50),
         eval_steps=train_cfg.get("eval_steps", 500),
@@ -243,10 +245,18 @@ class LoRATrainer:
         if self._tokenizer.pad_token is None:
             self._tokenizer.pad_token = self._tokenizer.eos_token
 
+        # Pick dtype based on precision config
+        if self.config.bf16:
+            model_dtype = torch.bfloat16
+        elif self.config.fp16:
+            model_dtype = torch.float16
+        else:
+            model_dtype = torch.float32
+
         base_model = AutoModelForSequenceClassification.from_pretrained(
             self.config.base_model,
             num_labels=self.config.num_labels,
-            torch_dtype=torch.float16,
+            torch_dtype=model_dtype,
             trust_remote_code=True,
         )
 
@@ -323,6 +333,7 @@ class LoRATrainer:
             weight_decay=self.config.weight_decay,
             warmup_ratio=self.config.warmup_ratio,
             fp16=self.config.fp16,
+            bf16=self.config.bf16,
             gradient_accumulation_steps=self.config.gradient_accumulation_steps,
             logging_steps=self.config.logging_steps,
             eval_strategy="steps",
