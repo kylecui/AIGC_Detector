@@ -78,3 +78,36 @@ models:
     quantization: null
     vram_gb: 1.0
     local_path: null
+
+  # Binoculars model pairs (observer = base, performer = instruct)
+  falcon-7b:
+    hf_id: tiiuae/falcon-7b
+    purpose: binoculars
+    language: en
+    quantization: bnb-4bit
+    vram_gb: 5.0
+    local_path: null
+
+  falcon-7b-instruct:
+    hf_id: tiiuae/falcon-7b-instruct
+    purpose: binoculars
+    language: en
+    quantization: bnb-4bit
+    vram_gb: 5.0
+    local_path: null
+
+  qwen2-7b:
+    hf_id: Qwen/Qwen2-7B
+    purpose: binoculars
+    language: zh
+    quantization: bnb-4bit
+    vram_gb: 5.5
+    local_path: null
+
+  qwen2-7b-instruct:
+    hf_id: Qwen/Qwen2-7B-Instruct
+    purpose: binoculars
+    language: zh
+    quantization: bnb-4bit
+    vram_gb: 5.5
+    local_path: null
