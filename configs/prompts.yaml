@@ -1,0 +1,240 @@
+# Prompt templates for AI text generation
+# Structure: domains × styles × languages
+# Each prompt instructs the model to generate a complete article/passage.
+#
+# Placeholders:
+#   {length} — target word/character count (filled at runtime)
+#
+# Domains (5): technology, education, healthcare, law, finance
+# Styles (4): news_report, argumentative, popular_science, commentary
+# Languages: zh, en
+
+domains:
+  technology:
+    display_name:
+      zh: "科技"
+      en: "Technology"
+
+  education:
+    display_name:
+      zh: "教育"
+      en: "Education"
+
+  healthcare:
+    display_name:
+      zh: "医疗健康"
+      en: "Healthcare"
+
+  law:
+    display_name:
+      zh: "法律"
+      en: "Law"
+
+  finance:
+    display_name:
+      zh: "金融"
+      en: "Finance"
+
+styles:
+  news_report:
+    display_name:
+      zh: "新闻报道"
+      en: "News Report"
+
+  argumentative:
+    display_name:
+      zh: "议论文"
+      en: "Argumentative Essay"
+
+  popular_science:
+    display_name:
+      zh: "科普文章"
+      en: "Popular Science"
+
+  commentary:
+    display_name:
+      zh: "评论"
+      en: "Commentary"
+
+# System prompts per style (used in chat template's "system" role)
+system_prompts:
+  news_report:
+    zh: "你是一位经验丰富的新闻记者，擅长撰写客观、准确的新闻报道。你的文风简洁明了，善于使用事实和数据支撑报道。"
+    en: "You are an experienced journalist skilled at writing objective, accurate news reports. Your writing style is concise, fact-driven, and supported by data."
+
+  argumentative:
+    zh: "你是一位学术写作专家，擅长撰写结构严谨、论证充分的议论文。你善于使用逻辑推理和证据支持论点。"
+    en: "You are an academic writing expert skilled at crafting well-structured argumentative essays. You use logical reasoning and evidence to support your thesis."
+
+  popular_science:
+    zh: "你是一位科普作家，擅长将复杂的专业知识用通俗易懂的语言解释给普通读者。你的文章生动有趣，深入浅出。"
+    en: "You are a popular science writer who excels at explaining complex topics in accessible language for general readers. Your articles are engaging and insightful."
+
+  commentary:
+    zh: "你是一位资深评论员，擅长对社会热点事件发表深刻、独到的见解。你的评论视角独特，分析透彻。"
+    en: "You are a seasoned commentator who provides sharp, insightful analysis on current issues. Your commentary is thought-provoking and well-reasoned."
+
+# User prompts: {domain} × {style} × {lang}
+# Each prompt is a user message that tells the model what to write.
+prompts:
+  # =========== TECHNOLOGY ===========
+  technology:
+    news_report:
+      zh:
+        - "请撰写一篇关于人工智能在自动驾驶领域最新突破的新闻报道，约{length}字。包括技术细节、企业动态和行业影响。"
+        - "请写一篇关于量子计算最新研究进展的新闻报道，约{length}字。报道应涵盖技术原理、实验成果和未来前景。"
+        - "请撰写一篇关于5G/6G通信技术发展的新闻报道，约{length}字。涵盖技术标准、商业应用和国际竞争格局。"
+      en:
+        - "Write a news report about the latest breakthroughs in artificial intelligence and autonomous driving, approximately {length} words. Include technical details, industry developments, and societal impact."
+        - "Write a news report covering recent advances in quantum computing research, approximately {length} words. Cover the technical principles, experimental results, and future outlook."
+        - "Write a news report about the evolution of 5G/6G communication technology, approximately {length} words. Cover technical standards, commercial applications, and global competition."
+
+    argumentative:
+      zh:
+        - "请写一篇议论文，讨论人工智能是否会取代大部分人类工作岗位，约{length}字。请从经济、社会和伦理多个角度进行分析。"
+        - "请撰写一篇议论文，论述开源软件与商业软件的优劣对比，约{length}字。从安全性、创新力和可持续性角度展开论述。"
+      en:
+        - "Write an argumentative essay discussing whether artificial intelligence will replace most human jobs, approximately {length} words. Analyze from economic, social, and ethical perspectives."
+        - "Write an argumentative essay comparing open-source software versus proprietary software, approximately {length} words. Discuss security, innovation, and sustainability."
+
+    popular_science:
+      zh:
+        - "请写一篇科普文章，向普通读者介绍大语言模型（LLM）的工作原理，约{length}字。要求语言通俗易懂，可以使用类比。"
+        - "请写一篇科普文章，解释区块链技术的基本原理及其在金融之外的应用，约{length}字。"
+      en:
+        - "Write a popular science article explaining how large language models (LLMs) work for a general audience, approximately {length} words. Use analogies and accessible language."
+        - "Write a popular science article explaining blockchain technology and its applications beyond cryptocurrency, approximately {length} words."
+
+    commentary:
+      zh:
+        - "请撰写一篇评论文章，评析社交媒体算法推荐对信息传播和公共舆论的影响，约{length}字。"
+        - "请写一篇评论，讨论数据隐私保护与科技创新之间的平衡，约{length}字。"
+      en:
+        - "Write a commentary analyzing the impact of social media recommendation algorithms on information dissemination and public opinion, approximately {length} words."
+        - "Write a commentary discussing the balance between data privacy protection and technological innovation, approximately {length} words."
+
+  # =========== EDUCATION ===========
+  education:
+    news_report:
+      zh:
+        - "请撰写一篇关于在线教育行业最新发展趋势的新闻报道，约{length}字。涵盖技术应用、政策变化和市场格局。"
+        - "请写一篇关于高考改革最新政策的新闻报道，约{length}字。包括政策内容、各方反应和预期影响。"
+      en:
+        - "Write a news report about the latest trends in online education, approximately {length} words. Cover technology adoption, policy changes, and market dynamics."
+        - "Write a news report on recent reforms in standardized testing and college admissions, approximately {length} words."
+
+    argumentative:
+      zh:
+        - "请写一篇议论文，讨论AI辅助教学是否应该在中小学全面推广，约{length}字。从教育公平、学习效果和教师角色转变角度分析。"
+        - "请撰写一篇议论文，论述双减政策对中国基础教育的长远影响，约{length}字。"
+      en:
+        - "Write an argumentative essay on whether AI-assisted teaching should be widely adopted in K-12 education, approximately {length} words. Consider equity, learning outcomes, and the evolving role of teachers."
+        - "Write an argumentative essay discussing the long-term impact of standardized testing on student development, approximately {length} words."
+
+    popular_science:
+      zh:
+        - "请写一篇科普文章，介绍认知科学对学习方法的最新研究发现，约{length}字。包括记忆机制、间隔重复和主动学习。"
+      en:
+        - "Write a popular science article about recent cognitive science findings on effective learning methods, approximately {length} words. Cover memory mechanisms, spaced repetition, and active learning."
+
+    commentary:
+      zh:
+        - "请撰写一篇评论，分析STEM教育热潮是否导致了人文教育的边缘化，约{length}字。"
+      en:
+        - "Write a commentary analyzing whether the STEM education trend is marginalizing humanities education, approximately {length} words."
+
+  # =========== HEALTHCARE ===========
+  healthcare:
+    news_report:
+      zh:
+        - "请撰写一篇关于mRNA疫苗技术在癌症治疗领域最新进展的新闻报道，约{length}字。涵盖临床试验结果和科学原理。"
+        - "请写一篇关于中医药现代化研究最新成果的新闻报道，约{length}字。"
+      en:
+        - "Write a news report about recent advances in mRNA vaccine technology for cancer treatment, approximately {length} words. Cover clinical trial results and scientific principles."
+        - "Write a news report on breakthroughs in precision medicine and genomic therapies, approximately {length} words."
+
+    argumentative:
+      zh:
+        - "请写一篇议论文，讨论医疗AI辅助诊断系统的可靠性和伦理问题，约{length}字。从准确性、责任归属和患者知情权角度分析。"
+      en:
+        - "Write an argumentative essay discussing the reliability and ethical implications of AI-assisted medical diagnosis, approximately {length} words. Address accuracy, liability, and patient autonomy."
+
+    popular_science:
+      zh:
+        - "请写一篇科普文章，向普通读者介绍肠道微生物组与人体健康的关系，约{length}字。"
+        - "请撰写一篇科普文章，解释基因编辑技术CRISPR的原理及其医学应用前景，约{length}字。"
+      en:
+        - "Write a popular science article explaining the relationship between the gut microbiome and human health, approximately {length} words."
+        - "Write a popular science article explaining CRISPR gene-editing technology and its medical applications, approximately {length} words."
+
+    commentary:
+      zh:
+        - "请撰写一篇评论，分析医疗资源不均衡问题及数字化医疗的解决方案，约{length}字。"
+      en:
+        - "Write a commentary analyzing healthcare resource inequality and the potential of digital health solutions, approximately {length} words."
+
+  # =========== LAW ===========
+  law:
+    news_report:
+      zh:
+        - "请撰写一篇关于个人信息保护法实施以来执法案例和行业变化的新闻报道，约{length}字。"
+        - "请写一篇关于人工智能生成内容版权争议最新司法判例的新闻报道，约{length}字。"
+      en:
+        - "Write a news report about recent legal developments in AI-generated content copyright disputes, approximately {length} words."
+        - "Write a news report covering enforcement actions under data privacy regulations like GDPR, approximately {length} words."
+
+    argumentative:
+      zh:
+        - "请写一篇议论文，论述AI生成内容是否应该享有著作权保护，约{length}字。从法律原理、国际比较和产业影响角度分析。"
+      en:
+        - "Write an argumentative essay on whether AI-generated content should be eligible for copyright protection, approximately {length} words. Consider legal principles, international comparisons, and industry impact."
+
+    popular_science:
+      zh:
+        - "请写一篇科普文章，向普通读者解释数据隐私相关法律法规的核心内容和实际意义，约{length}字。"
+      en:
+        - "Write a popular science article explaining data privacy laws and their practical implications for everyday users, approximately {length} words."
+
+    commentary:
+      zh:
+        - "请撰写一篇评论，分析算法歧视的法律规制路径和技术治理方案，约{length}字。"
+      en:
+        - "Write a commentary analyzing legal frameworks for regulating algorithmic bias and technical governance solutions, approximately {length} words."
+
+  # =========== FINANCE ===========
+  finance:
+    news_report:
+      zh:
+        - "请撰写一篇关于数字人民币推广应用最新进展的新闻报道，约{length}字。涵盖试点范围、技术架构和国际影响。"
+        - "请写一篇关于全球央行加息周期对资本市场影响的新闻报道，约{length}字。"
+      en:
+        - "Write a news report about the latest developments in central bank digital currencies (CBDCs), approximately {length} words. Cover pilot programs, technology, and global implications."
+        - "Write a news report analyzing the impact of global interest rate cycles on capital markets, approximately {length} words."
+
+    argumentative:
+      zh:
+        - "请写一篇议论文，讨论加密货币是否应该被纳入主流金融监管体系，约{length}字。从金融稳定、创新和投资者保护角度分析。"
+      en:
+        - "Write an argumentative essay on whether cryptocurrencies should be integrated into mainstream financial regulation, approximately {length} words. Discuss financial stability, innovation, and investor protection."
+
+    popular_science:
+      zh:
+        - "请写一篇科普文章，向普通读者解释量化交易的基本原理和发展历程，约{length}字。"
+      en:
+        - "Write a popular science article explaining the fundamentals and evolution of quantitative trading for general readers, approximately {length} words."
+
+    commentary:
+      zh:
+        - "请撰写一篇评论，分析金融科技（FinTech）对传统银行业的颠覆性影响及监管挑战，约{length}字。"
+      en:
+        - "Write a commentary analyzing the disruptive impact of FinTech on traditional banking and regulatory challenges, approximately {length} words."
+
+# Generation parameters
+generation:
+  temperatures: [0.7, 0.85, 1.0]
+  top_p_values: [0.85, 0.9, 0.95]
+  length_ranges:
+    zh: [300, 500, 800, 1200]  # character count targets
+    en: [200, 400, 600, 1000]  # word count targets
+  max_new_tokens: 2048
+  repetition_penalty: 1.1
