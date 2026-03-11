@@ -39,10 +39,9 @@ class TestRegistry:
         assert mistral.local_path == "models/mistral7b-gptq"
 
     def test_filter_by_purpose(self):
-        from aigc_detector.models.registry import get_models_by_purpose, _registry
-
         # Reset global cache to load fresh
         import aigc_detector.models.registry as reg
+        from aigc_detector.models.registry import get_models_by_purpose
 
         reg._registry = None
         gen_models = get_models_by_purpose("generation")
@@ -51,9 +50,8 @@ class TestRegistry:
             assert m.purpose == "generation"
 
     def test_filter_by_language(self):
-        from aigc_detector.models.registry import get_models_by_language
-
         import aigc_detector.models.registry as reg
+        from aigc_detector.models.registry import get_models_by_language
 
         reg._registry = None
         zh_models = get_models_by_language("zh")

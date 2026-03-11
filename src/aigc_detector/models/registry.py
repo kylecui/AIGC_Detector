@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Literal
+
 import yaml
 
 
@@ -20,7 +20,7 @@ _registry: dict[str, ModelInfo] | None = None
 
 def load_registry(path: str = "configs/models.yaml") -> dict[str, ModelInfo]:
     """Load model definitions from YAML file."""
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         data = yaml.safe_load(f)
 
     registry = {}
