@@ -1,0 +1,80 @@
+models:
+  mistral-7b-gptq:
+    hf_id: TheBloke/Mistral-7B-Instruct-v0.2-GPTQ
+    purpose: generation
+    language: en
+    quantization: gptq-4bit
+    vram_gb: 4.5
+    local_path: models/mistral7b-gptq
+
+  qwen2.5-7b:
+    hf_id: Qwen/Qwen2.5-7B-Instruct
+    purpose: generation
+    language: multi
+    quantization: bnb-4bit
+    vram_gb: 5.5
+    local_path: null
+
+  chatglm3-6b:
+    hf_id: THUDM/chatglm3-6b
+    purpose: generation
+    language: zh
+    quantization: bnb-int4
+    vram_gb: 5.0
+    local_path: null
+
+  yi-6b-chat:
+    hf_id: 01-ai/Yi-6B-Chat
+    purpose: generation
+    language: multi
+    quantization: bnb-4bit
+    vram_gb: 4.5
+    local_path: null
+
+  llama-3-8b-gptq:
+    hf_id: meta-llama/Meta-Llama-3-8B-Instruct
+    purpose: generation
+    language: en
+    quantization: gptq-4bit
+    vram_gb: 5.5
+    local_path: null
+
+  gpt2-xl:
+    hf_id: openai-community/gpt2-xl
+    purpose: statistical
+    language: en
+    quantization: null
+    vram_gb: 3.0
+    local_path: null
+
+  qwen2.5-7b-stat:
+    hf_id: Qwen/Qwen2.5-7B-Instruct
+    purpose: statistical
+    language: zh
+    quantization: bnb-4bit
+    vram_gb: 5.5
+    local_path: null
+
+  chinese-roberta-large:
+    hf_id: hfl/chinese-roberta-wwm-ext-large
+    purpose: encoder
+    language: zh
+    quantization: null
+    vram_gb: 4.0
+    local_path: null
+
+  deberta-v3-large:
+    hf_id: microsoft/deberta-v3-large
+    purpose: encoder
+    language: en
+    quantization: null
+    vram_gb: 4.0
+    local_path: null
+
+  xlm-roberta-lang-detect:
+    hf_id: papluca/xlm-roberta-base-language-detection
+    purpose: language_detection
+    language: multi
+    quantization: null
+    vram_gb: 1.0
+    local_path: null

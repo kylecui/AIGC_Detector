@@ -1,6 +1,6 @@
 .venv
 dataset/
-models/
+/models/
 logs/
 __pycache__/
 *.pyc
