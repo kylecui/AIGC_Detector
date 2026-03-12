@@ -1,7 +1,7 @@
 """Run full evaluation across all trained detectors on the test set.
 
 Evaluates:
-  1. Statistical classifier (per-language: EN with GPT-2-XL, ZH with Qwen2.5)
+  1. Statistical classifier (per-language: EN with GPT-2-XL, ZH with Wenzhong-GPT2-110M)
   2. Encoder classifier (per-language: EN with DeBERTa, ZH with RoBERTa)
   3. Combined: ensemble of statistical + encoder (mimics pipeline without Binoculars)
 
@@ -84,7 +84,7 @@ def evaluate_statistical(lang: str) -> dict | None:
         # Need to extract features first
         ref_models = {
             "en": {"model": "openai-community/gpt2-xl", "load_in_4bit": False},
-            "zh": {"model": "Qwen/Qwen2.5-7B-Instruct", "load_in_4bit": True},
+            "zh": {"model": "IDEA-CCNL/Wenzhong-GPT2-110M", "load_in_4bit": False},
         }
         model_cfg = ref_models[lang]
 
