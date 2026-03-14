@@ -87,8 +87,13 @@ class EncoderClassifier:
             return
 
         logger.info("Loading encoder model: %s", self.base_model_name)
+        tokenizer_source = (
+            self.adapter_path
+            if self.adapter_path and (self.adapter_path / "tokenizer_config.json").exists()
+            else self.base_model_name
+        )
         self._tokenizer = AutoTokenizer.from_pretrained(
-            self.base_model_name,
+            tokenizer_source,
             trust_remote_code=True,
         )
 

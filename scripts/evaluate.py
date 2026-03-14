@@ -39,6 +39,21 @@ PROCESSED_DIR = settings.dataset_dir / "processed"
 REPORTS_DIR = settings.model_dir / "eval_reports"
 
 
+def _resolve_local_base_model(lang: str, base_model: str) -> str:
+    """Prefer a local base-model cache if available.
+
+    This avoids hard dependency on HuggingFace access during offline/local eval.
+    """
+    local_candidates = {
+        "en": [settings.model_dir / "base" / "deberta-v3-large"],
+        "zh": [settings.model_dir / "base" / "chinese-roberta-wwm-ext-large"],
+    }
+    for candidate in local_candidates.get(lang, []):
+        if candidate.exists() and any(candidate.iterdir()):
+            return str(candidate)
+    return base_model
+
+
 def _load_test_records(lang: str) -> list[dict]:
     """Load test records for a specific language."""
     test_path = PROCESSED_DIR / "test.jsonl"
@@ -198,15 +213,21 @@ def evaluate_encoder(lang: str) -> dict | None:
     from transformers import AutoTokenizer
 
     console.print(f"[bold blue]Loading encoder + LoRA from {output_dir}...[/]")
-    tokenizer = AutoTokenizer.from_pretrained(config.base_model, trust_remote_code=True)
+    base_model_source = _resolve_local_base_model(lang, config.base_model)
+    tokenizer_source = output_dir if (output_dir / "tokenizer_config.json").exists() else base_model_source
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_source, trust_remote_code=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    model = AutoPeftModelForSequenceClassification.from_pretrained(
-        str(output_dir),
-        torch_dtype=torch.float16,
-        trust_remote_code=True,
-    )
+    try:
+        model = AutoPeftModelForSequenceClassification.from_pretrained(
+            str(output_dir),
+            torch_dtype=torch.float16,
+            trust_remote_code=True,
+        )
+    except Exception as e:
+        console.print(f"[yellow]Encoder load failed for {lang}: {e}. Skipping.[/]")
+        return None
     model.to(settings.device)
     model.eval()
 

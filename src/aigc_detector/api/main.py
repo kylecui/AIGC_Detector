@@ -24,8 +24,11 @@ from fastapi.staticfiles import StaticFiles
 from aigc_detector.api.middleware import setup_middleware
 from aigc_detector.api.routes import router
 from aigc_detector.config import settings
+from aigc_detector.detection.binoculars import BinocularsDetector
+from aigc_detector.detection.encoder import EncoderClassifier
 from aigc_detector.detection.language import LanguageRouter
 from aigc_detector.detection.pipeline import DetectionPipeline
+from aigc_detector.detection.statistical import StatisticalClassifier, StatisticalFeatureExtractor
 from aigc_detector.models.manager import ModelManager
 
 logger = logging.getLogger(__name__)
@@ -52,9 +55,66 @@ async def lifespan(app: FastAPI):
     except Exception:
         logger.warning("Language detection model failed to load, using heuristic fallback")
 
-    # Detection pipeline (detectors loaded lazily per request if needed)
+    # Build detector wrappers (actual model weights stay lazily loaded until first use)
+    statistical_extractors = {
+        "en": StatisticalFeatureExtractor(
+            model_name="openai-community/gpt2-xl",
+            device=settings.device,
+            load_in_4bit=False,
+        ),
+        "zh": StatisticalFeatureExtractor(
+            model_name="IDEA-CCNL/Wenzhong-GPT2-110M",
+            device=settings.device,
+            load_in_4bit=False,
+        ),
+    }
+    statistical_classifiers: dict[str, StatisticalClassifier] = {}
+    for lang in ("en", "zh"):
+        clf_path = settings.model_dir / f"statistical-{lang}" / "classifier.joblib"
+        if clf_path.exists():
+            clf = StatisticalClassifier()
+            clf.load(clf_path)
+            statistical_classifiers[lang] = clf
+        else:
+            logger.warning("Statistical classifier missing for %s: %s", lang, clf_path)
+
+    encoder_classifiers = {
+        "en": EncoderClassifier(
+            base_model_name="microsoft/deberta-v3-large",
+            adapter_path=settings.model_dir / "encoder-en",
+            device=settings.device,
+        ),
+        "zh": EncoderClassifier(
+            base_model_name="hfl/chinese-roberta-wwm-ext-large",
+            adapter_path=settings.model_dir / "encoder-zh",
+            device=settings.device,
+        ),
+    }
+
+    binoculars_detectors = {
+        "en": BinocularsDetector(
+            observer_name="tiiuae/falcon-7b",
+            performer_name="tiiuae/falcon-7b-instruct",
+            mode="low-fpr",
+            device=settings.device,
+            load_in_4bit=True,
+        ),
+        "zh": BinocularsDetector(
+            observer_name="Qwen/Qwen2-7B",
+            performer_name="Qwen/Qwen2-7B-Instruct",
+            mode="low-fpr",
+            device=settings.device,
+            load_in_4bit=True,
+        ),
+    }
+
+    # Detection pipeline (detectors instantiated here, weights loaded lazily on first use)
     pipeline = DetectionPipeline(
         language_router=language_router,
+        statistical_extractors=statistical_extractors,
+        statistical_classifiers=statistical_classifiers,
+        encoder_classifiers=encoder_classifiers,
+        binoculars_detectors=binoculars_detectors,
         model_manager=model_manager,
     )
     app.state.pipeline = pipeline

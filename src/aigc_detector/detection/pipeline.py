@@ -136,6 +136,10 @@ class DetectionPipeline:
             return None
 
         try:
+            if hasattr(extractor, "is_loaded") and hasattr(extractor, "load") and not extractor.is_loaded:
+                extractor.load()
+                if self.model_manager is not None:
+                    self.model_manager.load(f"statistical-{lang}", extractor)
             features = extractor.extract(text)
             result = classifier.predict(features)
             result["features"] = features.to_dict()
@@ -152,6 +156,10 @@ class DetectionPipeline:
             return None
 
         try:
+            if hasattr(classifier, "is_loaded") and hasattr(classifier, "load") and not classifier.is_loaded:
+                classifier.load()
+                if self.model_manager is not None:
+                    self.model_manager.load(f"encoder-{lang}", classifier)
             result = classifier.predict(text)
             return {
                 "label": result.label,
@@ -171,6 +179,10 @@ class DetectionPipeline:
             return None
 
         try:
+            if hasattr(detector, "is_loaded") and hasattr(detector, "load") and not detector.is_loaded:
+                detector.load()
+                if self.model_manager is not None:
+                    self.model_manager.load(f"binoculars-{lang}", detector)
             result = detector.predict(text)
             # Convert Binoculars score to p_ai (lower score = more AI)
             # Use a sigmoid-like mapping: p_ai = 1 / (1 + exp(k * (score - threshold)))
