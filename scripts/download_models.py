@@ -7,7 +7,7 @@ from rich.console import Console
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.aigc_detector.models.registry import get_registry, get_models_by_purpose
+from src.aigc_detector.models.registry import get_models_by_purpose, get_registry
 
 
 def download_model(model_name: str, model_info, models_dir: Path, console: Console) -> None:
