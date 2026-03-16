@@ -23,7 +23,21 @@ import torch
 from peft import PeftModel
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
+from aigc_detector.config import settings
+
 logger = logging.getLogger(__name__)
+
+
+def _resolve_local_base_model(base_model_name: str) -> str:
+    """Prefer a project-local base model directory when available."""
+    candidates = {
+        "microsoft/deberta-v3-large": settings.model_dir / "base" / "deberta-v3-large",
+        "hfl/chinese-roberta-wwm-ext-large": settings.model_dir / "base" / "chinese-roberta-wwm-ext-large",
+    }
+    candidate = candidates.get(base_model_name)
+    if candidate and candidate.exists() and any(candidate.iterdir()):
+        return str(candidate)
+    return base_model_name
 
 
 @dataclass
@@ -86,11 +100,12 @@ class EncoderClassifier:
         if self._model is not None:
             return
 
-        logger.info("Loading encoder model: %s", self.base_model_name)
+        base_model_source = _resolve_local_base_model(self.base_model_name)
+        logger.info("Loading encoder model: %s", base_model_source)
         tokenizer_source = (
             self.adapter_path
             if self.adapter_path and (self.adapter_path / "tokenizer_config.json").exists()
-            else self.base_model_name
+            else base_model_source
         )
         self._tokenizer = AutoTokenizer.from_pretrained(
             tokenizer_source,
@@ -98,7 +113,7 @@ class EncoderClassifier:
         )
 
         base_model = AutoModelForSequenceClassification.from_pretrained(
-            self.base_model_name,
+            base_model_source,
             num_labels=self.num_labels,
             torch_dtype=torch.float16,
             trust_remote_code=True,

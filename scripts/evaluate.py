@@ -208,9 +208,9 @@ def evaluate_encoder(lang: str) -> dict | None:
                     fout.write(line)
 
     # Load model
-    from peft import AutoPeftModelForSequenceClassification
+    from peft import PeftModel
     from torch.utils.data import DataLoader
-    from transformers import AutoTokenizer
+    from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
     console.print(f"[bold blue]Loading encoder + LoRA from {output_dir}...[/]")
     base_model_source = _resolve_local_base_model(lang, config.base_model)
@@ -220,11 +220,13 @@ def evaluate_encoder(lang: str) -> dict | None:
         tokenizer.pad_token = tokenizer.eos_token
 
     try:
-        model = AutoPeftModelForSequenceClassification.from_pretrained(
-            str(output_dir),
+        base_model = AutoModelForSequenceClassification.from_pretrained(
+            base_model_source,
+            num_labels=config.num_labels,
             torch_dtype=torch.float16,
             trust_remote_code=True,
         )
+        model = PeftModel.from_pretrained(base_model, str(output_dir))
     except Exception as e:
         console.print(f"[yellow]Encoder load failed for {lang}: {e}. Skipping.[/]")
         return None
