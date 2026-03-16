@@ -17,6 +17,7 @@ import logging
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
+import json
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -74,6 +75,14 @@ async def lifespan(app: FastAPI):
         if clf_path.exists():
             clf = StatisticalClassifier()
             clf.load(clf_path)
+            cal_path = settings.model_dir / f"statistical-{lang}" / "calibration.json"
+            if cal_path.exists():
+                try:
+                    calibration = json.loads(cal_path.read_text(encoding="utf-8"))
+                    if "optimal_threshold" in calibration:
+                        clf.set_threshold(float(calibration["optimal_threshold"]))
+                except Exception:
+                    logger.warning("Failed to load calibration for %s", lang, exc_info=True)
             statistical_classifiers[lang] = clf
         else:
             logger.warning("Statistical classifier missing for %s: %s", lang, clf_path)

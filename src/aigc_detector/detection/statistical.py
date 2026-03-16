@@ -275,6 +275,7 @@ class StatisticalClassifier:
     def __init__(self, backend: Literal["xgboost", "logistic_regression"] = "xgboost"):
         self.backend = backend
         self._pipeline: Pipeline | None = None
+        self.threshold: float = 0.5
         self._build_pipeline()
 
     def _build_pipeline(self) -> None:
@@ -341,14 +342,19 @@ class StatisticalClassifier:
         p_ai = float(proba[0, 1]) if x_arr.shape[0] == 1 else proba[:, 1].tolist()
 
         if x_arr.shape[0] == 1:
-            label = "ai" if p_ai > 0.5 else "human"
+            label = "ai" if p_ai > self.threshold else "human"
             confidence = max(p_ai, 1.0 - p_ai)
             return {"label": label, "p_ai": p_ai, "confidence": confidence}
 
         # Batch
-        labels = ["ai" if p > 0.5 else "human" for p in p_ai]
+        labels = ["ai" if p > self.threshold else "human" for p in p_ai]
         confidences = [max(p, 1.0 - p) for p in p_ai]
         return {"labels": labels, "p_ai": p_ai, "confidences": confidences}
+
+    def set_threshold(self, threshold: float) -> None:
+        """Override the AI decision threshold for inference."""
+        self.threshold = float(threshold)
+        logger.info("StatisticalClassifier threshold updated: %.6f", self.threshold)
 
     def predict_proba(self, features: np.ndarray | list[StatisticalFeatures]) -> np.ndarray:
         """Return raw probability array (n_samples, 2)."""
