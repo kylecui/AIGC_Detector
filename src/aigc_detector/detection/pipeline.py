@@ -27,6 +27,8 @@ from aigc_detector.detection.ensemble import EnsembleAggregator, EnsembleResult
 
 logger = logging.getLogger(__name__)
 
+ZH_DECISION_THRESHOLD = 0.47
+
 
 class DetectionPipeline:
     """Cascading AI text detection pipeline.
@@ -86,8 +88,11 @@ class DetectionPipeline:
         if stat_result is not None:
             stage_results["statistical"] = stat_result
 
-            # Early exit if statistical confidence is very high
-            if stat_result.get("confidence", 0) > self.early_exit_threshold:
+            # Early exit if statistical confidence is very high.
+            # For Chinese, keep the encoder in the loop because the statistical
+            # stage can be overconfident on fluent AI-written text and cause
+            # false Human-written exits before the stronger encoder runs.
+            if lang != "zh" and stat_result.get("confidence", 0) > self.early_exit_threshold:
                 logger.info("Stage 1 early exit: confidence=%.4f", stat_result["confidence"])
                 elapsed = (time.perf_counter() - t0) * 1000
                 return self._aggregator.combine(
@@ -100,6 +105,40 @@ class DetectionPipeline:
         encoder_result = self._run_encoder(text, lang)
         if encoder_result is not None:
             stage_results["encoder"] = encoder_result
+
+            # Conservative zh arbitration: when the statistical stage says human
+            # but the encoder has already crossed a moderate AI probability, the
+            # encoder is usually the stronger signal on formal Chinese prose.
+            if (
+                lang == "zh"
+                and stat_result is not None
+                and stat_result.get("label") == "human"
+                and encoder_result.get("p_ai", 0) >= 0.35
+            ):
+                logger.info(
+                    "Stage 2 zh arbitration: overriding statistical human with encoder p_ai=%.4f",
+                    encoder_result["p_ai"],
+                )
+                elapsed = (time.perf_counter() - t0) * 1000
+                return self._aggregator.combine(
+                    {"encoder": encoder_result},
+                    detected_language=lang,
+                    processing_time_ms=elapsed,
+                    decision_threshold=ZH_DECISION_THRESHOLD,
+                )
+
+            # For Chinese, a strong encoder result is more reliable than the
+            # statistical stage on fluent AI-written text. In that case, skip
+            # the heavyweight Binoculars fallback and combine the first two
+            # stages directly.
+            if lang == "zh" and encoder_result.get("confidence", 0) > self.early_exit_threshold:
+                logger.info("Stage 2 zh early exit: encoder confidence=%.4f", encoder_result["confidence"])
+                elapsed = (time.perf_counter() - t0) * 1000
+                return self._aggregator.combine(
+                    stage_results,
+                    detected_language=lang,
+                    processing_time_ms=elapsed,
+                )
 
             # If statistical and encoder agree, skip binoculars
             if stat_result is not None and self._aggregator.agree(stage_results):

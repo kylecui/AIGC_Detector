@@ -57,6 +57,7 @@ class EnsembleAggregator:
         stage_results: dict[str, dict],
         detected_language: str = "en",
         processing_time_ms: float = 0.0,
+        decision_threshold: float = 0.5,
     ) -> EnsembleResult:
         """Combine results from one or more detection stages.
 
@@ -88,7 +89,7 @@ class EnsembleAggregator:
             )
 
         p_ai = self._weighted_combine(stage_results)
-        predicted_label = "AI-generated" if p_ai > 0.5 else "Human-written"
+        predicted_label = "AI-generated" if p_ai > decision_threshold else "Human-written"
         confidence = max(p_ai, 1.0 - p_ai)
 
         return EnsembleResult(
