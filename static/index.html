@@ -42,6 +42,11 @@
       <button class="example-btn" @click="loadExample('zh_human')">中文人工示例</button>
       <button class="example-btn" @click="loadExample('zh_ai')">中文 AI 风格示例</button>
     </div>
+
+    <label class="toggle-row">
+      <input type="checkbox" x-model="includeSegments">
+      <span>Include segment-level analysis</span>
+    </label>
   </div>
 
   <!-- ── Input Card ──────────────────────────────────────── -->
@@ -150,6 +155,42 @@
         </div>
       </div>
 
+      <div class="analysis-grid">
+        <div class="analysis-card">
+          <div class="analysis-title">Document Analysis</div>
+          <div class="kv-list">
+            <div class="kv-row"><span>Label</span><span x-text="result.predicted_label"></span></div>
+            <div class="kv-row"><span>Confidence</span><span x-text="formatPercent(result.confidence)"></span></div>
+            <div class="kv-row"><span>P(AI)</span><span x-text="formatPercent(result.p_ai)"></span></div>
+            <div class="kv-row"><span>Language</span><span x-text="result.detected_language.toUpperCase()"></span></div>
+            <div class="kv-row"><span>Processing</span><span x-text="result.processing_time_ms.toFixed(1) + ' ms'"></span></div>
+            <div class="kv-row"><span>Stages Used</span><span x-text="result.stages_used.join(', ') || 'none'"></span></div>
+            <div class="kv-row"><span>Segments</span><span x-text="(result.segments || []).length"></span></div>
+            <div class="kv-row"><span>Top Segment P(AI)</span><span x-text="formatPercent(topSegmentPAI())"></span></div>
+            <div class="kv-row"><span>AI Segment Ratio</span><span x-text="formatPercent(aiSegmentRatio())"></span></div>
+          </div>
+        </div>
+
+        <template x-if="result.breakdown && Object.keys(result.breakdown).length > 0">
+          <div class="analysis-card">
+            <div class="analysis-title">Stage Metrics</div>
+            <template x-for="(detail, stage) in result.breakdown" :key="stage + '-metrics'">
+              <div class="stage-metric-block">
+                <div class="stage-name" x-text="stage"></div>
+                <div class="kv-list compact">
+                  <template x-for="[key, value] in flattenBreakdown(detail)" :key="stage + '-' + key">
+                    <div class="kv-row">
+                      <span x-text="key"></span>
+                      <span x-text="formatValue(value)"></span>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+          </div>
+        </template>
+      </div>
+
       <!-- Breakdown -->
       <template x-if="result.breakdown && Object.keys(result.breakdown).length > 0">
         <div>
@@ -159,6 +200,75 @@
               <div class="stage-card">
                 <div class="stage-name" x-text="stage"></div>
                 <div class="stage-details" x-text="formatBreakdown(detail)"></div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
+
+      <template x-if="result.segments && result.segments.length > 0">
+        <div class="segment-section">
+          <div class="breakdown-title">Annotated Text View</div>
+          <div class="annotation-legend">
+            <span class="legend-item"><span class="legend-swatch swatch-high"></span> High risk (P(AI) ≥ 70%)</span>
+            <span class="legend-item"><span class="legend-swatch swatch-medium"></span> Medium risk (40%–70%)</span>
+            <span class="legend-item"><span class="legend-swatch swatch-low"></span> Low risk (&lt; 40%)</span>
+          </div>
+          <div class="annotated-text">
+            <template x-for="part in annotatedTextParts()" :key="part.key">
+              <template x-if="part.type === 'plain'">
+                <span x-text="part.text"></span>
+              </template>
+              <template x-if="part.type === 'segment'">
+                <span
+                  class="annotated-segment"
+                  :class="segmentRiskClass(part.segment)"
+                  :title="segmentTooltip(part.segment)"
+                  x-text="part.text"
+                ></span>
+              </template>
+            </template>
+          </div>
+
+          <div class="breakdown-title">Segment Analysis</div>
+          <div class="segment-list">
+            <template x-for="segment in sortedSegments()" :key="'segment-' + segment.index">
+              <div class="segment-card">
+                <div class="segment-header">
+                  <div class="segment-title-row">
+                    <span class="tag" x-text="'Segment #' + segment.index"></span>
+                    <span class="label-badge label-badge-sm"
+                          :class="segment.predicted_label === 'AI-generated' ? 'label-ai' : 'label-human'"
+                          x-text="segment.predicted_label"></span>
+                  </div>
+                  <div class="meta-tags">
+                    <span class="tag" x-text="'P(AI): ' + formatPercent(segment.p_ai)"></span>
+                    <span class="tag" x-text="'Confidence: ' + formatPercent(segment.confidence)"></span>
+                    <span class="tag" x-text="'Chars: ' + segment.char_start + '-' + segment.char_end"></span>
+                    <span class="tag" x-text="'Time: ' + segment.processing_time_ms.toFixed(1) + ' ms'"></span>
+                  </div>
+                </div>
+
+                <div class="segment-text" x-text="segment.text"></div>
+
+                <template x-if="segment.breakdown && Object.keys(segment.breakdown).length > 0">
+                  <details class="segment-details">
+                    <summary>Segment stage breakdown</summary>
+                    <div class="kv-list compact segment-breakdown-list">
+                      <template x-for="(detail, stage) in segment.breakdown" :key="segment.index + '-' + stage">
+                        <div class="segment-breakdown-card">
+                          <div class="stage-name" x-text="stage"></div>
+                          <template x-for="[key, value] in flattenBreakdown(detail)" :key="segment.index + '-' + stage + '-' + key">
+                            <div class="kv-row">
+                              <span x-text="key"></span>
+                              <span x-text="formatValue(value)"></span>
+                            </div>
+                          </template>
+                        </div>
+                      </template>
+                    </div>
+                  </details>
+                </template>
               </div>
             </template>
           </div>
@@ -187,6 +297,7 @@ function detector() {
     error: null,
     result: null,
     health: null,
+    includeSegments: true,
     examples: {
       en_human: `The city council approved the renovation plan after a three-hour public hearing on Tuesday night. Residents raised concerns about construction noise, parking changes, and the long-term maintenance budget, but most speakers supported the proposal because the current facility is outdated and increasingly expensive to repair. Officials said the work will begin in early summer and continue in phases so that community services remain available throughout the project.`,
       en_ai: `Artificial intelligence systems continue to reshape modern workflows across business, education, and public administration. By combining scalable automation with rapid content generation, these systems can improve efficiency while also introducing new concerns about authenticity, trust, and accountability. As organizations adopt such tools, it becomes increasingly important to evaluate whether a piece of writing reflects direct human authorship, machine assistance, or a fully automated generation process.`,
@@ -248,6 +359,93 @@ function detector() {
         .join('  |  ');
     },
 
+    flattenBreakdown(detail, prefix = '') {
+      if (detail === null || detail === undefined) return [];
+      if (typeof detail !== 'object' || Array.isArray(detail)) {
+        return [[prefix || 'value', detail]];
+      }
+      const rows = [];
+      for (const [key, value] of Object.entries(detail)) {
+        const nextKey = prefix ? `${prefix}.${key}` : key;
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          rows.push(...this.flattenBreakdown(value, nextKey));
+        } else {
+          rows.push([nextKey, value]);
+        }
+      }
+      return rows;
+    },
+
+    formatValue(value) {
+      if (typeof value === 'number') {
+        return Number.isInteger(value) ? String(value) : value.toFixed(4);
+      }
+      if (Array.isArray(value)) return value.join(', ');
+      if (value === null || value === undefined) return '';
+      return String(value);
+    },
+
+    formatPercent(value) {
+      const n = Number(value || 0);
+      return (n * 100).toFixed(1) + '%';
+    },
+
+    sortedSegments() {
+      return [...(this.result?.segments || [])].sort((a, b) => (b.p_ai || 0) - (a.p_ai || 0));
+    },
+
+    topSegmentPAI() {
+      const vals = (this.result?.segments || []).map(s => Number(s.p_ai || 0));
+      return vals.length ? Math.max(...vals) : 0;
+    },
+
+    segmentRiskClass(segment) {
+      const p = Number(segment?.p_ai || 0);
+      if (p >= 0.7) return 'segment-risk-high';
+      if (p >= 0.4) return 'segment-risk-medium';
+      return 'segment-risk-low';
+    },
+
+    segmentTooltip(segment) {
+      return `Segment #${segment.index} | ${segment.predicted_label} | P(AI) ${this.formatPercent(segment.p_ai)} | Confidence ${this.formatPercent(segment.confidence)}`;
+    },
+
+    annotatedTextParts() {
+      const text = this.text || '';
+      const segments = [...(this.result?.segments || [])].sort((a, b) => (a.char_start || 0) - (b.char_start || 0));
+      if (!text || !segments.length) {
+        return [{ key: 'plain-all', type: 'plain', text }];
+      }
+
+      const parts = [];
+      let cursor = 0;
+      for (const segment of segments) {
+        const start = Number(segment.char_start || 0);
+        const end = Number(segment.char_end || start);
+        if (start > cursor) {
+          parts.push({ key: `plain-${cursor}-${start}`, type: 'plain', text: text.slice(cursor, start) });
+        }
+        parts.push({
+          key: `segment-${segment.index}-${start}-${end}`,
+          type: 'segment',
+          text: text.slice(start, end),
+          segment,
+        });
+        cursor = Math.max(cursor, end);
+      }
+      if (cursor < text.length) {
+        parts.push({ key: `plain-${cursor}-${text.length}`, type: 'plain', text: text.slice(cursor) });
+      }
+      return parts;
+    },
+
+    aiSegmentRatio() {
+      const segments = this.result?.segments || [];
+      if (!segments.length) return 0;
+      const aiCount = segments.filter(s => s.predicted_label === 'AI-generated').length;
+      return aiCount / segments.length;
+    },
+
     async detect() {
       this.loading = true;
       this.error = null;
@@ -257,7 +455,7 @@ function detector() {
         const resp = await fetch('/api/v1/detect', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: this.text, models: ['all'] }),
+          body: JSON.stringify({ text: this.text, models: ['all'], include_segments: this.includeSegments }),
         });
 
         if (resp.status === 429) {

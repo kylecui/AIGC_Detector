@@ -14,3 +14,4 @@ build/
 *.incomplete
 _archive/
 nul
+samples/

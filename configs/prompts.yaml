@@ -5,7 +5,7 @@
 # Placeholders:
 #   {length} — target word/character count (filled at runtime)
 #
-# Domains (5): technology, education, healthcare, law, finance
+# Domains (6): technology, education, healthcare, law, finance, security_bp
 # Styles (4): news_report, argumentative, popular_science, commentary
 # Languages: zh, en
 
@@ -34,6 +34,11 @@ domains:
     display_name:
       zh: "金融"
       en: "Finance"
+
+  security_bp:
+    display_name:
+      zh: "安全攻防与商业方案"
+      en: "Security BP / Incident Analysis"
 
 styles:
   news_report:
@@ -228,6 +233,35 @@ prompts:
         - "请撰写一篇评论，分析金融科技（FinTech）对传统银行业的颠覆性影响及监管挑战，约{length}字。"
       en:
         - "Write a commentary analyzing the disruptive impact of FinTech on traditional banking and regulatory challenges, approximately {length} words."
+
+  # =========== SECURITY BP / INCIDENT ANALYSIS ===========
+  security_bp:
+    news_report:
+      zh:
+        - "请撰写一篇关于大型内容平台遭遇自动化黑产攻击事件的深度新闻报道，约{length}字。要求描述攻击路径、平台处置过程、业务影响与行业启示。"
+        - "请撰写一篇关于直播平台因接口滥用而爆发大规模违规推流事件的报道，约{length}字。需要涵盖时间线、技术原因、平台应急响应和监管后续。"
+      en:
+        - "Write a news report about a major content platform hit by automated abuse infrastructure, approximately {length} words. Cover the attack path, incident response, business impact, and industry lessons."
+
+    argumentative:
+      zh:
+        - "请写一篇议论文，论述大型互联网平台应否将安全防线从事后内容审核转向事前免疫与实时阻断，约{length}字。请从算力成本、攻击自动化、平台治理和用户体验角度分析。"
+        - "请撰写一篇议论文，讨论端网协同安全机制是否能够成为平台治理自动化攻击的核心基础设施，约{length}字。要求兼顾技术可行性、误伤风险与商业价值。"
+      en:
+        - "Write an argumentative essay discussing whether large online platforms should shift from post-hoc moderation to pre-emptive blocking against automated abuse, approximately {length} words."
+
+    popular_science:
+      zh:
+        - "请写一篇科普文章，向普通读者解释什么是自动化攻击、接口滥用和端网协同防御，约{length}字。要求语言通俗，但保留必要的技术细节。"
+      en:
+        - "Write a popular science article explaining automated abuse, API misuse, and coordinated client-network defense for general readers, approximately {length} words."
+
+    commentary:
+      zh:
+        - "请撰写一篇评论文章，评析大型内容平台在AI驱动自动化攻击时代为何必须从内容审核转向实时阻断，约{length}字。要求文风犀利、论断明确，并结合商业BP式说服表达。"
+        - "请写一篇评论，围绕一次平台安全事故展开分析，论证所谓“端网协同”“多维状态语义一致性校验”等方案为何具有降维防御优势，约{length}字。要求包含技术术语、中英缩写和强结论表达。"
+      en:
+        - "Write a commentary arguing that large content platforms must evolve from content review to real-time blocking in the age of AI-driven automated abuse, approximately {length} words."
 
 # Generation parameters
 generation:

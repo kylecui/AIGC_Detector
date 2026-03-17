@@ -1,0 +1,1840 @@
+[
+  {
+    "id": "professional_zh_ai_001",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "technology_article",
+    "subtype": "industry_analysis",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "随着智能终端、边缘计算与大模型推理能力的同步提升，未来三到五年内，企业级AI应用将从“单点工具化”阶段迈入“流程操作系统化”阶段。对于科技公司而言，真正的竞争不再只是模型参数规模，而是能否围绕数据接入、推理编排、权限治理与业务闭环构建完整平台能力。尤其是在ToB场景中，客户越来越不关心底层模型名称，而更关心系统是否能够稳定、可控、可审计地嵌入现有业务流。这意味着下一轮行业分化，将发生在平台工程能力与行业交付能力，而非单纯的模型性能榜单。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.907,
+      "p_ai": 0.093,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.005718983244150877,
+          "confidence": 0.9942810167558491,
+          "features": {
+            "perplexity": 3.64453125,
+            "avg_entropy": 1.1982421875,
+            "std_entropy": 1.3798828125,
+            "burstiness": 0.07045454518126722,
+            "max_entropy": 9.546875,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.1279296875,
+          "confidence": 0.8720703125,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 8410.5
+    },
+    "latency_ms_wall": 8410.5,
+    "correct": false
+  },
+  {
+    "id": "professional_zh_ai_002",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "technology_article",
+    "subtype": "product_trend",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "从产品演进路径看，AI原生应用正在从“功能增强型插件”转向“任务闭环型代理”。这一变化的关键，不在于模型是否更会生成文本，而在于系统是否具备对上下文、工具调用、权限边界和结果验证的统一编排能力。未来成熟的AI产品，将不再把对话界面作为终点，而是把任务完成率、业务回流率和组织协同效率作为核心指标。谁能率先把模型能力沉淀为稳定的产品架构，谁就更有机会构建真正可复制的商业护城河。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9261,
+      "p_ai": 0.0739,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.007206679321825504,
+          "confidence": 0.9927933206781745,
+          "features": {
+            "perplexity": 3.59375,
+            "avg_entropy": 1.220703125,
+            "std_entropy": 1.3544921875,
+            "burstiness": 0.051952976665908805,
+            "max_entropy": 8.0234375,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.1005859375,
+          "confidence": 0.8994140625,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 247.0
+    },
+    "latency_ms_wall": 247.0,
+    "correct": false
+  },
+  {
+    "id": "professional_zh_human_001",
+    "lang": "zh",
+    "label": "human",
+    "domain": "technology_article",
+    "subtype": "industry_analysis",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "最近看了几家做企业级AI平台的公司方案，我一个比较直观的感受是，大家都在讲“平台化”，但真正能落到客户现场的东西其实差异很大。有的团队强调模型能力，有的团队强调流程编排，也有的团队更重视权限和审计。站在使用者角度看，客户未必会关心底层模型到底换了多少次，反而更在意系统接进去之后是不是稳定、是不是容易管、出了问题能不能回溯。所以我觉得下一阶段的竞争，可能会越来越像工程能力和交付能力的竞争。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9884,
+      "p_ai": 0.0116,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.0021182741038501263,
+          "confidence": 0.9978817258961499,
+          "features": {
+            "perplexity": 3.60546875,
+            "avg_entropy": 1.18359375,
+            "std_entropy": 1.3232421875,
+            "burstiness": 0.055707050810112894,
+            "max_entropy": 7.5234375,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.0154266357421875,
+          "confidence": 0.9845733642578125,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 92.1
+    },
+    "latency_ms_wall": 92.1,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_human_002",
+    "lang": "zh",
+    "label": "human",
+    "domain": "technology_article",
+    "subtype": "product_trend",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "这两年很多团队都在谈AI Agent，但真正试下来就会发现，能不能把任务完整地跑通，远比“会不会聊天”更重要。比如工具调用失败怎么办、上下文过长怎么办、权限边界谁来定、结果要不要人工确认，这些都是很现实的问题。我现在更倾向于把Agent看成一种工程体系，而不是一个简单的新交互入口。谁能把这些看起来零散的问题串起来，谁的产品体验才可能真正稳定。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9753,
+      "p_ai": 0.0247,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.006283339578658342,
+          "confidence": 0.9937166604213417,
+          "features": {
+            "perplexity": 4.015625,
+            "avg_entropy": 1.28515625,
+            "std_entropy": 1.396484375,
+            "burstiness": 0.04151493065363697,
+            "max_entropy": 8.09375,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.032135009765625,
+          "confidence": 0.967864990234375,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 81.5
+    },
+    "latency_ms_wall": 81.5,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_ai_011",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "technology_article",
+    "subtype": "enterprise_adoption",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "在企业数字化进入深水区之后，AI应用的竞争焦点正从模型试用率转向组织级落地效率。过去很多公司把大模型当作创新展示窗口，强调界面新颖和回答自然，但真正进入业务现场后，客户更关心的是权限边界是否清晰、结果是否可追溯、成本是否可控以及跨系统协同是否顺畅。对于科技厂商而言，下一轮增长并不来自单一功能爆发，而来自把模型能力沉淀为稳定的工作流基础设施。谁能率先完成从“能力演示”到“组织系统”的跃迁，谁就更可能在企业级AI市场占据长期优势。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.8547,
+      "p_ai": 0.1453,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.0063803354278206825,
+          "confidence": 0.9936196645721793,
+          "features": {
+            "perplexity": 3.66796875,
+            "avg_entropy": 1.2021484375,
+            "std_entropy": 1.3349609375,
+            "burstiness": 0.05234795976287794,
+            "max_entropy": 8.4609375,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.2008056640625,
+          "confidence": 0.7991943359375,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 59.8
+    },
+    "latency_ms_wall": 59.8,
+    "correct": false
+  },
+  {
+    "id": "professional_zh_ai_012",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "technology_article",
+    "subtype": "platform_engineering",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "面向企业的AI平台建设，正在从单纯提供推理服务转向构建一套覆盖接入、编排、治理与观测的工程体系。对于平台团队来说，真正的门槛并不只是模型推理速度，而是如何在多租户环境下实现任务调度、权限控制、知识接入和效果评估的一体化运作。随着客户对可靠性和审计能力要求提升，未来领先的平台产品必须同时满足灵活配置、可解释输出、可回滚发布和可量化收益四个条件。换言之，AI平台的竞争正逐步从模型能力竞争演变为平台工程竞争。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.7825,
+      "p_ai": 0.2175,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.006207151338458061,
+          "confidence": 0.9937928486615419,
+          "features": {
+            "perplexity": 3.576171875,
+            "avg_entropy": 1.1689453125,
+            "std_entropy": 1.3408203125,
+            "burstiness": 0.06848248999950945,
+            "max_entropy": 8.1484375,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.302001953125,
+          "confidence": 0.697998046875,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 83.3
+    },
+    "latency_ms_wall": 83.3,
+    "correct": false
+  },
+  {
+    "id": "professional_zh_ai_013",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "technology_article",
+    "subtype": "workflow_transformation",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "生成式AI对企业流程的影响，不会停留在文案生成和知识问答等浅层应用。随着模型理解、调用和反馈能力的逐步成熟，更多企业将尝试把AI嵌入客服、销售、运营、研发和审计等核心流程，通过人机协同提升单位组织产出。在这一过程中，真正决定实施成败的因素不是模型是否足够聪明，而是流程边界如何定义、结果责任如何划分以及反馈闭环如何建立。未来具有竞争力的科技企业，必须把AI视为流程重构工具，而非孤立的功能插件。",
+    "prediction": {
+      "predicted_label": "AI-generated",
+      "confidence": 0.5923,
+      "p_ai": 0.5923,
+      "detected_language": "zh",
+      "stages_used": [
+        "encoder"
+      ],
+      "breakdown": {
+        "encoder": {
+          "label": "ai",
+          "p_ai": 0.59228515625,
+          "confidence": 0.59228515625,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 73.8
+    },
+    "latency_ms_wall": 73.8,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_ai_014",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "technology_article",
+    "subtype": "infra_commentary",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "今天讨论AI基础设施，已经不能只停留在算力和模型两个维度。真正可持续的基础设施竞争，取决于企业能否围绕数据治理、调用编排、权限控制、成本监测与业务反馈形成闭环能力。很多公司在早期能够凭借模型体验吸引关注，但一旦进入组织级落地阶段，问题就会迅速转向接口标准、系统兼容、异常回退和部署成本。对于平台厂商来说，未来最关键的不是把模型堆得更大，而是把AI能力做成稳定、低摩擦、可复制的基础设施层。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.8608,
+      "p_ai": 0.1392,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.0027211522683501244,
+          "confidence": 0.9972788477316499,
+          "features": {
+            "perplexity": 3.85546875,
+            "avg_entropy": 1.1806640625,
+            "std_entropy": 1.3251953125,
+            "burstiness": 0.057677318553929956,
+            "max_entropy": 8.0234375,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.1937255859375,
+          "confidence": 0.8062744140625,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 57.0
+    },
+    "latency_ms_wall": 57.0,
+    "correct": false
+  },
+  {
+    "id": "professional_zh_human_011",
+    "lang": "zh",
+    "label": "human",
+    "domain": "technology_article",
+    "subtype": "enterprise_adoption",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "这段时间和几家企业客户聊下来，我越来越觉得，大家对AI的期待已经明显从“新鲜感”转向“能不能真的接进业务”。以前很多讨论会围绕模型效果展开，现在更常被问到的是权限怎么控、结果怎么追踪、谁来承担误判责任，以及出了问题能不能迅速回退。也正因为这样，我对那些只讲模型性能、不讲工程细节的产品介绍会更谨慎。企业真正愿意持续投入的，通常不是看起来最炫的能力，而是最容易嵌进现有流程的能力。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9284,
+      "p_ai": 0.0716,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.003057623514905572,
+          "confidence": 0.9969423764850944,
+          "features": {
+            "perplexity": 3.951171875,
+            "avg_entropy": 1.2568359375,
+            "std_entropy": 1.3388671875,
+            "burstiness": 0.03160270868186165,
+            "max_entropy": 8.09375,
+            "min_entropy": 1.1920928955078125e-07
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.0989990234375,
+          "confidence": 0.9010009765625,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 79.0
+    },
+    "latency_ms_wall": 79.0,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_human_012",
+    "lang": "zh",
+    "label": "human",
+    "domain": "technology_article",
+    "subtype": "platform_engineering",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "最近看一些AI平台产品方案，我会特别留意它们有没有认真处理“平台工程”这件事。因为很多团队讲到最后，还是在重复模型、Agent、工作流这些词，但真正难的是多租户隔离怎么做、异常调用怎么回滚、日志怎么审计、运营指标怎么定义。客户并不会因为你图画得漂亮就放心把流程接进去，他们更关心系统出了问题时谁能接住。所以我现在越来越觉得，AI平台这条路拼到后面，比的还是工程基本功。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9899,
+      "p_ai": 0.0101,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.002314917976036668,
+          "confidence": 0.9976850820239633,
+          "features": {
+            "perplexity": 4.65234375,
+            "avg_entropy": 1.3984375,
+            "std_entropy": 1.39453125,
+            "burstiness": -0.0013986013935938187,
+            "max_entropy": 7.53515625,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.01314544677734375,
+          "confidence": 0.9868545532226562,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 74.2
+    },
+    "latency_ms_wall": 74.2,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_human_013",
+    "lang": "zh",
+    "label": "human",
+    "domain": "technology_article",
+    "subtype": "workflow_transformation",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "我现在对“AI会重构企业流程”这句话本身并不反对，但会比较在意它到底落在什么层面。有的场景确实适合让AI参与得更深，但也有不少环节一旦责任边界不清，就会把风险放大。比如看起来只是把AI接进审批、客服或者运营建议链路，实际可能会影响人怎么复核、系统怎么留痕、出了错怎么追责。这些问题如果不先想清楚，光靠模型能力提升，其实很难把流程真正改掉。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9896,
+      "p_ai": 0.0104,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.006964646279811859,
+          "confidence": 0.9930353537201881,
+          "features": {
+            "perplexity": 4.48046875,
+            "avg_entropy": 1.34375,
+            "std_entropy": 1.3662109375,
+            "burstiness": 0.008288288257703759,
+            "max_entropy": 8.3203125,
+            "min_entropy": 7.212162017822266e-06
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.01171112060546875,
+          "confidence": 0.9882888793945312,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 86.3
+    },
+    "latency_ms_wall": 86.3,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_human_014",
+    "lang": "zh",
+    "label": "human",
+    "domain": "technology_article",
+    "subtype": "infra_commentary",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "现在很多公司谈AI基础设施，还是容易把注意力放在显性的东西上，比如模型大小、算力资源或者接口数量。但真正在企业环境里跑起来，反而是一些看起来不那么“前沿”的问题最先暴露，比如权限怎么分、成本怎么记、异常怎么退、数据从哪来又回到哪去。我自己越来越倾向于把AI基础设施理解成一套治理体系，而不是几个能力模块简单叠加。基础设施这件事，一旦缺少治理视角，后面很多问题都会在业务里重新出现。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9837,
+      "p_ai": 0.0163,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.003230427857488394,
+          "confidence": 0.9967695721425116,
+          "features": {
+            "perplexity": 3.611328125,
+            "avg_entropy": 1.24609375,
+            "std_entropy": 1.3720703125,
+            "burstiness": 0.0481163743033526,
+            "max_entropy": 7.5390625,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.021484375,
+          "confidence": 0.978515625,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 57.9
+    },
+    "latency_ms_wall": 57.9,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_ai_019",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "technology_article",
+    "subtype": "vendor_ecosystem",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "随着企业级AI市场进入平台整合阶段，科技厂商的竞争边界正在从单一产品能力扩展到生态位构建能力。过去客户更关注某个模型或某项功能是否足够领先，而现在他们开始评估厂商是否具备与知识库、工作流、身份权限、审计系统及行业应用进行稳定耦合的能力。在这一背景下，真正具有长期优势的厂商，不只是“模型做得更好”的厂商，而是能够把模型、工具、流程和治理机制共同沉淀为生态接口标准的厂商。谁能主导这种标准化协同，谁就更可能在下一阶段获得平台级议价权。",
+    "prediction": {
+      "predicted_label": "AI-generated",
+      "confidence": 0.8164,
+      "p_ai": 0.8164,
+      "detected_language": "zh",
+      "stages_used": [
+        "encoder"
+      ],
+      "breakdown": {
+        "encoder": {
+          "label": "ai",
+          "p_ai": 0.81640625,
+          "confidence": 0.81640625,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 61.1
+    },
+    "latency_ms_wall": 61.2,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_ai_020",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "technology_article",
+    "subtype": "cio_advisory",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "对于企业CIO而言，部署AI系统的关键挑战早已不是模型是否可用，而是如何把模型能力嵌入现有IT治理体系。若企业只把AI视为一个新工具，就很容易在权限边界、审计追踪、数据来源和责任归属上留下管理空白。真正有效的做法，应当是在部署初期就同步规划知识接入、风险控制、流程编排和人机协作边界，使AI系统从一开始就具备可控、可追溯、可回退的工程属性。未来能够实现规模化AI落地的企业，本质上都将是先完成治理重构的企业。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9247,
+      "p_ai": 0.0753,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.009679819457232952,
+          "confidence": 0.990320180542767,
+          "features": {
+            "perplexity": 3.943359375,
+            "avg_entropy": 1.228515625,
+            "std_entropy": 1.35546875,
+            "burstiness": 0.04913076322634202,
+            "max_entropy": 8.4609375,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.1015625,
+          "confidence": 0.8984375,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 58.5
+    },
+    "latency_ms_wall": 58.5,
+    "correct": false
+  },
+  {
+    "id": "professional_zh_ai_021",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "technology_article",
+    "subtype": "organizational_change",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "生成式AI进入企业之后，最容易被低估的并不是技术难度，而是组织协作方式的变化成本。许多公司在试点阶段会把重点放在模型调用效果和用户体验上，但当项目真正扩展到多个部门时，权限审批、流程改写、责任边界和收益衡量就会成为新的主战场。如果不能同步调整组织机制，AI能力往往只能停留在局部演示层，而无法转化为稳定的经营效率提升。因此，下一轮技术文章讨论AI落地时，必须把组织系统视为与模型系统同等重要的基础设施。",
+    "prediction": {
+      "predicted_label": "AI-generated",
+      "confidence": 0.6074,
+      "p_ai": 0.6074,
+      "detected_language": "zh",
+      "stages_used": [
+        "encoder"
+      ],
+      "breakdown": {
+        "encoder": {
+          "label": "ai",
+          "p_ai": 0.607421875,
+          "confidence": 0.607421875,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 58.9
+    },
+    "latency_ms_wall": 58.9,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_ai_022",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "technology_article",
+    "subtype": "industry_outlook",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "未来企业级AI行业将呈现出明显的分层格局：底层模型能力将逐步标准化，中间层平台能力将成为主要差异化来源，而上层行业解决方案则决定最终商业转化效率。对于科技公司来说，真正的机会不在于反复强调模型参数或榜单排名，而在于围绕任务编排、权限控制、效果评估和流程沉淀建立可复制的平台结构。当行业从试验阶段进入规模部署阶段，能够率先形成工程标准和交付标准的厂商，将比单纯依赖模型领先性的厂商更具穿越周期的能力。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.8739,
+      "p_ai": 0.1261,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.0034980541095137596,
+          "confidence": 0.9965019458904862,
+          "features": {
+            "perplexity": 3.587890625,
+            "avg_entropy": 1.1494140625,
+            "std_entropy": 1.3427734375,
+            "burstiness": 0.07758620658523403,
+            "max_entropy": 7.5234375,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.1751708984375,
+          "confidence": 0.8248291015625,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 59.6
+    },
+    "latency_ms_wall": 59.6,
+    "correct": false
+  },
+  {
+    "id": "professional_zh_human_019",
+    "lang": "zh",
+    "label": "human",
+    "domain": "technology_article",
+    "subtype": "vendor_ecosystem",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "我最近看一些企业AI厂商的材料时，发现大家越来越喜欢讲“生态”而不是单点产品，这个变化其实挺能说明问题。因为客户现在很少只买一个孤立能力，他更关心这东西能不能和现有流程、权限体系、知识系统接起来。也正因为这样，我会特别留意厂商到底是在讲真实可对接的接口能力，还是只是把很多合作名词堆在一起。生态这个词听起来很大，但真正落到交付现场，往往还是看接口和责任边界是不是讲清楚了。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9893,
+      "p_ai": 0.0107,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.005843394435942173,
+          "confidence": 0.9941566055640578,
+          "features": {
+            "perplexity": 4.55859375,
+            "avg_entropy": 1.28515625,
+            "std_entropy": 1.357421875,
+            "burstiness": 0.02734663699924998,
+            "max_entropy": 8.3203125,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.0126953125,
+          "confidence": 0.9873046875,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 54.8
+    },
+    "latency_ms_wall": 54.9,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_human_020",
+    "lang": "zh",
+    "label": "human",
+    "domain": "technology_article",
+    "subtype": "cio_advisory",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "如果从企业IT负责人的角度看AI部署，我觉得最难的地方从来不是“上不上模型”，而是这套东西一旦接进来，谁来管、怎么审、出了问题怎么回退。很多外部文章喜欢把AI落地讲成一个很顺的技术升级过程，但真实环境里常常会卡在权限、审计、预算和跨部门协调这些看起来不那么炫的地方。所以我现在看这类文章，更关心作者有没有把治理和工程问题讲进去，而不是只谈模型能力本身。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9841,
+      "p_ai": 0.0159,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.003501642495393753,
+          "confidence": 0.9964983575046062,
+          "features": {
+            "perplexity": 4.51171875,
+            "avg_entropy": 1.2978515625,
+            "std_entropy": 1.333984375,
+            "burstiness": 0.013729127962676708,
+            "max_entropy": 8.625,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.0207977294921875,
+          "confidence": 0.9792022705078125,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 55.1
+    },
+    "latency_ms_wall": 55.1,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_human_021",
+    "lang": "zh",
+    "label": "human",
+    "domain": "technology_article",
+    "subtype": "organizational_change",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "我自己越来越觉得，AI项目要不要继续投，很多时候不是由技术指标单独决定的，而是由组织能不能跟上决定的。试点阶段也许靠几个积极团队就能推进，但一旦涉及多个部门，流程怎么改、责任怎么分、收益怎么对齐，就会立刻变复杂。很多文章会把这种变化说成“组织升级”，可在实际操作里，它更像是一连串很琐碎的协调工作。要是这些事没有人盯住，项目就很容易停留在展示层。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9824,
+      "p_ai": 0.0176,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.003233915427699685,
+          "confidence": 0.9967660845723003,
+          "features": {
+            "perplexity": 3.8671875,
+            "avg_entropy": 1.2724609375,
+            "std_entropy": 1.330078125,
+            "burstiness": 0.022138836687916816,
+            "max_entropy": 8.3203125,
+            "min_entropy": 1.0132789611816406e-06
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.0233917236328125,
+          "confidence": 0.9766082763671875,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 58.2
+    },
+    "latency_ms_wall": 58.2,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_human_022",
+    "lang": "zh",
+    "label": "human",
+    "domain": "technology_article",
+    "subtype": "industry_outlook",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "现在很多行业文章都喜欢讨论企业级AI会怎么分层，我觉得这个分析方向没错，但也容易说得太整齐。现实里并不是所有公司都会按“模型层—平台层—方案层”这样标准化地展开竞争，有时候渠道能力、客户关系和实施团队成熟度也会直接改变市场格局。所以我看这种行业展望时，通常会把它当成一种分析框架，而不是已经发生的事实。框架能帮助理解问题，但未必能直接替代对市场现场的观察。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9724,
+      "p_ai": 0.0276,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.0013725908938795328,
+          "confidence": 0.9986274091061205,
+          "features": {
+            "perplexity": 3.87890625,
+            "avg_entropy": 1.2177734375,
+            "std_entropy": 1.3115234375,
+            "burstiness": 0.03706563691909184,
+            "max_entropy": 7.5390625,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.03814697265625,
+          "confidence": 0.96185302734375,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 54.5
+    },
+    "latency_ms_wall": 54.5,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_ai_023",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "technology_article",
+    "subtype": "industry_analysis",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "从当前产业演进节奏来看，企业级AI市场正在经历一次由“模型能力竞争”向“系统整合竞争”的明显切换。过去厂商之间的差异更多体现在模型效果和交互体验上，但随着大模型能力趋于可获得，客户开始将关注点转向系统接入成本、治理能力、交付路径和业务结果闭环。对于科技公司而言，未来真正决定行业格局的，不再是单点智能能力是否足够亮眼，而是能否围绕数据、流程、权限和反馈构建一套持续运转的企业级能力底座。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9142,
+      "p_ai": 0.0858,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.0059343371540308,
+          "confidence": 0.9940656628459692,
+          "features": {
+            "perplexity": 3.4296875,
+            "avg_entropy": 1.1103515625,
+            "std_entropy": 1.318359375,
+            "burstiness": 0.08564535549778511,
+            "max_entropy": 8.0234375,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.1177978515625,
+          "confidence": 0.8822021484375,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 55.2
+    },
+    "latency_ms_wall": 55.2,
+    "correct": false
+  },
+  {
+    "id": "professional_zh_human_023",
+    "lang": "zh",
+    "label": "human",
+    "domain": "technology_article",
+    "subtype": "industry_analysis",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "最近和做企业服务的朋友聊行业时，我越来越觉得，AI赛道讨论得最热闹的部分，和客户真正买单的部分并不完全重合。外面讲得最多的是模型突破、产品体验和增长空间，可到了客户现场，大家更关心的还是怎么接系统、怎么控权限、怎么确认结果到底值不值得信。所以我现在看行业分析文章时，会先看作者有没有把这些“落地细节”一起算进去，不然很多判断容易显得太轻。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9904,
+      "p_ai": 0.0096,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.001155887614004314,
+          "confidence": 0.9988441123859957,
+          "features": {
+            "perplexity": 4.1796875,
+            "avg_entropy": 1.326171875,
+            "std_entropy": 1.3369140625,
+            "burstiness": 0.004033736691857182,
+            "max_entropy": 7.53515625,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.0130462646484375,
+          "confidence": 0.9869537353515625,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 52.6
+    },
+    "latency_ms_wall": 52.6,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_ai_024",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "technology_article",
+    "subtype": "product_trend",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "未来两年的AI产品趋势，将从“功能增量创新”逐步转向“流程级产品重构”。这意味着竞争不再只发生在对话质量、生成速度或单项任务完成率上，而会更多发生在任务拆解、工具调用、结果校验与组织协同等更高层的产品设计维度。对科技公司而言，真正有机会建立壁垒的，不是把一个AI功能做得更显眼，而是把AI能力嵌入长期可复用的产品结构之中，使其成为业务流程的稳定组成部分。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.7846,
+      "p_ai": 0.2154,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.003230427857488394,
+          "confidence": 0.9967695721425116,
+          "features": {
+            "perplexity": 3.541015625,
+            "avg_entropy": 1.263671875,
+            "std_entropy": 1.3583984375,
+            "burstiness": 0.03612662928493978,
+            "max_entropy": 7.53515625,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.30029296875,
+          "confidence": 0.69970703125,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 56.1
+    },
+    "latency_ms_wall": 56.1,
+    "correct": false
+  },
+  {
+    "id": "professional_zh_human_024",
+    "lang": "zh",
+    "label": "human",
+    "domain": "technology_article",
+    "subtype": "product_trend",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "我现在看很多AI产品趋势文章时，会特别留意一个问题：作者到底是在讲用户真的会持续使用的东西，还是只是在描述一时看起来很吸引眼球的功能。因为很多趋势判断一开始都说得很顺，但只要往后追一步，就会遇到成本、维护、权限和协同这些不太容易写得好看的问题。所以我越来越觉得，趋势分析如果不把这些约束带进去，最后就会显得太像宣言，而不像观察。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9804,
+      "p_ai": 0.0196,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.008948144502937794,
+          "confidence": 0.9910518554970622,
+          "features": {
+            "perplexity": 4.19140625,
+            "avg_entropy": 1.3349609375,
+            "std_entropy": 1.39453125,
+            "burstiness": 0.02182468686100723,
+            "max_entropy": 8.3203125,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.023895263671875,
+          "confidence": 0.976104736328125,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 60.7
+    },
+    "latency_ms_wall": 60.7,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_ai_025",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "technology_article",
+    "subtype": "enterprise_adoption",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "企业采纳AI的决定因素，已经从“技术是否先进”演变为“系统是否可落地”。在多数ToB场景中，管理层并不会因为模型更会生成文本就立即扩大投入，他们更关心的是系统能否以可控的方式接入既有流程、是否具备稳定审计能力、是否能够支撑部门级推广。也正因如此，科技厂商在推动企业采纳AI时，必须把治理、运维与组织协同一并设计，而不能把产品想象成一个独立运行的智能模块。",
+    "prediction": {
+      "predicted_label": "AI-generated",
+      "confidence": 0.6792,
+      "p_ai": 0.6792,
+      "detected_language": "zh",
+      "stages_used": [
+        "encoder"
+      ],
+      "breakdown": {
+        "encoder": {
+          "label": "ai",
+          "p_ai": 0.67919921875,
+          "confidence": 0.67919921875,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 57.9
+    },
+    "latency_ms_wall": 57.9,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_human_025",
+    "lang": "zh",
+    "label": "human",
+    "domain": "technology_article",
+    "subtype": "enterprise_adoption",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "如果只看公开宣传，很多人会觉得企业上AI这件事已经进入快车道了。但我和客户交流时更常听到的，反而是一些很具体的问题：权限怎么划、谁来维护提示词、结果出了偏差以后谁负责、现有系统到底能不能接进去。也正因为这些问题都很现实，所以企业采纳速度往往比外界预期慢。我现在会更相信那些把 adoption 过程写得没那么轻松的文章。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.8902,
+      "p_ai": 0.1098,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.006034978199750185,
+          "confidence": 0.9939650218002498,
+          "features": {
+            "perplexity": 4.55078125,
+            "avg_entropy": 1.3173828125,
+            "std_entropy": 1.3544921875,
+            "burstiness": 0.013888888836907084,
+            "max_entropy": 8.625,
+            "min_entropy": 3.874301910400391e-06
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.1513671875,
+          "confidence": 0.8486328125,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 95.3
+    },
+    "latency_ms_wall": 95.3,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_ai_026",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "technology_article",
+    "subtype": "platform_engineering",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "平台工程在AI时代的重要性，正在从底层支撑能力升级为核心竞争能力。随着模型、工具和业务流程逐渐耦合，企业越来越需要一套能够同时处理任务编排、权限控制、资源调度、知识接入和效果观测的统一平台体系。对于科技厂商而言，如果不能在工程层面提供稳定的多租户隔离、可回滚机制和审计闭环，再强的模型能力也难以转化为企业级产品竞争力。未来AI平台的真正差异化，将主要体现在工程体系的完整性与可运营性上。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9242,
+      "p_ai": 0.0758,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.008185590617358685,
+          "confidence": 0.9918144093826413,
+          "features": {
+            "perplexity": 3.439453125,
+            "avg_entropy": 1.1611328125,
+            "std_entropy": 1.384765625,
+            "burstiness": 0.08784042926755428,
+            "max_entropy": 9.1015625,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.10284423828125,
+          "confidence": 0.89715576171875,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 78.8
+    },
+    "latency_ms_wall": 78.8,
+    "correct": false
+  },
+  {
+    "id": "professional_zh_human_026",
+    "lang": "zh",
+    "label": "human",
+    "domain": "technology_article",
+    "subtype": "platform_engineering",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "说到底，平台工程这件事难就难在它很少能靠一个漂亮的概念解决问题。比如多租户隔离、日志审计、回滚策略、指标口径，这些内容放在文章里写起来都像配套能力，但真做起来往往会拖很长时间。我现在对很多平台工程文章的判断标准很简单：它有没有认真去碰这些细节。如果没有，那它更像是在讲愿景，而不是在讲平台。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9818,
+      "p_ai": 0.0182,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.014194768853485584,
+          "confidence": 0.9858052311465144,
+          "features": {
+            "perplexity": 4.0,
+            "avg_entropy": 1.408203125,
+            "std_entropy": 1.4208984375,
+            "burstiness": 0.0044874007435447075,
+            "max_entropy": 9.1328125,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.0197601318359375,
+          "confidence": 0.9802398681640625,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 70.3
+    },
+    "latency_ms_wall": 70.3,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_ai_027",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "technology_article",
+    "subtype": "infra_commentary",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "AI基础设施的竞争已经进入第二阶段：第一阶段比拼的是算力供给与模型可得性，第二阶段比拼的则是治理、调度与业务嵌入能力。随着企业级部署需求上升，单纯强调模型性能或GPU资源已无法形成长期优势，真正决定基础设施价值的，是其能否支撑稳定接入、弹性扩容、权限审计和成本优化等复杂目标。对科技公司来说，基础设施层的胜负并不由单一技术突破决定，而取决于是否能把多项能力组织成一个长期可靠的系统。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.6492,
+      "p_ai": 0.3508,
+      "detected_language": "zh",
+      "stages_used": [
+        "encoder"
+      ],
+      "breakdown": {
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.350830078125,
+          "confidence": 0.649169921875,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 67.3
+    },
+    "latency_ms_wall": 67.4,
+    "correct": false
+  },
+  {
+    "id": "professional_zh_human_027",
+    "lang": "zh",
+    "label": "human",
+    "domain": "technology_article",
+    "subtype": "infra_commentary",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "我一直觉得，AI基础设施这几个字被说得太“宏大”了，以至于很多文章看起来都像在讲一个无所不能的底座。但真要落到企业里，基础设施其实常常意味着一堆不那么显眼的工作：怎么做容量规划、怎么做权限审计、出了问题怎么定位、成本怎么摊。要是文章只强调“重要性”，不碰这些具体内容，我一般不会太快相信它的判断。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.982,
+      "p_ai": 0.018,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.006274152547121048,
+          "confidence": 0.993725847452879,
+          "features": {
+            "perplexity": 4.40625,
+            "avg_entropy": 1.26171875,
+            "std_entropy": 1.353515625,
+            "burstiness": 0.03510082137437177,
+            "max_entropy": 8.3203125,
+            "min_entropy": 3.039836883544922e-06
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.0227203369140625,
+          "confidence": 0.9772796630859375,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 53.9
+    },
+    "latency_ms_wall": 53.9,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_ai_028",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "technology_article",
+    "subtype": "cio_advisory",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "在企业AI部署议题上，CIO的角色正在从技术采纳推动者转变为治理体系重构者。模型是否先进固然重要，但更关键的是如何将其纳入现有的权限体系、审计流程和风险控制框架之中。若缺少这一层治理设计，AI项目即使在试点阶段取得良好效果，也很难扩展为组织级能力。因此，对于CIO而言，评估AI系统的标准不应止于功能表现，而应进一步考察其可控性、可追溯性和对既有IT架构的兼容性。",
+    "prediction": {
+      "predicted_label": "AI-generated",
+      "confidence": 0.9683,
+      "p_ai": 0.9683,
+      "detected_language": "zh",
+      "stages_used": [
+        "encoder"
+      ],
+      "breakdown": {
+        "encoder": {
+          "label": "ai",
+          "p_ai": 0.96826171875,
+          "confidence": 0.96826171875,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 47.5
+    },
+    "latency_ms_wall": 47.5,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_human_028",
+    "lang": "zh",
+    "label": "human",
+    "domain": "technology_article",
+    "subtype": "cio_advisory",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "如果是给企业IT负责人写建议，我反而会少讲一点“AI一定会带来什么”，多讲一点“引进之后会碰到什么”。因为很多管理层不是不知道AI有价值，而是担心系统引进来之后会打乱原来的治理逻辑。比如权限要不要重划、审计链路怎么补、出了偏差以后谁来兜底，这些问题如果文章里一句带过，建议本身就会显得太轻。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9896,
+      "p_ai": 0.0104,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.006391860544681549,
+          "confidence": 0.9936081394553185,
+          "features": {
+            "perplexity": 4.5078125,
+            "avg_entropy": 1.37890625,
+            "std_entropy": 1.3857421875,
+            "burstiness": 0.0024726245053621775,
+            "max_entropy": 8.625,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.012054443359375,
+          "confidence": 0.987945556640625,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 52.8
+    },
+    "latency_ms_wall": 52.9,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_ai_029",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "technology_article",
+    "subtype": "industry_outlook",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "展望未来三到五年的企业级AI产业格局，可以预见行业将从分散试验期进入平台集中期。届时，底层模型能力的差距将进一步收敛，中间层平台与上层行业化方案的协同效率将成为决定商业胜负的关键变量。对于科技公司而言，真正值得提前布局的，并不是短期流量红利，而是围绕流程标准化、权限治理、知识沉淀和交付体系构建可复制的行业能力。谁能先完成这种平台化能力沉淀，谁就更有机会在企业AI市场形成长期领先。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9673,
+      "p_ai": 0.0327,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.00823244173079729,
+          "confidence": 0.9917675582692027,
+          "features": {
+            "perplexity": 3.662109375,
+            "avg_entropy": 1.2060546875,
+            "std_entropy": 1.3642578125,
+            "burstiness": 0.06155015173621826,
+            "max_entropy": 7.70703125,
+            "min_entropy": 1.0132789611816406e-06
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.04248046875,
+          "confidence": 0.95751953125,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 57.2
+    },
+    "latency_ms_wall": 57.2,
+    "correct": false
+  },
+  {
+    "id": "professional_zh_human_029",
+    "lang": "zh",
+    "label": "human",
+    "domain": "technology_article",
+    "subtype": "industry_outlook",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "我对行业展望类文章一直有个习惯，就是会先看作者有没有交代判断的边界。因为只要把时间拉到三五年，很多话都很容易说得顺，但真正难的是说明哪些条件成立时这个判断才成立。尤其是企业级AI这种变化很快的领域，政策、客户预算、组织成熟度和供给侧竞争都会影响结果。所以我看 outlook 文章时，更在意它有没有把不确定性写进去。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9839,
+      "p_ai": 0.0161,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.0056506493128836155,
+          "confidence": 0.9943493506871164,
+          "features": {
+            "perplexity": 4.828125,
+            "avg_entropy": 1.396484375,
+            "std_entropy": 1.3828125,
+            "burstiness": -0.004919184803101739,
+            "max_entropy": 8.3203125,
+            "min_entropy": 1.0132789611816406e-06
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.020294189453125,
+          "confidence": 0.979705810546875,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 54.0
+    },
+    "latency_ms_wall": 54.1,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_ai_030",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "technology_article",
+    "subtype": "industry_analysis",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "企业级AI行业正在进入一个更强调结构分化的阶段。过去市场普遍把模型能力视为决定竞争格局的首要变量，但随着底层能力供给逐渐稳定，客户开始重新评估平台工程能力、行业适配深度和长期治理成本。在这一过程中，真正具备扩张性的科技厂商，不会只围绕单点功能建立叙事，而会围绕交付标准、知识沉淀、流程嵌入和权限体系构建连续能力。未来行业分析的核心，不再是比较谁的模型更强，而是比较谁能把模型能力组织成企业真正愿意持续投入的系统。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.8799,
+      "p_ai": 0.1201,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.004943904932588339,
+          "confidence": 0.9950560950674117,
+          "features": {
+            "perplexity": 3.56640625,
+            "avg_entropy": 1.1796875,
+            "std_entropy": 1.3408203125,
+            "burstiness": 0.06392870954876792,
+            "max_entropy": 8.6171875,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.1661376953125,
+          "confidence": 0.8338623046875,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 57.6
+    },
+    "latency_ms_wall": 57.7,
+    "correct": false
+  },
+  {
+    "id": "professional_zh_human_030",
+    "lang": "zh",
+    "label": "human",
+    "domain": "technology_article",
+    "subtype": "industry_analysis",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "我现在看企业级AI行业分析时，最在意的一点就是作者有没有把客户侧约束真正写进去。因为只要不把预算、交付、治理和组织改造这些因素算进去，行业判断就很容易偏向“技术视角的乐观”。但真实市场里，很多公司不是不想上AI，而是很难判断这件事值不值得长期投入。所以我觉得好的行业分析文章，应该让人看到增长逻辑，也让人看到增长阻力。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9814,
+      "p_ai": 0.0186,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.009208764880895615,
+          "confidence": 0.9907912351191044,
+          "features": {
+            "perplexity": 4.2265625,
+            "avg_entropy": 1.3076171875,
+            "std_entropy": 1.4130859375,
+            "burstiness": 0.03876525470317437,
+            "max_entropy": 8.3203125,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.0222930908203125,
+          "confidence": 0.9777069091796875,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 76.6
+    },
+    "latency_ms_wall": 76.7,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_ai_031",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "technology_article",
+    "subtype": "product_trend",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "未来AI产品趋势的关键变化，在于产品边界将越来越少地围绕单个功能展开，而更多围绕长期任务闭环组织。对用户而言，真正有价值的不是一次回答是否更像人，而是系统能否稳定接入业务、串联工具、控制风险并持续优化结果。因此，下一阶段的产品趋势将从“交互体验升级”转向“任务系统升级”，谁能率先把AI嵌入流程而不是停留在界面层，谁就更有可能形成下一轮产品主导权。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9485,
+      "p_ai": 0.0515,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.0032037696801126003,
+          "confidence": 0.9967962303198874,
+          "features": {
+            "perplexity": 3.693359375,
+            "avg_entropy": 1.2021484375,
+            "std_entropy": 1.3466796875,
+            "burstiness": 0.05670498062043717,
+            "max_entropy": 7.53515625,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.07080078125,
+          "confidence": 0.92919921875,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 65.7
+    },
+    "latency_ms_wall": 65.7,
+    "correct": false
+  },
+  {
+    "id": "professional_zh_human_031",
+    "lang": "zh",
+    "label": "human",
+    "domain": "technology_article",
+    "subtype": "product_trend",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "我觉得很多AI产品趋势文章的问题，不是方向一定错，而是太容易把“可能发生”写成“马上发生”。比如从聊天界面走向任务闭环，这个判断本身很有吸引力，但中间其实还隔着很多现实条件：工具接得稳不稳、用户愿不愿意改流程、公司有没有能力维护复杂系统。要是这些条件都不展开，趋势就会显得像结论先行。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9865,
+      "p_ai": 0.0135,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.008955090306699276,
+          "confidence": 0.9910449096933007,
+          "features": {
+            "perplexity": 4.8125,
+            "avg_entropy": 1.4111328125,
+            "std_entropy": 1.41796875,
+            "burstiness": 0.002416292708062535,
+            "max_entropy": 8.3203125,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.0152740478515625,
+          "confidence": 0.9847259521484375,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 52.4
+    },
+    "latency_ms_wall": 52.4,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_ai_032",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "technology_article",
+    "subtype": "platform_engineering",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "在AI平台竞争进入深水区之后，平台工程能力将成为决定企业级成败的关键变量。与早期强调模型调用效率不同，成熟平台需要同时处理多租户隔离、权限治理、任务编排、知识接入、效果评估与异常回滚等复杂问题。只有当这些工程能力形成统一体系，平台才能真正支撑跨部门、跨流程、跨场景的规模化部署。因此，未来平台工程的核心价值不在于支撑模型运行，而在于把模型能力稳定转化为企业组织可以长期依赖的基础设施。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.8083,
+      "p_ai": 0.1917,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.013678530231118202,
+          "confidence": 0.9863214697688818,
+          "features": {
+            "perplexity": 3.30859375,
+            "avg_entropy": 1.0869140625,
+            "std_entropy": 1.3134765625,
+            "burstiness": 0.09438567902094819,
+            "max_entropy": 8.4609375,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.262939453125,
+          "confidence": 0.737060546875,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 51.7
+    },
+    "latency_ms_wall": 51.7,
+    "correct": false
+  },
+  {
+    "id": "professional_zh_human_032",
+    "lang": "zh",
+    "label": "human",
+    "domain": "technology_article",
+    "subtype": "platform_engineering",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "平台工程类文章有时候最容易把事情讲得很完整，但也最容易让人忽略真正难做的地方。比如多租户隔离、权限控制、回滚机制这些词放在一起很顺，可一旦要进系统，很多细节都会立刻冒出来。我现在会更相信那些愿意把这些工程摩擦写出来的文章，因为那至少说明作者知道平台不是几层架构图拼起来就能跑。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9682,
+      "p_ai": 0.0318,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.0024645316880196333,
+          "confidence": 0.9975354683119804,
+          "features": {
+            "perplexity": 4.8984375,
+            "avg_entropy": 1.3447265625,
+            "std_entropy": 1.359375,
+            "burstiness": 0.005417118073141463,
+            "max_entropy": 9.1015625,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.043487548828125,
+          "confidence": 0.956512451171875,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 55.4
+    },
+    "latency_ms_wall": 55.5,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_ai_033",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "technology_article",
+    "subtype": "infra_commentary",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "AI基础设施竞争的核心矛盾，正在从资源供给转向系统治理。随着模型可得性增强，企业对基础设施的评价标准也在变化：是否能够实现稳定调度、是否支持权限分层、是否具备日志追踪和成本观测能力，正逐渐取代单纯性能指标，成为新的基础设施判断依据。对于科技企业来说，未来真正可持续的基础设施优势，来自于把模型、工具、流程和治理机制做成长期可运营的系统，而不仅是提供一次性的算力或服务能力。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.6189,
+      "p_ai": 0.3811,
+      "detected_language": "zh",
+      "stages_used": [
+        "encoder"
+      ],
+      "breakdown": {
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.381103515625,
+          "confidence": 0.618896484375,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 55.9
+    },
+    "latency_ms_wall": 55.9,
+    "correct": false
+  },
+  {
+    "id": "professional_zh_human_033",
+    "lang": "zh",
+    "label": "human",
+    "domain": "technology_article",
+    "subtype": "infra_commentary",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "现在说AI基础设施时，很多文章都会很自然地把重点放到资源和性能上，但企业实际遇到的问题往往没有那么“纯技术”。系统一旦接进业务，权限怎么管、日志怎么留、成本怎么算、出了错谁来定位，这些问题很快就会变得比性能更具体。我自己更愿意把基础设施评论看成一种治理评论，而不只是技术评论，因为后者常常解释不了真正的落地难题。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9206,
+      "p_ai": 0.0794,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.0013146776473149657,
+          "confidence": 0.998685322352685,
+          "features": {
+            "perplexity": 3.822265625,
+            "avg_entropy": 1.2294921875,
+            "std_entropy": 1.30859375,
+            "burstiness": 0.03116583288990453,
+            "max_entropy": 7.53515625,
+            "min_entropy": 1.0132789611816406e-06
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.110595703125,
+          "confidence": 0.889404296875,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 53.6
+    },
+    "latency_ms_wall": 53.6,
+    "correct": true
+  },
+  {
+    "id": "professional_zh_ai_034",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "technology_article",
+    "subtype": "industry_outlook",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "从中长期看，企业级AI行业将进入一个由平台能力主导价值分配的新阶段。底层模型供给会持续丰富，上层行业方案也会不断细化，但真正构成竞争壁垒的，将是中间层如何把模型能力标准化、治理化、流程化并沉淀为组织资产。对于科技厂商来说，未来的行业领先优势不再依赖短期技术领先，而依赖能否围绕平台工程、交付能力和行业知识形成持续复利。这意味着行业展望不应只盯住模型趋势，而应更多关注平台结构与组织协同的长期演进。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9518,
+      "p_ai": 0.0482,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.01804792322218418,
+          "confidence": 0.9819520767778158,
+          "features": {
+            "perplexity": 3.71875,
+            "avg_entropy": 1.2138671875,
+            "std_entropy": 1.3916015625,
+            "burstiness": 0.0682158917921549,
+            "max_entropy": 8.0234375,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.06024169921875,
+          "confidence": 0.93975830078125,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 72.4
+    },
+    "latency_ms_wall": 72.5,
+    "correct": false
+  },
+  {
+    "id": "professional_zh_human_034",
+    "lang": "zh",
+    "label": "human",
+    "domain": "technology_article",
+    "subtype": "industry_outlook",
+    "source": "manual_seed",
+    "style": "article",
+    "text": "我对行业展望文章最大的期待，其实不是它能不能判断对未来，而是它能不能把判断讲得有边界。尤其是企业级AI这种赛道，变量实在太多了：模型供给、客户预算、政策环境、交付团队能力，任何一个因素变动都可能把原来的预测打乱。所以如果一篇 outlook 文章只给出很确定的方向，却不交代这些不确定性，我一般会觉得它更像立场表达，而不是分析。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9786,
+      "p_ai": 0.0214,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.005875785369426012,
+          "confidence": 0.994124214630574,
+          "features": {
+            "perplexity": 4.56640625,
+            "avg_entropy": 1.353515625,
+            "std_entropy": 1.3564453125,
+            "burstiness": 0.0010810810770917945,
+            "max_entropy": 8.3203125,
+            "min_entropy": 1.0132789611816406e-06
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.0276641845703125,
+          "confidence": 0.9723358154296875,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 75.3
+    },
+    "latency_ms_wall": 75.3,
+    "correct": true
+  }
+]

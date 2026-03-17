@@ -1,0 +1,530 @@
+[
+  {
+    "id": "security_bp_eval_ai_001",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "security_bp",
+    "subtype": "incident_retrospective",
+    "source": "manual_hard_case",
+    "style": "news_report",
+    "text": "某头部内容平台在深夜遭遇一次大规模自动化滥用事件。短时间内，异常账号通过脚本化方式批量触发开播、推流与内容分发链路，造成审核系统瞬时拥堵、直播频道入口被迫中断以及部分风控策略降级。事后复盘显示，这次事故并非单一内容识别模型失效，而是平台在高风险接口上缺乏基于端侧行为一致性的前置校验机制，导致请求能够在进入审核环节前就快速放大。业内人士指出，随着自动化攻击逐步平台化、基础设施化，单纯依赖事后审核已难以应对高并发灰黑产冲击，平台需要将防线前移至访问控制与实时阻断层。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9598,
+      "p_ai": 0.0402,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.001717582461424172,
+          "confidence": 0.9982824175385758,
+          "features": {
+            "perplexity": 4.5,
+            "avg_entropy": 1.3291015625,
+            "std_entropy": 1.3828125,
+            "burstiness": 0.01980554547972316,
+            "max_entropy": 7.359375,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.05560302734375,
+          "confidence": 0.94439697265625,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 8889.0
+    },
+    "latency_ms_wall": 8889.1,
+    "correct": false
+  },
+  {
+    "id": "security_bp_eval_ai_002",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "security_bp",
+    "subtype": "incident_retrospective",
+    "source": "manual_hard_case",
+    "style": "commentary",
+    "text": "这场事故最值得警惕的地方，不是平台最终下线了多少违规内容，而是它再次暴露出一种过时的治理范式：把算力集中投入到事后识别，却对前端行为意图和底层接口调用之间的语义断层缺乏即时约束。对于自动化黑产而言，真正的机会窗口从来都不在内容本身，而在于请求能否跨过第一道门槛。一旦平台允许脚本批量进入推流、鉴权和分发主路径，再精细的审核模型也只能被动接盘。所谓新一代平台安全，不应该继续停留在“看见问题再处理”的逻辑，而应升级为“在请求发生时判定这件事是否本就不该发生”。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9833,
+      "p_ai": 0.0167,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.004004893824458122,
+          "confidence": 0.9959951061755419,
+          "features": {
+            "perplexity": 4.62109375,
+            "avg_entropy": 1.3701171875,
+            "std_entropy": 1.3505859375,
+            "burstiness": -0.007178750870958216,
+            "max_entropy": 8.09375,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.0217132568359375,
+          "confidence": 0.9782867431640625,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 169.5
+    },
+    "latency_ms_wall": 169.5,
+    "correct": false
+  },
+  {
+    "id": "security_bp_eval_ai_003",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "security_bp",
+    "subtype": "vendor_pitch",
+    "source": "manual_hard_case",
+    "style": "commentary",
+    "text": "如果把AI时代的平台治理视作一场防守方与自动化攻击者之间的不对称战争，那么端网协同探针的价值就在于，它直接把战线从昂贵的内容识别层拉回到高收益的行为阻断层。传统平台每年投入巨额GPU预算去做多模态审核，却依旧防不住接口滥用和脚本化并发。而一套具备端侧意图校验、链路一致性判断和风险闭环反馈能力的安全架构，可以在攻击发起的第一毫秒就识别“没有真实用户操作却存在敏感调用”的异常模式，并以极低边际成本完成熔断。对平台安全决策者而言，这不仅是一项技术升级，更是一种ROI极高的治理范式切换。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9554,
+      "p_ai": 0.0446,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.005621302407234907,
+          "confidence": 0.9943786975927651,
+          "features": {
+            "perplexity": 4.9765625,
+            "avg_entropy": 1.396484375,
+            "std_entropy": 1.375,
+            "burstiness": -0.007751937956525777,
+            "max_entropy": 8.625,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.060211181640625,
+          "confidence": 0.939788818359375,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 60.2
+    },
+    "latency_ms_wall": 60.2,
+    "correct": false
+  },
+  {
+    "id": "security_bp_eval_ai_004",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "security_bp",
+    "subtype": "vendor_pitch",
+    "source": "manual_hard_case",
+    "style": "argumentative",
+    "text": "大型内容平台是否应该把安全投入重点从内容审核转向实时阻断？答案是肯定的。原因在于，自动化攻击的优势从来不是内容生成更复杂，而是请求发起更廉价、复制更快速、规模扩张更线性。继续将主要预算堆叠在审核模型上，只会让平台在攻击高峰到来时被迫承担持续上升的算力成本和运营压力。反之，若在入口处基于端网协同机制完成设备状态、前端交互、接口调用与行为序列之间的一致性校验，就能在不显著增加审核开销的前提下，直接压缩黑产攻击的收益空间。从治理逻辑看，事前免疫显然优于事后补救。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9703,
+      "p_ai": 0.0297,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.002211536979302764,
+          "confidence": 0.9977884630206972,
+          "features": {
+            "perplexity": 4.42578125,
+            "avg_entropy": 1.34765625,
+            "std_entropy": 1.3359375,
+            "burstiness": -0.004366812210801981,
+            "max_entropy": 7.92578125,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.040740966796875,
+          "confidence": 0.959259033203125,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 57.7
+    },
+    "latency_ms_wall": 57.8,
+    "correct": false
+  },
+  {
+    "id": "security_bp_eval_ai_005",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "security_bp",
+    "subtype": "acronym_architecture",
+    "source": "manual_hard_case",
+    "style": "commentary",
+    "text": "从体系设计角度看，平台需要构建一个由 Policy Decision Point（PDP）、Policy Enforcement Point（PEP）以及 Runtime Telemetry Layer 组成的三层风险闭环。PDP 负责在控制平面完成请求语义判定与策略推演，PEP 负责在执行平面落实权限裁决与动作阻断，遥测层则持续汇聚 API、UI、设备态与行为侧信道信号，形成可回流的风险上下文。只有当这三个层面形成稳定联动，平台才可能真正实现从“识别有害内容”到“拒绝不合理动作”的范式跃迁。否则，任何单点风控能力都只能在攻击扩散之后充当救火队。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.8773,
+      "p_ai": 0.1227,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.018588969483971596,
+          "confidence": 0.9814110305160284,
+          "features": {
+            "perplexity": 5.46484375,
+            "avg_entropy": 1.447265625,
+            "std_entropy": 1.59765625,
+            "burstiness": 0.04939063486024371,
+            "max_entropy": 8.0234375,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.164306640625,
+          "confidence": 0.835693359375,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 97.3
+    },
+    "latency_ms_wall": 97.4,
+    "correct": false
+  },
+  {
+    "id": "security_bp_eval_ai_006",
+    "lang": "zh",
+    "label": "ai",
+    "domain": "security_bp",
+    "subtype": "structured_persuasion",
+    "source": "manual_hard_case",
+    "style": "commentary",
+    "text": "为什么说平台安全已经到了必须重构的时候？原因有三。第一，攻击自动化带来的并发放大效应，已经使传统审核链路的单位处理成本持续上升；第二，端侧行为与网侧调用之间的语义错位，正在成为黑产脚本规模化渗透的核心突破口；第三，平台内部的安全体系往往按部门分割，导致策略、执行和监测无法形成真正闭环。因此，下一阶段最值得投入的方向，不是继续横向堆模型，而是纵向重建一套具备意图校验、实时阻断和动态反馈能力的行为访问控制体系。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9795,
+      "p_ai": 0.0205,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.002492340048775077,
+          "confidence": 0.9975076599512249,
+          "features": {
+            "perplexity": 4.0859375,
+            "avg_entropy": 1.2119140625,
+            "std_entropy": 1.33984375,
+            "burstiness": 0.050133945459865444,
+            "max_entropy": 8.140625,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.02777099609375,
+          "confidence": 0.97222900390625,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 51.6
+    },
+    "latency_ms_wall": 51.6,
+    "correct": false
+  },
+  {
+    "id": "security_bp_eval_human_001",
+    "lang": "zh",
+    "label": "human",
+    "domain": "security_bp",
+    "subtype": "incident_retrospective",
+    "source": "manual_hard_case",
+    "style": "news_report",
+    "text": "最近和几位做平台安全的朋友聊天时，大家都提到一个共同感受：自动化攻击的处置节奏和前几年不一样了。以前很多问题还能靠临时扩容和人工兜底顶一下，现在一旦并发被打起来，审核链路很容易被拖慢。有人举了某次直播场景里的案例，说问题其实不是单个模型判断失误，而是入口处放进来的异常请求太多，后面所有系统都被迫跟着承压。听下来我最大的感受是，平台以后可能真的不能只靠内容审核思路了，但到底怎么把入口策略收得更稳、又不误伤正常用户，业内似乎也还在摸索。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9921,
+      "p_ai": 0.0079,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.001144787878729403,
+          "confidence": 0.9988552121212706,
+          "features": {
+            "perplexity": 4.73046875,
+            "avg_entropy": 1.462890625,
+            "std_entropy": 1.3271484375,
+            "burstiness": -0.04865243244725204,
+            "max_entropy": 7.5234375,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.010589599609375,
+          "confidence": 0.989410400390625,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 68.8
+    },
+    "latency_ms_wall": 68.8,
+    "correct": true
+  },
+  {
+    "id": "security_bp_eval_human_002",
+    "lang": "zh",
+    "label": "human",
+    "domain": "security_bp",
+    "subtype": "incident_retrospective",
+    "source": "manual_hard_case",
+    "style": "commentary",
+    "text": "我之前读过几份平台事故复盘材料，感觉很多团队在总结时都会强调“算力不够”或者“策略没来得及更新”，但真正麻烦的地方可能更前面一些。比如某些请求为什么会这么轻易地进入主链路，为什么前端行为和后端调用之间没有更强的联动校验，这些问题往往在事故发生后才被拿出来讨论。说到底，平台安全并不只是多买几张卡、多训几个模型那么简单，它还涉及流程、组织和责任划分。真要把防线前移，其实会牵动很多存量系统，不是喊一句口号就能落地。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9862,
+      "p_ai": 0.0138,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.003233915427699685,
+          "confidence": 0.9967660845723003,
+          "features": {
+            "perplexity": 4.4140625,
+            "avg_entropy": 1.2900390625,
+            "std_entropy": 1.3369140625,
+            "burstiness": 0.017843866103077626,
+            "max_entropy": 8.3203125,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.018035888671875,
+          "confidence": 0.981964111328125,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 52.5
+    },
+    "latency_ms_wall": 52.5,
+    "correct": true
+  },
+  {
+    "id": "security_bp_eval_human_003",
+    "lang": "zh",
+    "label": "human",
+    "domain": "security_bp",
+    "subtype": "vendor_pitch",
+    "source": "manual_hard_case",
+    "style": "commentary",
+    "text": "坦率讲，我对很多安全厂商的方案介绍都会先保留一点距离。不是说这些思路没有价值，而是很多材料在写的时候会把现实环境中的复杂度压得很低，好像只要上了一层探针或者加了一套引擎，平台治理难题就能一次性解决。实际情况通常没那么乐观。平台内部的接口治理、业务例外流、误伤回滚机制、跨团队配合，都会影响方案能不能真正落地。所以即便我认同端网协同这类方向有潜力，也更想看到的是渐进式试点结果，而不是直接下结论说它一定能在第一秒“物理斩首”所有问题。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9918,
+      "p_ai": 0.0082,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.0021046092733740807,
+          "confidence": 0.9978953907266259,
+          "features": {
+            "perplexity": 4.85546875,
+            "avg_entropy": 1.3720703125,
+            "std_entropy": 1.3427734375,
+            "burstiness": -0.010791366866725325,
+            "max_entropy": 7.70703125,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.01067352294921875,
+          "confidence": 0.9893264770507812,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 57.0
+    },
+    "latency_ms_wall": 57.0,
+    "correct": true
+  },
+  {
+    "id": "security_bp_eval_human_004",
+    "lang": "zh",
+    "label": "human",
+    "domain": "security_bp",
+    "subtype": "vendor_pitch",
+    "source": "manual_hard_case",
+    "style": "argumentative",
+    "text": "从业务角度看，把安全投入前移到实时阻断并不是没有道理，但也不能简单地说以后就不需要内容审核了。很多平台场景本来就存在灰区，用户行为是不是异常、请求是不是恶意，并不总能在入口处被稳定判断。如果策略做得太激进，可能反而会把正常业务流程打断，尤其是在直播、电商和即时互动场景里，误伤成本并不低。所以我更倾向于把实时阻断视为治理体系的一部分，而不是唯一答案。对平台来说，真正关键的还是找到不同层防线之间的合理分工。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9849,
+      "p_ai": 0.0151,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.00328927394002676,
+          "confidence": 0.9967107260599732,
+          "features": {
+            "perplexity": 4.0390625,
+            "avg_entropy": 1.3134765625,
+            "std_entropy": 1.361328125,
+            "burstiness": 0.01788974071442463,
+            "max_entropy": 8.0234375,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.0197601318359375,
+          "confidence": 0.9802398681640625,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 54.5
+    },
+    "latency_ms_wall": 54.5,
+    "correct": true
+  },
+  {
+    "id": "security_bp_eval_human_005",
+    "lang": "zh",
+    "label": "human",
+    "domain": "security_bp",
+    "subtype": "acronym_architecture",
+    "source": "manual_hard_case",
+    "style": "commentary",
+    "text": "上个月参加一次闭门讨论时，有位架构师提到他们内部也在尝试把策略决策点、执行点和遥测层做更紧的联动，不过推进速度并不快。原因不是大家不理解这些概念，而是每个团队关注的指标不同：有的人关心接口性能，有的人盯误报率，有的人更担心上线后的回滚成本。像 PDP、PEP 这些术语在方案会上说起来都很顺，但真正拆到系统边界、埋点质量和责任闭环时，工作量就完全是另一回事了。所以我现在更相信这类架构需要逐步演化，而不是靠一次大改造直接到位。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.985,
+      "p_ai": 0.015,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.006109755020588636,
+          "confidence": 0.9938902449794114,
+          "features": {
+            "perplexity": 5.0625,
+            "avg_entropy": 1.45703125,
+            "std_entropy": 1.3984375,
+            "burstiness": -0.02051983576945174,
+            "max_entropy": 8.1015625,
+            "min_entropy": 1.1324882507324219e-06
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.0185699462890625,
+          "confidence": 0.9814300537109375,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 73.7
+    },
+    "latency_ms_wall": 73.8,
+    "correct": true
+  },
+  {
+    "id": "security_bp_eval_human_006",
+    "lang": "zh",
+    "label": "human",
+    "domain": "security_bp",
+    "subtype": "structured_persuasion",
+    "source": "manual_hard_case",
+    "style": "commentary",
+    "text": "如果一定要总结平台安全下一阶段的重点，我觉得至少有三件事值得同步推进。第一，入口策略要更细，不能只依赖事后内容审核来兜底；第二，内部监测体系要把接口调用、设备状态和业务上下文尽量串起来，不然很多异常只能在事故之后回看出来；第三，任何新方案都要把误伤与回滚机制提前设计好，否则一旦拦错了，业务部门会很快失去耐心。换句话说，防线前移是方向，但真正决定成败的，还是工程细节和组织协同。",
+    "prediction": {
+      "predicted_label": "Human-written",
+      "confidence": 0.9909,
+      "p_ai": 0.0091,
+      "detected_language": "zh",
+      "stages_used": [
+        "statistical",
+        "encoder"
+      ],
+      "breakdown": {
+        "statistical": {
+          "label": "human",
+          "p_ai": 0.005841425620019436,
+          "confidence": 0.9941585743799806,
+          "features": {
+            "perplexity": 4.265625,
+            "avg_entropy": 1.2685546875,
+            "std_entropy": 1.3544921875,
+            "burstiness": 0.03276247195253622,
+            "max_entropy": 8.625,
+            "min_entropy": -0.0
+          }
+        },
+        "encoder": {
+          "label": "human",
+          "p_ai": 0.010406494140625,
+          "confidence": 0.989593505859375,
+          "model": "hfl/chinese-roberta-wwm-ext-large"
+        }
+      },
+      "processing_time_ms": 62.7
+    },
+    "latency_ms_wall": 62.7,
+    "correct": true
+  }
+]

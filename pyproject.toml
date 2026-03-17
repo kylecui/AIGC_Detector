@@ -39,6 +39,8 @@ dependencies = [
     "rich>=13.0",
     "tqdm>=4.66",
     "protobuf>=7.34.0",
+    "paramiko>=4.0.0",
+    "pypdf>=6.9.0",
 ]
 
 [dependency-groups]

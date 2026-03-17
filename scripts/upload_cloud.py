@@ -1,15 +1,17 @@
 """Upload training files to cloud GPU and set up environment."""
 
+import argparse
 import os
+import re
 import sys
 from pathlib import Path
 
 import paramiko
 
-HOST = "qmvgypgt2ehhxauesnow.deepln.com"
-PORT = 47939
+HOST = "egtmw5gvs4tqw9dlsnow.deepln.com"
+PORT = 49570
 USER = "root"
-PASS = "l1sTMYxt1pKeBtMuCjX4dReBMVW7TpVq"
+PASS = "wH7I6ttJSEMRctlVTIASt13HqxGSe4VU"
 REMOTE_BASE = "/data/aigc"
 
 
@@ -52,18 +54,52 @@ def upload_file(sftp, local_path, remote_path):
     sftp.put(str(local_path), remote_path)
 
 
-def main():
-    local_base = Path(__file__).parent.parent
-    dataset_dir = local_base / "dataset" / "processed"
+def normalize_remote_path(path: str) -> str:
+    """Normalize remote POSIX paths when invoked from Git Bash on Windows.
 
-    # Files to upload
+    Git Bash may rewrite `/data/...` into `C:/Program Files/Git/data/...` before
+    Python receives argv. Convert that form back to the intended POSIX path.
+    """
+    normalized = path.replace("\\", "/")
+    normalized = re.sub(r"^[A-Za-z]:/Program Files/Git", "", normalized)
+    if not normalized.startswith("/"):
+        normalized = f"/{normalized.lstrip('/')}"
+    return normalized
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Upload training script and dataset files to the cloud GPU host")
+    parser.add_argument(
+        "--dataset-dir",
+        type=Path,
+        default=None,
+        help="Local dataset directory containing train.jsonl/val.jsonl/test.jsonl",
+    )
+    parser.add_argument(
+        "--remote-dataset-dir",
+        default=f"{REMOTE_BASE}/dataset",
+        help="Remote directory where dataset split files should be uploaded",
+    )
+    parser.add_argument(
+        "--remote-script-path",
+        default=f"{REMOTE_BASE}/train_cloud.py",
+        help="Remote path for the training entrypoint script",
+    )
+    args = parser.parse_args()
+
+    # Avoid Git Bash / MSYS converting remote POSIX paths like /data/... into
+    # local Windows-looking paths such as C:/Program Files/Git/data/...
+    os.environ.setdefault("MSYS_NO_PATHCONV", "1")
+    os.environ.setdefault("MSYS2_ARG_CONV_EXCL", "*")
+
+    local_base = Path(__file__).parent.parent
+    dataset_dir = args.dataset_dir or (local_base / "dataset" / "processed")
+
     files = {
-        # Training script
-        str(local_base / "scripts" / "train_cloud.py"): f"{REMOTE_BASE}/train_cloud.py",
-        # Dataset files
-        str(dataset_dir / "train.jsonl"): f"{REMOTE_BASE}/dataset/train.jsonl",
-        str(dataset_dir / "val.jsonl"): f"{REMOTE_BASE}/dataset/val.jsonl",
-        str(dataset_dir / "test.jsonl"): f"{REMOTE_BASE}/dataset/test.jsonl",
+        str(local_base / "scripts" / "train_cloud.py"): args.remote_script_path,
+        str(dataset_dir / "train.jsonl"): f"{args.remote_dataset_dir}/train.jsonl",
+        str(dataset_dir / "val.jsonl"): f"{args.remote_dataset_dir}/val.jsonl",
+        str(dataset_dir / "test.jsonl"): f"{args.remote_dataset_dir}/test.jsonl",
     }
 
     # Check local files exist
@@ -76,8 +112,19 @@ def main():
     client = get_client()
     sftp = client.open_sftp()
 
+    remote_dataset_dir = normalize_remote_path(args.remote_dataset_dir)
+    remote_script_path = normalize_remote_path(args.remote_script_path)
+    remote_script_dir = os.path.dirname(remote_script_path)
+
     print("\n=== Creating directories ===")
-    run_cmd(client, f"mkdir -p {REMOTE_BASE}/dataset {REMOTE_BASE}/models")
+    run_cmd(client, f"mkdir -p {remote_dataset_dir} {remote_script_dir} {REMOTE_BASE}/models")
+
+    files = {
+        str(local_base / "scripts" / "train_cloud.py"): remote_script_path,
+        str(dataset_dir / "train.jsonl"): f"{remote_dataset_dir}/train.jsonl",
+        str(dataset_dir / "val.jsonl"): f"{remote_dataset_dir}/val.jsonl",
+        str(dataset_dir / "test.jsonl"): f"{remote_dataset_dir}/test.jsonl",
+    }
 
     print("\n=== Uploading files ===")
     for local_path, remote_path in files.items():
@@ -86,9 +133,9 @@ def main():
     sftp.close()
 
     print("\n=== Verifying uploads ===")
-    run_cmd(client, f"ls -lh {REMOTE_BASE}/")
-    run_cmd(client, f"ls -lh {REMOTE_BASE}/dataset/")
-    run_cmd(client, f"wc -l {REMOTE_BASE}/dataset/*.jsonl")
+    run_cmd(client, f'ls -lh "{remote_script_dir}"')
+    run_cmd(client, f'ls -lh "{remote_dataset_dir}"')
+    run_cmd(client, f'sh -lc "wc -l {remote_dataset_dir}/*.jsonl"')
 
     client.close()
     print("\n=== Upload complete ===")

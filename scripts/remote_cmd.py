@@ -4,10 +4,10 @@ import sys
 
 import paramiko
 
-HOST = "qmvgypgt2ehhxauesnow.deepln.com"
-PORT = 47939
+HOST = "egtmw5gvs4tqw9dlsnow.deepln.com"
+PORT = 49570
 USER = "root"
-PASS = "l1sTMYxt1pKeBtMuCjX4dReBMVW7TpVq"
+PASS = "wH7I6ttJSEMRctlVTIASt13HqxGSe4VU"
 
 
 def run(cmd: str, timeout: int = 300) -> tuple[int, str, str]:

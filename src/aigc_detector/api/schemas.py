@@ -26,6 +26,10 @@ class DetectionRequest(BaseModel):
         default=["all"],
         description="Which detection models to use. Default 'all' runs the full pipeline.",
     )
+    include_segments: bool = Field(
+        default=False,
+        description="If true, also return segment-level detection results.",
+    )
 
 
 class StageBreakdown(BaseModel):
@@ -48,6 +52,10 @@ class DetectionResponse(BaseModel):
         description="Per-stage result details",
     )
     processing_time_ms: float = Field(default=0.0, ge=0.0)
+    segments: list[dict] = Field(
+        default_factory=list,
+        description="Optional segment-level detection results.",
+    )
 
 
 class HealthResponse(BaseModel):
