@@ -815,3 +815,366 @@ class TestExtractFeaturesFromJsonl:
         assert len(lines) == 2
         assert "features" in lines[0]
         assert lines[0]["features"]["perplexity"] == 25.0
+
+
+# ======================================================================
+# L2 integration: statistical token log-prob exposure, ensemble weights,
+# pipeline linguistic branch, and API schema diagnostics.
+# ======================================================================
+
+
+class TestStatisticalTokenLogProbsExposure:
+    """Verify StatisticalFeatureExtractor exposes per-token log-probs."""
+
+    def test_default_is_none(self):
+        from aigc_detector.detection.statistical import StatisticalFeatureExtractor
+
+        extractor = StatisticalFeatureExtractor("dummy-model", device="cpu")
+        assert extractor._last_token_log_probs is None
+
+    def test_extract_populates_attribute(self):
+        from aigc_detector.detection.statistical import StatisticalFeatureExtractor
+
+        extractor = StatisticalFeatureExtractor("dummy-model", device="cpu")
+
+        seq_len = 12
+        vocab_size = 100
+        mock_logits = torch.randn(1, seq_len, vocab_size)
+        mock_loss = torch.tensor(2.5)
+
+        mock_model = MagicMock()
+        mock_model.device = torch.device("cpu")
+        mock_model.return_value = MagicMock(logits=mock_logits, loss=mock_loss)
+
+        mock_tokenizer = MagicMock()
+        mock_tokenizer.return_value = {
+            "input_ids": torch.randint(0, vocab_size, (1, seq_len)),
+            "attention_mask": torch.ones(1, seq_len, dtype=torch.long),
+        }
+        mock_tokenizer.pad_token = "[PAD]"
+        mock_tokenizer.eos_token = "[EOS]"
+
+        extractor._model = mock_model
+        extractor._tokenizer = mock_tokenizer
+
+        # Before extract: None
+        assert extractor._last_token_log_probs is None
+
+        features = extractor.extract("Test text for feature extraction.")
+
+        # After extract: populated list of floats. The shifted sequence has
+        # seq_len-1 tokens contributing per-token log-probs.
+        assert isinstance(extractor._last_token_log_probs, list)
+        assert all(isinstance(x, float) for x in extractor._last_token_log_probs)
+        assert len(extractor._last_token_log_probs) == seq_len - 1
+        # Sanity: features still returned as before.
+        assert isinstance(features.perplexity, float)
+
+    def test_extract_resets_on_failure(self):
+        """A failed extract() must not leak stale _last_token_log_probs."""
+        from aigc_detector.detection.statistical import StatisticalFeatureExtractor
+
+        extractor = StatisticalFeatureExtractor("dummy-model", device="cpu")
+
+        # Seed a stale value to prove it gets cleared.
+        extractor._last_token_log_probs = [1.0, 2.0, 3.0]
+
+        # Make the model raise mid-forward.
+        mock_model = MagicMock()
+        mock_model.device = torch.device("cpu")
+        mock_model.side_effect = RuntimeError("simulated forward failure")
+
+        mock_tokenizer = MagicMock()
+        mock_tokenizer.return_value = {
+            "input_ids": torch.tensor([[1, 2, 3]]),
+            "attention_mask": torch.tensor([[1, 1, 1]]),
+        }
+
+        extractor._model = mock_model
+        extractor._tokenizer = mock_tokenizer
+
+        with pytest.raises(RuntimeError, match="simulated forward failure"):
+            extractor.extract("Test text.")
+
+        # Even though extract() raised, the cached attribute should be None
+        # (it was reset at the top of extract() before the failure).
+        assert extractor._last_token_log_probs is None
+
+    def test_unload_clears_attribute(self):
+        from aigc_detector.detection.statistical import StatisticalFeatureExtractor
+
+        extractor = StatisticalFeatureExtractor("dummy-model", device="cpu")
+        extractor._last_token_log_probs = [1.0, 2.0]
+        extractor.unload()
+        assert extractor._last_token_log_probs is None
+
+
+class TestEnsembleWeightsUpdate:
+    """Verify the L2 ensemble weight rebalance and LEGACY_DEFAULTS rollback."""
+
+    def test_default_weights_include_linguistic(self):
+        from aigc_detector.detection.ensemble import DEFAULT_WEIGHTS
+
+        assert DEFAULT_WEIGHTS["linguistic"] == 0.15
+        assert DEFAULT_WEIGHTS["statistical"] == 0.15
+        assert DEFAULT_WEIGHTS["encoder"] == 0.50
+        assert DEFAULT_WEIGHTS["binoculars"] == 0.20
+
+    def test_default_weights_sum_to_one(self):
+        from aigc_detector.detection.ensemble import DEFAULT_WEIGHTS
+
+        assert abs(sum(DEFAULT_WEIGHTS.values()) - 1.0) < 1e-9
+
+    def test_legacy_defaults_preserved(self):
+        from aigc_detector.detection.ensemble import LEGACY_DEFAULTS
+
+        # LEGACY_DEFAULTS captures the pre-L2 three-axis weight set.
+        assert LEGACY_DEFAULTS["statistical"] == 0.2
+        assert LEGACY_DEFAULTS["encoder"] == 0.5
+        assert LEGACY_DEFAULTS["binoculars"] == 0.3
+        assert "linguistic" not in LEGACY_DEFAULTS
+        assert abs(sum(LEGACY_DEFAULTS.values()) - 1.0) < 1e-9
+
+    def test_combine_only_statistical_and_linguistic_normalizes(self):
+        """When only the two fast stages are active, weights renormalize."""
+        from aigc_detector.detection.ensemble import EnsembleAggregator
+
+        agg = EnsembleAggregator()  # uses DEFAULT_WEIGHTS
+        result = agg.combine(
+            {
+                "statistical": {"p_ai": 0.8},
+                "linguistic": {"p_ai": 0.6},
+            }
+        )
+        # Active weights: stat=0.15 + ling=0.15 = 0.30
+        # Weighted: (0.15*0.8 + 0.15*0.6) / 0.30 = (0.12 + 0.09) / 0.30 = 0.7
+        assert abs(result.p_ai - 0.7) < 1e-6
+        assert set(result.stages_used) == {"statistical", "linguistic"}
+
+    def test_legacy_defaults_usable_in_aggregator(self):
+        """An aggregator constructed with LEGACY_DEFAULTS should behave pre-L2."""
+        from aigc_detector.detection.ensemble import LEGACY_DEFAULTS, EnsembleAggregator
+
+        agg = EnsembleAggregator(weights=dict(LEGACY_DEFAULTS))
+        result = agg.combine(
+            {
+                "statistical": {"p_ai": 0.8},
+                "encoder": {"p_ai": 0.9},
+            }
+        )
+        # Pre-L2: (0.2*0.8 + 0.5*0.9) / 0.7 ≈ 0.871428...
+        # combine() rounds p_ai to 4 decimals → tolerate that rounding.
+        expected = round((0.2 * 0.8 + 0.5 * 0.9) / 0.7, 4)
+        assert abs(result.p_ai - expected) < 1e-6
+
+
+class TestPipelineLinguisticIntegration:
+    """Integration tests for the linguistic stage in DetectionPipeline."""
+
+    def _make_linguistic_mocks(self, ling_p_ai: float = 0.7):
+        """Build mock linguistic extractor + classifier."""
+        mock_ling_extractor = MagicMock()
+        mock_ling_features = MagicMock()
+        mock_ling_features.to_dict.return_value = {"hedging_density": 3.0}
+        mock_ling_extractor.extract.return_value = mock_ling_features
+
+        mock_ling_clf = MagicMock()
+        mock_ling_clf.predict.return_value = {
+            "label": "ai" if ling_p_ai > 0.5 else "human",
+            "p_ai": ling_p_ai,
+            "confidence": max(ling_p_ai, 1.0 - ling_p_ai),
+        }
+        return mock_ling_extractor, mock_ling_clf
+
+    def _make_pipeline_with_linguistic(
+        self,
+        stat_p_ai: float = 0.8,
+        enc_p_ai: float = 0.9,
+        bino_score: float = 0.5,
+        ling_p_ai: float = 0.7,
+        lang: str = "en",
+        with_linguistic: bool = True,
+    ):
+        from aigc_detector.detection.pipeline import DetectionPipeline
+
+        mock_router = MagicMock()
+        mock_router.detect.return_value = MagicMock(lang=lang, confidence=0.95)
+
+        mock_extractor = MagicMock()
+        mock_features = MagicMock()
+        mock_features.to_dict.return_value = {"perplexity": 25.0}
+        # Statistical extractor exposes the cached log-probs attribute.
+        mock_extractor.extract.return_value = mock_features
+        mock_extractor._last_token_log_probs = [-1.2, -0.8, -2.1]
+
+        mock_stat_clf = MagicMock()
+        mock_stat_clf.predict.return_value = {
+            "label": "ai" if stat_p_ai > 0.5 else "human",
+            "p_ai": stat_p_ai,
+            "confidence": max(stat_p_ai, 1.0 - stat_p_ai),
+        }
+
+        mock_enc_clf = MagicMock()
+        mock_enc_clf.predict.return_value = MagicMock(
+            label="ai" if enc_p_ai > 0.5 else "human",
+            p_ai=enc_p_ai,
+            confidence=max(enc_p_ai, 1.0 - enc_p_ai),
+            model_name="test-encoder",
+        )
+
+        mock_bino = MagicMock()
+        mock_bino.predict.return_value = MagicMock(
+            label="ai" if bino_score < 0.9 else "human",
+            score=bino_score,
+            threshold=0.9,
+            mode="accuracy",
+        )
+
+        linguistic_extractors = {}
+        linguistic_classifiers = {}
+        if with_linguistic:
+            ling_ext, ling_clf = self._make_linguistic_mocks(ling_p_ai=ling_p_ai)
+            linguistic_extractors = {lang: ling_ext}
+            linguistic_classifiers = {lang: ling_clf}
+
+        pipeline = DetectionPipeline(
+            language_router=mock_router,
+            statistical_extractors={lang: mock_extractor},
+            statistical_classifiers={lang: mock_stat_clf},
+            encoder_classifiers={lang: mock_enc_clf},
+            binoculars_detectors={lang: mock_bino},
+            linguistic_extractors=linguistic_extractors,
+            linguistic_classifiers=linguistic_classifiers,
+        )
+        return pipeline
+
+    def test_all_stages_succeed_linguistic_present(self):
+        """When stat + linguistic + encoder all run and agree, all three appear."""
+        # stat=0.8 (ai), linguistic=0.7 (ai), encoder=0.85 (ai) → all agree → no binoculars
+        pipeline = self._make_pipeline_with_linguistic(
+            stat_p_ai=0.8, ling_p_ai=0.7, enc_p_ai=0.85, with_linguistic=True
+        )
+        result = pipeline.detect("Test text " * 10)
+        assert "statistical" in result.stages_used
+        assert "linguistic" in result.stages_used
+        assert "encoder" in result.stages_used
+        # All agree on AI → binoculars skipped.
+        assert "binoculars" not in result.stages_used
+
+    def test_linguistic_absent_when_classifier_missing(self):
+        """Pipeline still works when linguistic classifier is missing for a lang."""
+        pipeline = self._make_pipeline_with_linguistic(
+            stat_p_ai=0.8, enc_p_ai=0.85, with_linguistic=False
+        )
+        result = pipeline.detect("Test text " * 10)
+        assert "statistical" in result.stages_used
+        assert "linguistic" not in result.stages_used
+        assert "encoder" in result.stages_used
+
+    def test_linguistic_extractor_receives_token_log_probs(self):
+        """The cached per-token log-probs from Stage 1 flow into Stage 1b."""
+        pipeline = self._make_pipeline_with_linguistic(with_linguistic=True)
+        pipeline.detect("Test text " * 10)
+        # The mock statistical extractor has _last_token_log_probs=[-1.2,-0.8,-2.1]
+        # and that list should be forwarded to the linguistic extractor's extract().
+        ling_ext = pipeline.linguistic_extractors["en"]
+        assert ling_ext.extract.called
+        _, kwargs = ling_ext.extract.call_args
+        assert kwargs.get("token_log_probs") == [-1.2, -0.8, -2.1]
+
+    def test_linguistic_failure_does_not_break_pipeline(self):
+        """If the linguistic stage raises, the pipeline must still return a result."""
+        pipeline = self._make_pipeline_with_linguistic(with_linguistic=True)
+        # Make the linguistic extractor blow up.
+        pipeline.linguistic_extractors["en"].extract.side_effect = RuntimeError("boom")
+        result = pipeline.detect("Test text " * 10)
+        # Statistical + encoder still produced a result.
+        assert "statistical" in result.stages_used
+        assert "linguistic" not in result.stages_used
+        assert "encoder" in result.stages_used
+
+    def test_zh_arbitration_still_triggers_without_linguistic_in_combine(self):
+        """
+        Existing zh-arbitration must remain unchanged: when stat=human &
+        encoder p_ai >= 0.35 & lang=zh, the arbitration path returns
+        encoder-only and does NOT inject linguistic into the combine call.
+        """
+        pipeline = self._make_pipeline_with_linguistic(
+            stat_p_ai=0.2,  # stat says human
+            enc_p_ai=0.5,   # encoder crosses 0.35
+            ling_p_ai=0.9,  # linguistic says ai (should NOT enter arbitration combine)
+            lang="zh",
+            with_linguistic=True,
+        )
+        result = pipeline.detect("测试文本" * 20)
+        # Arbitration returns encoder-only combine → only "encoder" in stages_used.
+        assert result.stages_used == ["encoder"]
+        # The result p_ai should equal the encoder p_ai (0.5) exactly.
+        assert abs(result.p_ai - 0.5) < 1e-9
+
+    def test_linguistic_adds_strictness_to_agree_check(self):
+        """
+        Adding linguistic to stage_results makes the agree() check stricter.
+        When stat=ai, linguistic=human, encoder=ai, agree() returns False →
+        binoculars should be invoked.
+        """
+        pipeline = self._make_pipeline_with_linguistic(
+            stat_p_ai=0.8,    # ai
+            ling_p_ai=0.2,    # human — disagrees
+            enc_p_ai=0.85,    # ai
+            bino_score=0.5,
+            with_linguistic=True,
+        )
+        result = pipeline.detect("Test text " * 10)
+        assert "statistical" in result.stages_used
+        assert "linguistic" in result.stages_used
+        assert "encoder" in result.stages_used
+        # Disagreement → binoculars invoked.
+        assert "binoculars" in result.stages_used
+
+
+class TestApiSchemasDiagnostics:
+    """Verify the new include_diagnostics / linguistic_diagnostics schema fields."""
+
+    def test_detection_request_default_no_diagnostics(self):
+        from aigc_detector.api.schemas import DetectionRequest
+
+        req = DetectionRequest(text="x" * 60)
+        assert req.include_diagnostics is False
+
+    def test_detection_request_accepts_include_diagnostics(self):
+        from aigc_detector.api.schemas import DetectionRequest
+
+        req = DetectionRequest(text="x" * 60, include_diagnostics=True)
+        assert req.include_diagnostics is True
+
+    def test_detection_response_default_no_diagnostics(self):
+        from aigc_detector.api.schemas import DetectionResponse
+
+        resp = DetectionResponse(
+            predicted_label="AI-generated",
+            confidence=0.9,
+            p_ai=0.9,
+            detected_language="en",
+        )
+        assert resp.linguistic_diagnostics is None
+
+    def test_detection_response_accepts_diagnostics_dict(self):
+        from aigc_detector.api.schemas import DetectionResponse
+
+        diag = {
+            "micro_score": 7.5,
+            "meso_score": 6.0,
+            "macro_score": 8.0,
+            "top_signals": ["hedging_density"],
+            "human_likeness_score": 71.0,
+        }
+        resp = DetectionResponse(
+            predicted_label="Human-written",
+            confidence=0.7,
+            p_ai=0.3,
+            detected_language="en",
+            linguistic_diagnostics=diag,
+        )
+        assert resp.linguistic_diagnostics == diag
+        assert resp.linguistic_diagnostics["human_likeness_score"] == 71.0

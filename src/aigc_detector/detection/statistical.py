@@ -91,6 +91,11 @@ class StatisticalFeatureExtractor:
         self.max_length = max_length
         self._model = None
         self._tokenizer = None
+        # Per-token log-probs from the most recent extract() call. Exposed so
+        # that :class:`LinguisticFeatureExtractor` can compute M5/M6 without
+        # a second LM forward pass. Reset to None at the start of each
+        # extract() call and on unload().
+        self._last_token_log_probs: list[float] | None = None
 
     # ------------------------------------------------------------------
     # Lazy loading
@@ -158,6 +163,8 @@ class StatisticalFeatureExtractor:
                 except RuntimeError:
                     pass  # CUDA may be in unrecoverable state
             logger.info("Statistical reference model unloaded")
+        # Always clear the cached log-probs, even if no model was loaded.
+        self._last_token_log_probs = None
 
     @property
     def is_loaded(self) -> bool:
@@ -174,6 +181,10 @@ class StatisticalFeatureExtractor:
         """
         if self._model is None or self._tokenizer is None:
             raise RuntimeError("Model not loaded. Call .load() first.")
+
+        # Reset cached log-probs at the start so partial failures don't leak
+        # stale data from a previous call.
+        self._last_token_log_probs = None
 
         inputs = self._tokenizer(
             text,
@@ -207,6 +218,15 @@ class StatisticalFeatureExtractor:
         # Per-token log-softmax for perplexity computation
         log_probs = torch.log_softmax(shifted_logits, dim=-1)
         token_log_probs = log_probs.gather(2, target_ids.unsqueeze(-1)).squeeze(-1).squeeze(0)
+
+        # Expose the per-token log-probs (as a plain Python list) so that
+        # downstream CPU-only feature extractors (e.g. LinguisticFeatureExtractor)
+        # can reuse them for M5/M6 without a second LM forward pass.
+        self._last_token_log_probs = (
+            token_log_probs.detach().cpu().tolist()
+            if isinstance(token_log_probs, torch.Tensor)
+            else None
+        )
 
         # Per-token entropy: H = -sum(p * log(p))
         probs = torch.softmax(shifted_logits, dim=-1)

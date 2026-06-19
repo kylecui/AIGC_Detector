@@ -1,12 +1,23 @@
 """Cascading detection pipeline.
 
-Orchestrates the three detection stages (Statistical → Encoder → Binoculars)
-with early-exit logic for high-confidence results.
+Orchestrates the detection stages with early-exit logic for
+high-confidence results.
+
+Stages
+------
+- **Statistical** (Stage 1, fast): LM-probability features.
+- **Linguistic** (Stage 1b, fast): CPU-only stylistic features that run
+  in parallel with Stage 1. Reuses the per-token log-probs already
+  computed by :class:`StatisticalFeatureExtractor` (exposed via the
+  ``_last_token_log_probs`` instance attribute) to derive the M5/M6
+  features without a second LM forward pass.
+- **Encoder** (Stage 2): transformer-based classifier.
+- **Binoculars** (Stage 3, zero-shot fallback).
 
 Flow:
     1. Language Router → determine ``zh`` or ``en``
-    2. Stage 1: Statistical classifier (<200 ms)
-       - If confidence > ``early_exit_threshold`` → return immediately
+    2. Stage 1: Statistical + Linguistic (parallel, both "fast stage")
+       - If statistical confidence > ``early_exit_threshold`` → return immediately
     3. Stage 2: Encoder classifier (300–500 ms)
        - If Stage 1 & 2 agree → weighted combine → return
     4. Stage 3: Binoculars zero-shot (1–3 s, only on conflict)
@@ -16,6 +27,7 @@ References:
     - DESIGN.md §2.1 (cascading pipeline)
     - DESIGN.md §4.4 (ensemble weights)
     - DEVPLAN.md Phase 4 task 4.3
+    - .sisyphus/plans/upgrade-linguistic-detection.md (L2 linguistic axis)
 """
 
 from __future__ import annotations
@@ -45,6 +57,11 @@ class DetectionPipeline:
         Language → ``EncoderClassifier`` mapping.
     binoculars_detectors : dict[str, object]
         Language → ``BinocularsDetector`` mapping.
+    linguistic_extractors : dict[str, object] or None
+        Language → ``LinguisticFeatureExtractor`` mapping (CPU-only, optional).
+        When absent for a language, the linguistic stage is silently skipped.
+    linguistic_classifiers : dict[str, object] or None
+        Language → ``LinguisticClassifier`` mapping (optional).
     model_manager : object or None
         VRAM lifecycle manager.
     early_exit_threshold : float
@@ -58,16 +75,22 @@ class DetectionPipeline:
         statistical_classifiers: dict[str, object] | None = None,
         encoder_classifiers: dict[str, object] | None = None,
         binoculars_detectors: dict[str, object] | None = None,
+        linguistic_extractors: dict[str, object] | None = None,
+        linguistic_classifiers: dict[str, object] | None = None,
         model_manager: object | None = None,
         early_exit_threshold: float = 0.95,
+        ensemble_weights_by_lang: dict[str, dict[str, float]] | None = None,
     ):
         self.language_router = language_router
         self.statistical_extractors = statistical_extractors or {}
         self.statistical_classifiers = statistical_classifiers or {}
         self.encoder_classifiers = encoder_classifiers or {}
         self.binoculars_detectors = binoculars_detectors or {}
+        self.linguistic_extractors = linguistic_extractors or {}
+        self.linguistic_classifiers = linguistic_classifiers or {}
         self.model_manager = model_manager
         self.early_exit_threshold = early_exit_threshold
+        self.ensemble_weights_by_lang = ensemble_weights_by_lang or {}
         self._aggregator = EnsembleAggregator()
 
     def detect(self, text: str) -> EnsembleResult:
@@ -83,10 +106,25 @@ class DetectionPipeline:
         lang = lang_result.lang
         logger.info("Detected language: %s (confidence=%.2f)", lang, lang_result.confidence)
 
-        # Step 1: Statistical features → classifier
-        stat_result = self._run_statistical(text, lang)
+        # Apply language-specific ensemble weights if configured
+        lang_weights = self.ensemble_weights_by_lang.get(lang)
+        if lang_weights:
+            self._aggregator.weights = dict(lang_weights)
+            logger.debug("Using lang-specific weights for %s: %s", lang, lang_weights)
+
+        # Step 1: Statistical features → classifier. _run_statistical also
+        # returns the per-token log-probs from the extractor so the
+        # linguistic stage (Stage 1b) can reuse them for M5/M6.
+        stat_result, token_log_probs = self._run_statistical(text, lang)
         if stat_result is not None:
             stage_results["statistical"] = stat_result
+
+            # Stage 1b: Linguistic (CPU-only, runs alongside Stage 1). Adds
+            # an orthogonal "human writing noise" evidence source. Silently
+            # skipped when no extractor/classifier is registered for the lang.
+            linguistic_result = self._run_linguistic(text, lang, token_log_probs)
+            if linguistic_result is not None:
+                stage_results["linguistic"] = linguistic_result
 
             # Early exit if statistical confidence is very high.
             # For Chinese, keep the encoder in the loop because the statistical
@@ -140,8 +178,15 @@ class DetectionPipeline:
                     processing_time_ms=elapsed,
                 )
 
-            # If statistical and encoder agree, skip binoculars
-            if stat_result is not None and self._aggregator.agree(stage_results):
+            # If statistical and encoder agree, skip binoculars.
+            # EXCEPT for ZH: HC3-trained models can catastrophically fail on
+            # modern LLM text (p_ai as low as 0.01 for GPT-4/Claude content).
+            # Always run Binoculars for ZH as a safety net.
+            if (
+                lang != "zh"
+                and stat_result is not None
+                and self._aggregator.agree(stage_results)
+            ):
                 logger.info("Stage 1 & 2 agree — skipping Binoculars")
                 elapsed = (time.perf_counter() - t0) * 1000
                 return self._aggregator.combine(
@@ -156,23 +201,36 @@ class DetectionPipeline:
             stage_results["binoculars"] = bino_result
 
         elapsed = (time.perf_counter() - t0) * 1000
+        # For ZH, apply the lower decision threshold to all exit paths
+        # (not just the arbitration block) — see DETECTOR_NOTES_2026-06.md
+        dt = ZH_DECISION_THRESHOLD if lang == "zh" else 0.5
         return self._aggregator.combine(
             stage_results,
             detected_language=lang,
             processing_time_ms=elapsed,
+            decision_threshold=dt,
         )
 
     # ------------------------------------------------------------------
     # Stage runners
     # ------------------------------------------------------------------
 
-    def _run_statistical(self, text: str, lang: str) -> dict | None:
-        """Run Stage 1: statistical feature extraction + classification."""
+    def _run_statistical(self, text: str, lang: str) -> tuple[dict | None, list[float] | None]:
+        """Run Stage 1: statistical feature extraction + classification.
+
+        Returns a ``(result, token_log_probs)`` tuple. ``result`` is the
+        classifier output dict (or ``None`` if the stage is unavailable /
+        fails). ``token_log_probs`` is the per-token log-prob list cached
+        on the extractor (``extractor._last_token_log_probs``) so the
+        linguistic stage can reuse it for M5/M6 without a second LM
+        forward pass. ``token_log_probs`` is ``None`` when extraction did
+        not run or the extractor is a mock that doesn't expose the attr.
+        """
         extractor = self.statistical_extractors.get(lang)
         classifier = self.statistical_classifiers.get(lang)
         if extractor is None or classifier is None:
             logger.debug("No statistical detector for language: %s", lang)
-            return None
+            return None, None
 
         try:
             if hasattr(extractor, "is_loaded") and hasattr(extractor, "load") and not extractor.is_loaded:
@@ -182,9 +240,43 @@ class DetectionPipeline:
             features = extractor.extract(text)
             result = classifier.predict(features)
             result["features"] = features.to_dict()
-            return result
+            # Read the cached per-token log-probs. Defensive getattr in case
+            # the extractor is a foreign/mock implementation.
+            token_log_probs = getattr(extractor, "_last_token_log_probs", None)
+            return result, token_log_probs
         except Exception:
             logger.warning("Statistical detection failed", exc_info=True)
+            return None, None
+
+    def _run_linguistic(
+        self,
+        text: str,
+        lang: str,
+        token_log_probs: list[float] | None,
+    ) -> dict | None:
+        """Run Stage 1b: linguistic-stylistic feature extraction + classification.
+
+        Mirrors :meth:`_run_statistical` but for the CPU-only linguistic
+        axis. ``token_log_probs`` (typically from Stage 1) is forwarded to
+        the extractor so M5/M6 can be computed without a second LM forward
+        pass; ``None`` is acceptable (M5/M6 will be NaN).
+
+        Returns the classifier result dict with an added ``"features"``
+        key, or ``None`` when the stage is unavailable / fails.
+        """
+        extractor = self.linguistic_extractors.get(lang)
+        classifier = self.linguistic_classifiers.get(lang)
+        if extractor is None or classifier is None:
+            logger.debug("No linguistic detector for language: %s", lang)
+            return None
+
+        try:
+            features = extractor.extract(text, lang=lang, token_log_probs=token_log_probs)
+            result = classifier.predict(features)
+            result["features"] = features.to_dict()
+            return result
+        except Exception:
+            logger.warning("Linguistic detection failed", exc_info=True)
             return None
 
     def _run_encoder(self, text: str, lang: str) -> dict | None:

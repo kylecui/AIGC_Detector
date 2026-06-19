@@ -4,9 +4,26 @@ Combines scores from statistical, encoder, and binoculars detectors
 using configurable weights.  Handles partial results (not all stages
 may be invoked on every request due to early-exit logic).
 
+Stage weights
+-------------
+As of L2 the ensemble recognises four stages: ``statistical``,
+``linguistic``, ``encoder``, ``binoculars``. The new ``linguistic`` axis
+captures CPU-only stylistic signals orthogonal to LM-probability and is
+intentionally given the same weight as ``statistical`` (0.15) so the two
+"fast stage" evidence sources together carry 0.30. The heavier
+``encoder`` (0.50) and ``binoculars`` (0.20) weights remain the dominant
+swing factors. ``_weighted_combine`` always re-normalises over the active
+stages, so partial pipelines (e.g. only ``{statistical, linguistic}``)
+still produce a well-defined p_ai.
+
+``LEGACY_DEFAULTS`` preserves the pre-L2 weight set
+(``statistical=0.2, encoder=0.5, binoculars=0.3``) for rollback / A-B
+comparison.
+
 References:
-    - DESIGN.md §4.4 (weights: stat=0.2, encoder=0.5, bino=0.3)
+    - DESIGN.md §4.4 (weights: stat=0.2, encoder=0.5, bino=0.3 — pre-L2)
     - DEVPLAN.md Phase 4 task 4.2
+    - .sisyphus/plans/upgrade-linguistic-detection.md (L2 rebalance)
 """
 
 from __future__ import annotations
@@ -16,8 +33,16 @@ from dataclasses import asdict, dataclass, field
 
 logger = logging.getLogger(__name__)
 
-# Default ensemble weights from DESIGN.md §4.4
+# Default ensemble weights (L2 and later). The four axes always sum to 1.0.
 DEFAULT_WEIGHTS: dict[str, float] = {
+    "statistical": 0.15,
+    "linguistic": 0.15,
+    "encoder": 0.50,
+    "binoculars": 0.20,
+}
+
+# Pre-L2 weights, kept for rollback / A-B comparison. Three axes sum to 1.0.
+LEGACY_DEFAULTS: dict[str, float] = {
     "statistical": 0.2,
     "encoder": 0.5,
     "binoculars": 0.3,
