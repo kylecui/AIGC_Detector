@@ -1,0 +1,63 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="模块结构图" id="modules">
+    <mxGraphModel dx="1100" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="系统模块结构图" style="text;html=1;fontSize=16;fontStyle=1;align=center;" vertex="1" parent="1"><mxGeometry x="400" y="10" width="300" height="25" as="geometry"/></mxCell>
+
+        <!-- Root -->
+        <mxCell id="root" value="aigc_detector" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="480" y="50" width="160" height="40" as="geometry"/></mxCell>
+
+        <!-- Level 1 packages -->
+        <mxCell id="detection" value="detection/&#xa;检测引擎" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1"><mxGeometry x="80" y="140" width="130" height="45" as="geometry"/></mxCell>
+        <mxCell id="api" value="api/&#xa;服务接口" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1"><mxGeometry x="280" y="140" width="130" height="45" as="geometry"/></mxCell>
+        <mxCell id="training" value="training/&#xa;训练评估" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1"><mxGeometry x="480" y="140" width="130" height="45" as="geometry"/></mxCell>
+        <mxCell id="models" value="models/&#xa;模型管理" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" vertex="1" parent="1"><mxGeometry x="680" y="140" width="130" height="45" as="geometry"/></mxCell>
+        <mxCell id="data" value="data/&#xa;数据管道" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="1"><mxGeometry x="880" y="140" width="130" height="45" as="geometry"/></mxCell>
+        <mxCell id="utils" value="utils/&#xa;工具模块" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1"><mxGeometry x="1080" y="140" width="130" height="45" as="geometry"/></mxCell>
+
+        <!-- Detection modules -->
+        <mxCell id="m_pipeline" value="pipeline.py&#xa;级联管线 (338行)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1"><mxGeometry x="30" y="220" width="120" height="40" as="geometry"/></mxCell>
+        <mxCell id="m_linguistic" value="linguistic.py&#xa;语言学引擎 (912行)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1"><mxGeometry x="160" y="220" width="120" height="40" as="geometry"/></mxCell>
+        <mxCell id="m_stat" value="statistical.py&#xa;统计特征 (356行)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1"><mxGeometry x="30" y="270" width="120" height="40" as="geometry"/></mxCell>
+        <mxCell id="m_enc" value="encoder.py&#xa;编码器 (261行)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1"><mxGeometry x="160" y="270" width="120" height="40" as="geometry"/></mxCell>
+        <mxCell id="m_bino" value="binoculars.py&#xa;零样本检测 (266行)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1"><mxGeometry x="30" y="320" width="120" height="40" as="geometry"/></mxCell>
+        <mxCell id="m_ens" value="ensemble.py&#xa;加权集成 (167行)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1"><mxGeometry x="160" y="320" width="120" height="40" as="geometry"/></mxCell>
+        <mxCell id="m_lang" value="language.py&#xa;语言路由" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1"><mxGeometry x="95" y="370" width="120" height="35" as="geometry"/></mxCell>
+
+        <!-- API modules -->
+        <mxCell id="m_main" value="main.py&#xa;应用入口 (345行)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="1"><mxGeometry x="270" y="220" width="120" height="40" as="geometry"/></mxCell>
+        <mxCell id="m_routes" value="routes.py&#xa;API路由 (340行)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="1"><mxGeometry x="270" y="270" width="120" height="40" as="geometry"/></mxCell>
+        <mxCell id="m_schemas" value="schemas.py&#xa;请求/响应模型" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="1"><mxGeometry x="270" y="320" width="120" height="40" as="geometry"/></mxCell>
+        <mxCell id="m_mw" value="middleware.py&#xa;中间件" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="1"><mxGeometry x="270" y="370" width="120" height="35" as="geometry"/></mxCell>
+
+        <!-- Training modules -->
+        <mxCell id="m_trainer" value="trainer.py&#xa;LoRA训练器" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=9;" vertex="1" parent="1"><mxGeometry x="470" y="220" width="120" height="40" as="geometry"/></mxCell>
+        <mxCell id="m_eval" value="evaluator.py&#xa;评估器" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=9;" vertex="1" parent="1"><mxGeometry x="470" y="270" width="120" height="40" as="geometry"/></mxCell>
+        <mxCell id="m_calib" value="calibration.py&#xa;阈值校准" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=9;" vertex="1" parent="1"><mxGeometry x="470" y="320" width="120" height="40" as="geometry"/></mxCell>
+
+        <!-- Models modules -->
+        <mxCell id="m_mgr" value="manager.py&#xa;VRAM管理器 (234行)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=9;" vertex="1" parent="1"><mxGeometry x="670" y="220" width="130" height="40" as="geometry"/></mxCell>
+        <mxCell id="m_reg" value="registry.py&#xa;模型注册表" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=9;" vertex="1" parent="1"><mxGeometry x="670" y="270" width="130" height="40" as="geometry"/></mxCell>
+
+        <!-- Data modules -->
+        <mxCell id="m_proc" value="processor.py&#xa;文本处理" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=9;" vertex="1" parent="1"><mxGeometry x="870" y="220" width="120" height="35" as="geometry"/></mxCell>
+        <mxCell id="m_split" value="splitter.py&#xa;数据集分割" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=9;" vertex="1" parent="1"><mxGeometry x="870" y="265" width="120" height="35" as="geometry"/></mxCell>
+        <mxCell id="m_gen" value="generator.py&#xa;AI文本生成" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=9;" vertex="1" parent="1"><mxGeometry x="870" y="310" width="120" height="35" as="geometry"/></mxCell>
+
+        <!-- Utils modules -->
+        <mxCell id="m_hfcache" value="hf_cache.py&#xa;HF缓存检测" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=9;" vertex="1" parent="1"><mxGeometry x="1070" y="220" width="120" height="35" as="geometry"/></mxCell>
+        <mxCell id="m_text" value="text.py&#xa;文本工具" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=9;" vertex="1" parent="1"><mxGeometry x="1070" y="265" width="120" height="35" as="geometry"/></mxCell>
+
+        <!-- Edges: root to packages -->
+        <mxCell id="r_d" edge="1" source="root" target="detection" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="r_a" edge="1" source="root" target="api" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="r_t" edge="1" source="root" target="training" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="r_m" edge="1" source="root" target="models" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="r_da" edge="1" source="root" target="data" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="r_u" edge="1" source="root" target="utils" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

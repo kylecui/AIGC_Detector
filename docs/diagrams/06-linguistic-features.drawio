@@ -1,0 +1,51 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="语言学特征层次图" id="features">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="14维多层级语言学文体特征层次图" style="text;html=1;fontSize=16;fontStyle=1;align=center;" vertex="1" parent="1"><mxGeometry x="300" y="10" width="500" height="25" as="geometry"/></mxCell>
+
+        <!-- Root -->
+        <mxCell id="root" value="14维语言学特征引擎&#xa;(纯CPU, 零GPU依赖)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="400" y="50" width="260" height="45" as="geometry"/></mxCell>
+
+        <!-- Three layers -->
+        <mxCell id="micro" value="微观层 Micro&#xa;(句子级, 9个特征)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="100" y="140" width="200" height="45" as="geometry"/></mxCell>
+        <mxCell id="meso" value="中观层 Meso&#xa;(段落级, 2个特征)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="430" y="140" width="200" height="45" as="geometry"/></mxCell>
+        <mxCell id="macro" value="宏观层 Macro&#xa;(全文级, 3个特征)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="760" y="140" width="200" height="45" as="geometry"/></mxCell>
+
+        <!-- Micro features -->
+        <mxCell id="m1" value="M1: 句长爆发度&#xa;(Burstiness)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1"><mxGeometry x="20" y="210" width="120" height="40" as="geometry"/></mxCell>
+        <mxCell id="m2" value="M2: 句长变异系数&#xa;(CV)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1"><mxGeometry x="150" y="210" width="120" height="40" as="geometry"/></mxCell>
+        <mxCell id="m3" value="M3: 句长基尼系数&#xa;(Gini)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1"><mxGeometry x="280" y="210" width="120" height="40" as="geometry"/></mxCell>
+        <mxCell id="m4" value="M4: 句首句法重复&#xa;(Jaccard)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1"><mxGeometry x="20" y="260" width="120" height="40" as="geometry"/></mxCell>
+        <mxCell id="m5" value="M5: 对数概率偏度&#xa;(Skewness)*" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=9;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="150" y="260" width="120" height="40" as="geometry"/></mxCell>
+        <mxCell id="m6" value="M6: 高概率token占比&#xa;(High-prob)*" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=9;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="280" y="260" width="120" height="40" as="geometry"/></mxCell>
+        <mxCell id="m7" value="M7: 模糊限制语密度&#xa;(Hedging)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1"><mxGeometry x="20" y="310" width="120" height="40" as="geometry"/></mxCell>
+        <mxCell id="m8" value="M8: 话语模板标记&#xa;(Discourse)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1"><mxGeometry x="150" y="310" width="120" height="40" as="geometry"/></mxCell>
+        <mxCell id="m9" value="M9: 标点风格评分&#xa;(Punctuation)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1"><mxGeometry x="280" y="310" width="120" height="40" as="geometry"/></mxCell>
+
+        <!-- Meso features -->
+        <mxCell id="s1" value="S1: 段落长度方差&#xa;(Para Length Variance)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="1"><mxGeometry x="410" y="210" width="160" height="40" as="geometry"/></mxCell>
+        <mxCell id="s2" value="S2: 段落模板评分&#xa;(Template Score)&#xa;检测: 背景→方法→结果→结论" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="1"><mxGeometry x="410" y="260" width="180" height="50" as="geometry"/></mxCell>
+
+        <!-- Macro features -->
+        <mxCell id="d1" value="D1: 词汇多样性&#xa;(MTLD)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=9;" vertex="1" parent="1"><mxGeometry x="740" y="210" width="130" height="40" as="geometry"/></mxCell>
+        <mxCell id="d2" value="D2: 作者立场密度&#xa;(Authorial Stance)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=9;" vertex="1" parent="1"><mxGeometry x="880" y="210" width="140" height="40" as="geometry"/></mxCell>
+        <mxCell id="d3" value="D3: 可读性指数&#xa;(Readability)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=9;" vertex="1" parent="1"><mxGeometry x="740" y="260" width="130" height="40" as="geometry"/></mxCell>
+
+        <!-- Notes -->
+        <mxCell id="note1" value="* M5/M6 复用 Stage 1 缓存的 token log-prob&#xa;  (零成本, 无需第二次 LM 前向传播)" style="text;html=1;fontSize=9;fontColor=#d79b00;align=left;" vertex="1" parent="1"><mxGeometry x="20" y="370" width="350" height="30" as="geometry"/></mxCell>
+        <mxCell id="note2" value="所有特征支持中英文双语词汇表&#xa;XGBoost 分类器 + NaN 安全 (SimpleImputer)" style="text;html=1;fontSize=9;fontColor=#666666;align=left;" vertex="1" parent="1"><mxGeometry x="400" y="370" width="350" height="30" as="geometry"/></mxCell>
+
+        <!-- Performance -->
+        <mxCell id="perf" value="EN ROC-AUC: 0.9087 | ZH ROC-AUC: 0.7433" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="350" y="420" width="350" height="35" as="geometry"/></mxCell>
+
+        <!-- Edges -->
+        <mxCell id="e_rm" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;strokeWidth=2;" edge="1" source="root" target="micro" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_rs" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;strokeWidth=2;" edge="1" source="root" target="meso" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_rd" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;strokeWidth=2;" edge="1" source="root" target="macro" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

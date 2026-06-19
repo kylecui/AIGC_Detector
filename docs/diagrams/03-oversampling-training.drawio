@@ -1,0 +1,46 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="过采样训练流程" id="oversample">
+    <mxGraphModel dx="1100" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="过采样持续学习领域自适应训练流程" style="text;html=1;fontSize=16;fontStyle=1;align=center;" vertex="1" parent="1"><mxGeometry x="334" y="10" width="500" height="25" as="geometry"/></mxCell>
+
+        <!-- Data Sources -->
+        <mxCell id="hc3" value="HC3-Chinese 数据集&#xa;10,510 样本&#xa;(ChatGPT-3.5 Q&amp;A, 2023)" style="shape=note;whiteSpace=wrap;html=1;size=15;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1"><mxGeometry x="60" y="60" width="200" height="70" as="geometry"/></mxCell>
+        <mxCell id="textbook" value="企业AI安全教材&#xa;98 个文本块&#xa;(GPT-4/Claude, 2026)" style="shape=note;whiteSpace=wrap;html=1;size=15;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1"><mxGeometry x="60" y="160" width="200" height="70" as="geometry"/></mxCell>
+
+        <!-- Split -->
+        <mxCell id="split" value="8:1:1 拆分&#xa;(train/val/test)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1"><mxGeometry x="310" y="125" width="120" height="45" as="geometry"/></mxCell>
+
+        <!-- Oversampling -->
+        <mxCell id="oversample" value="10x 过采样&#xa;82→820 (训练集)&#xa;占训练数据 7.2%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="310" y="220" width="160" height="55" as="geometry"/></mxCell>
+
+        <!-- Merge -->
+        <mxCell id="merge" value="合并训练集&#xa;10,510 + 820 = 11,330" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1"><mxGeometry x="310" y="310" width="160" height="45" as="geometry"/></mxCell>
+
+        <!-- Training -->
+        <mxCell id="train" value="LoRA 微调训练&#xa;模型: chinese-roberta-wwm-ext-large&#xa;r=16, α=32, lr=2e-5&#xa;epochs=3, batch=16, bf16" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1"><mxGeometry x="280" y="390" width="220" height="70" as="geometry"/></mxCell>
+
+        <!-- Evaluation -->
+        <mxCell id="eval" value="评估" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1"><mxGeometry x="350" y="500" width="80" height="50" as="geometry"/></mxCell>
+
+        <!-- Results: Before vs After -->
+        <mxCell id="before" value="优化前 (v1)&#xa;&#xa;教材 p_ai: 0.0096 ❌&#xa;教材召回率: 27.3%&#xa;HC3准确率: 95.2%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;align=left;spacingLeft=10;" vertex="1" parent="1"><mxGeometry x="520" y="500" width="180" height="80" as="geometry"/></mxCell>
+        <mxCell id="after" value="优化后 (v2)&#xa;&#xa;教材 p_ai: 0.9980 ✅&#xa;教材召回率: 100.0%&#xa;HC3准确率: 95.0% (无回归)&#xa;总体准确率: 97.7%" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=left;spacingLeft=10;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="730" y="490" width="200" height="90" as="geometry"/></mxCell>
+
+        <!-- Arrow before->after -->
+        <mxCell id="imparrow" value="提升" style="endArrow=classic;html=1;fontSize=12;fontStyle=1;fontColor=#009900;strokeColor=#009900;strokeWidth=2;" edge="1" parent="1" source="before" target="after"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- Edges -->
+        <mxCell id="ed1" edge="1" source="hc3" target="split" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ed2" edge="1" source="textbook" target="split" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ed3" edge="1" source="split" target="oversample" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ed4" edge="1" source="oversample" target="merge" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ed5" edge="1" source="merge" target="train" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ed6" edge="1" source="train" target="eval" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ed7" edge="1" source="eval" target="before" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

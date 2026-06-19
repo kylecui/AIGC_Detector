@@ -1,0 +1,40 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="跨阶段缓存复用" id="cache">
+    <mxGraphModel dx="1100" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="600" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="跨阶段Token对数概率缓存复用示意图" style="text;html=1;fontSize=16;fontStyle=1;align=center;" vertex="1" parent="1"><mxGeometry x="300" y="10" width="500" height="25" as="geometry"/></mxCell>
+
+        <!-- Stage 1 -->
+        <mxCell id="s1box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;dashed=1;" vertex="1" parent="1"><mxGeometry x="80" y="60" width="350" height="200" as="geometry"/></mxCell>
+        <mxCell id="s1title" value="Stage 1: 统计特征提取器" style="text;html=1;fontSize=12;fontStyle=1;align=center;" vertex="1" parent="1"><mxGeometry x="120" y="65" width="270" height="20" as="geometry"/></mxCell>
+        <mxCell id="lm" value="参考语言模型&#xa;(GPT-2-XL / Wenzhong)&#xa;前向传播" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1"><mxGeometry x="120" y="95" width="170" height="50" as="geometry"/></mxCell>
+        <mxCell id="logprob" value="逐Token对数概率&#xa;[log p(t1), log p(t2), ...]&#xa;缓存至 _last_token_log_probs" style="shape=note;whiteSpace=wrap;html=1;size=15;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=9;align=left;spacingLeft=10;" vertex="1" parent="1"><mxGeometry x="110" y="160" width="200" height="55" as="geometry"/></mxCell>
+        <mxCell id="statfeat" value="6维统计特征&#xa;困惑度/熵/爆发度" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1"><mxGeometry x="330" y="170" width="80" height="50" as="geometry"/></mxCell>
+
+        <!-- Cache arrow -->
+        <mxCell id="cachearrow" value="缓存传递&#xa;(零成本)" style="endArrow=classic;startArrow=classic;html=1;strokeWidth=3;strokeColor=#cc6600;fontSize=11;fontStyle=1;fontColor=#cc6600;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="210" y="225" as="sourcePoint"/>
+            <mxPoint x="600" y="225" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Stage 1b -->
+        <mxCell id="s1bbox" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;dashed=1;" vertex="1" parent="1"><mxGeometry x="480" y="60" width="350" height="200" as="geometry"/></mxCell>
+        <mxCell id="s1btitle" value="Stage 1b: 语言学特征提取器" style="text;html=1;fontSize=12;fontStyle=1;align=center;" vertex="1" parent="1"><mxGeometry x="520" y="65" width="270" height="20" as="geometry"/></mxCell>
+        <mxCell id="m5" value="M5: 对数概率偏度&#xa;(Skewness)&#xa;无需LM前向传播" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="510" y="95" width="140" height="55" as="geometry"/></mxCell>
+        <mxCell id="m6" value="M6: 高概率占比&#xa;(High-prob fraction)&#xa;无需LM前向传播" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="670" y="95" width="140" height="55" as="geometry"/></mxCell>
+        <mxCell id="otherfeat" value="其余12维特征&#xa;(M1-M4, M7-M9, S1-S2, D1-D3)&#xa;纯CPU计算" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;" vertex="1" parent="1"><mxGeometry x="540" y="165" width="240" height="45" as="geometry"/></mxCell>
+
+        <!-- Savings -->
+        <mxCell id="save" value="节省: 1次LM前向传播&#xa;≈ 150-300ms GPU时间&#xa;≈ 3-5GB 显存" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="870" y="130" width="180" height="60" as="geometry"/></mxCell>
+
+        <!-- Edges -->
+        <mxCell id="e_lm_lp" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;strokeWidth=2;" edge="1" source="lm" target="logprob" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e_lp_sf" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;strokeWidth=2;" edge="1" source="logprob" target="statfeat" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

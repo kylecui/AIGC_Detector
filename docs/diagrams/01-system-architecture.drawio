@@ -1,0 +1,56 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="系统架构图" id="arch">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <!-- Title -->
+        <mxCell id="title" value="中英文AI生成文本检测系统 — 总体架构" style="text;html=1;fontSize=18;fontStyle=1;align=center;" vertex="1" parent="1"><mxGeometry x="334" y="20" width="500" height="30" as="geometry"/></mxCell>
+
+        <!-- Layer 1: Clients -->
+        <mxCell id="webui" value="Web UI&#xa;(浏览器)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1"><mxGeometry x="200" y="70" width="140" height="50" as="geometry"/></mxCell>
+        <mxCell id="apiclient" value="API Client&#xa;(curl/SDK)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1"><mxGeometry x="500" y="70" width="140" height="50" as="geometry"/></mxCell>
+        <mxCell id="pdf" value="PDF 文件&#xa;上传" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1"><mxGeometry x="800" y="70" width="140" height="50" as="geometry"/></mxCell>
+
+        <!-- Layer 2: FastAPI Server -->
+        <mxCell id="api" value="FastAPI Server (:8000)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="300" y="160" width="540" height="40" as="geometry"/></mxCell>
+        <mxCell id="routes" value="Routes&#xa;/detect&#xa;/detect/file" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1"><mxGeometry x="330" y="210" width="100" height="50" as="geometry"/></mxCell>
+        <mxCell id="middleware" value="Middleware&#xa;限流/OOM处理" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1"><mxGeometry x="470" y="210" width="100" height="50" as="geometry"/></mxCell>
+        <mxCell id="schemas" value="Schemas&#xa;请求/响应" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1"><mxGeometry x="610" y="210" width="100" height="50" as="geometry"/></mxCell>
+
+        <!-- Layer 3: Detection Pipeline -->
+        <mxCell id="pipeline" value="四阶段级联检测管线" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="200" y="290" width="740" height="40" as="geometry"/></mxCell>
+
+        <mxCell id="langrouter" value="语言检测&#xa;路由器" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1"><mxGeometry x="230" y="340" width="90" height="50" as="geometry"/></mxCell>
+        <mxCell id="s1" value="Stage 1&#xa;统计特征" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1"><mxGeometry x="350" y="340" width="90" height="50" as="geometry"/></mxCell>
+        <mxCell id="s1b" value="Stage 1b&#xa;语言学特征" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1"><mxGeometry x="470" y="340" width="90" height="50" as="geometry"/></mxCell>
+        <mxCell id="s2" value="Stage 2&#xa;编码器" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1"><mxGeometry x="590" y="340" width="90" height="50" as="geometry"/></mxCell>
+        <mxCell id="s3" value="Stage 3&#xa;Binoculars" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1"><mxGeometry x="710" y="340" width="90" height="50" as="geometry"/></mxCell>
+        <mxCell id="ensemble" value="加权集成&#xa;+阈值判定" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1"><mxGeometry x="830" y="340" width="90" height="50" as="geometry"/></mxCell>
+
+        <!-- Cache arrow -->
+        <mxCell id="cachelbl" value="token log-prob&#xa;缓存复用" style="text;html=1;fontSize=9;fontColor=#999999;align=center;" vertex="1" parent="1"><mxGeometry x="420" y="395" width="100" height="30" as="geometry"/></mxCell>
+
+        <!-- Layer 4: Model Manager -->
+        <mxCell id="mgr" value="Model Manager (LRU 驱逐, 11GB VRAM 预算)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="200" y="450" width="340" height="35" as="geometry"/></mxCell>
+        <mxCell id="bgdl" value="后台下载线程&#xa;(断点续传)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" vertex="1" parent="1"><mxGeometry x="600" y="445" width="140" height="45" as="geometry"/></mxCell>
+
+        <!-- Layer 5: Hardware -->
+        <mxCell id="gpu" value="GPU (RTX 3060 12GB)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;size=10;" vertex="1" parent="1"><mxGeometry x="250" y="520" width="160" height="60" as="geometry"/></mxCell>
+        <mxCell id="disk" value="磁盘缓存&#xa;~60GB 模型" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;size=10;" vertex="1" parent="1"><mxGeometry x="500" y="520" width="160" height="60" as="geometry"/></mxCell>
+        <mxCell id="hf" value="HuggingFace&#xa;Hub" style="shape=cloud;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1"><mxGeometry x="750" y="520" width="140" height="60" as="geometry"/></mxCell>
+
+        <!-- Edges -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="webui" target="api" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="apiclient" target="api" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="pdf" target="api" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;dashed=1;" edge="1" source="api" target="pipeline" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="s1" target="s1b" parent="1"><mxGeometry relative="1" as="geometry"/><mxCell id="e5lbl" value="共享" style="edgeLabel;html=1;fontSize=9;" vertex="1" connectable="0" parent="e1"><mxGeometry x="-0.1" relative="1" as="geometry"/></mxCell></mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="pipeline" target="mgr" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="mgr" target="gpu" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="bgdl" target="disk" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;dashed=1;" edge="1" source="hf" target="bgdl" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

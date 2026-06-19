@@ -1,0 +1,73 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="语言感知级联管线" id="pipeline">
+    <mxGraphModel dx="1200" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="语言感知四阶段级联检测管线流程图" style="text;html=1;fontSize=16;fontStyle=1;align=center;" vertex="1" parent="1"><mxGeometry x="300" y="10" width="500" height="25" as="geometry"/></mxCell>
+
+        <!-- Input -->
+        <mxCell id="input" value="输入文本" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1"><mxGeometry x="80" y="50" width="120" height="40" as="geometry"/></mxCell>
+
+        <!-- Language Router -->
+        <mxCell id="lang" value="语言检测&#xa;路由器" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1"><mxGeometry x="80" y="120" width="120" height="45" as="geometry"/></mxCell>
+
+        <!-- Decision: Language -->
+        <mxCell id="langdec" value="语言?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1"><mxGeometry x="100" y="195" width="80" height="60" as="geometry"/></mxCell>
+
+        <!-- Stage 1 + 1b -->
+        <mxCell id="s1" value="Stage 1: 统计特征&#xa;(GPT-2 / Wenzhong)&#xa;困惑度/熵/爆发度" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1"><mxGeometry x="250" y="130" width="170" height="55" as="geometry"/></mxCell>
+        <mxCell id="s1b" value="Stage 1b: 语言学特征&#xa;(14维 CPU-only)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1"><mxGeometry x="250" y="215" width="170" height="45" as="geometry"/></mxCell>
+
+        <!-- EN early exit -->
+        <mxCell id="enexit" value="EN: 置信度&#xa;&gt; 0.99?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="1"><mxGeometry x="470" y="130" width="100" height="55" as="geometry"/></mxCell>
+        <mxCell id="enexitY" value="是→提前退出" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" vertex="1" parent="1"><mxGeometry x="600" y="135" width="100" height="40" as="geometry"/></mxCell>
+
+        <!-- Stage 2 -->
+        <mxCell id="s2" value="Stage 2: 编码器&#xa;(RoBERTa/DeBERTa + LoRA)&#xa;输出 p_ai" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1"><mxGeometry x="250" y="300" width="170" height="55" as="geometry"/></mxCell>
+
+        <!-- ZH Arbitration -->
+        <mxCell id="zharb" value="ZH 仲裁块&#xa;stat=人类 且&#xa;enc p_ai ≥ 0.35?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=9;" vertex="1" parent="1"><mxGeometry x="480" y="295" width="140" height="65" as="geometry"/></mxCell>
+        <mxCell id="zharbY" value="是 → 仅用&#xa;编码器决策" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=9;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="660" y="300" width="100" height="50" as="geometry"/></mxCell>
+
+        <!-- Agreement Check -->
+        <mxCell id="agree" value="Stage 1&amp;2&#xa;一致?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1"><mxGeometry x="290" y="400" width="100" height="60" as="geometry"/></mxCell>
+        <mxCell id="agreeEN" value="EN: 一致→&#xa;跳过Stage3" style="text;html=1;fontSize=9;fontColor=#009900;align=center;" vertex="1" parent="1"><mxGeometry x="140" y="410" width="110" height="30" as="geometry"/></mxCell>
+        <mxCell id="agreeZH" value="ZH: 始终运行&#xa;Stage 3" style="text;html=1;fontSize=9;fontColor=#cc0000;align=center;" vertex="1" parent="1"><mxGeometry x="430" y="410" width="100" height="30" as="geometry"/></mxCell>
+
+        <!-- Stage 3 -->
+        <mxCell id="s3" value="Stage 3: Binoculars&#xa;(Qwen2-7B / Falcon-7B)&#xa;交叉困惑度" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1"><mxGeometry x="250" y="510" width="170" height="55" as="geometry"/></mxCell>
+
+        <!-- Ensemble -->
+        <mxCell id="ens" value="加权集成聚合器&#xa;EN: ling=0.85, stat=0.15&#xa;ZH: enc=0.60, bino=0.20" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="230" y="610" width="210" height="55" as="geometry"/></mxCell>
+
+        <!-- Threshold -->
+        <mxCell id="thresh" value="p_ai ≥ 阈值?&#xa;EN: 0.50 / ZH: 0.47" style="rhombus;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1"><mxGeometry x="270" y="710" width="140" height="60" as="geometry"/></mxCell>
+
+        <!-- Outputs -->
+        <mxCell id="outAI" value="AI 生成" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=14;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="120" y="810" width="120" height="40" as="geometry"/></mxCell>
+        <mxCell id="outHuman" value="人类撰写" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="440" y="810" width="120" height="40" as="geometry"/></mxCell>
+
+        <!-- ===== ALL EDGES WITH VISIBLE ARROWS ===== -->
+        <mxCell id="ed1" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;strokeWidth=2;strokeColor=#333333;" edge="1" source="input" target="lang" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ed2" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;strokeWidth=2;strokeColor=#333333;" edge="1" source="lang" target="langdec" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ed3" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;strokeWidth=2;strokeColor=#333333;" edge="1" source="langdec" target="s1" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <!-- Cache reuse arrow -->
+        <mxCell id="ed_cache" value="缓存复用&#xa;token log-prob" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;startArrow=classic;html=1;strokeWidth=1.5;strokeColor=#999999;dashed=1;fontSize=8;fontColor=#999999;" edge="1" source="s1" target="s1b" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ed4" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;strokeWidth=2;strokeColor=#333333;" edge="1" source="s1" target="enexit" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ed4b" value="是" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;strokeWidth=2;strokeColor=#009900;" edge="1" source="enexit" target="enexitY" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ed5" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;strokeWidth=2;strokeColor=#333333;" edge="1" source="s1b" target="s2" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ed6" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;strokeWidth=2;strokeColor=#333333;" edge="1" source="s2" target="zharb" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ed7" value="是" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;strokeWidth=2;strokeColor=#cc0000;" edge="1" source="zharb" target="zharbY" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ed8" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;strokeWidth=2;strokeColor=#333333;" edge="1" source="s2" target="agree" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ed9" value="否/不一致" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;strokeWidth=2;strokeColor=#333333;" edge="1" source="agree" target="s3" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ed10" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;strokeWidth=2;strokeColor=#9673a6;" edge="1" source="s3" target="ens" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ed11" value="EN: 一致" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;strokeWidth=2;strokeColor=#009900;" edge="1" source="agree" target="ens" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ed12" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;strokeWidth=2;strokeColor=#cc0000;" edge="1" source="zharbY" target="ens" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ed13" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;strokeWidth=2;strokeColor=#333333;" edge="1" source="ens" target="thresh" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ed14" value="是" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;strokeWidth=2;strokeColor=#cc0000;" edge="1" source="thresh" target="outAI" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="ed15" value="否" style="edgeStyle=orthogonalEdgeStyle;endArrow=classic;html=1;strokeWidth=2;strokeColor=#009900;" edge="1" source="thresh" target="outHuman" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
