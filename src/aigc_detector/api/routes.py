@@ -1,8 +1,9 @@
 """API route definitions for the AIGC detection service.
 
 Endpoints:
-    POST /api/v1/detect  — Run AI text detection on submitted text
-    GET  /api/v1/health  — Health check with GPU status
+    POST /api/v1/detect        — Run AI text detection on submitted text
+    POST /api/v1/detect/file   — Upload PDF/TXT file, extract text, detect
+    GET  /api/v1/health        — Health check with GPU status
 
 References:
     - DESIGN.md §5 (API specification)
@@ -12,15 +13,18 @@ References:
 from __future__ import annotations
 
 import asyncio
+import dataclasses
 import logging
+import re
 import time
 from time import perf_counter
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 from starlette.concurrency import run_in_threadpool
 
 from aigc_detector.api.middleware import limiter
 from aigc_detector.api.schemas import DetectionRequest, DetectionResponse, HealthResponse
+from aigc_detector.detection.linguistic import LinguisticDiagnostics, LinguisticFeatureExtractor
 from aigc_detector.utils.text import split_sentences_bilingual
 
 logger = logging.getLogger(__name__)
@@ -33,6 +37,12 @@ _semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
 QUEUE_TIMEOUT_SECONDS = 120
 MIN_SEGMENT_CHARS = 80
 MAX_SEGMENTS = 8
+
+# File upload limits
+MAX_FILE_SIZE_MB = 20
+MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+ALLOWED_EXTENSIONS = {".pdf", ".txt", ".md"}
+MAX_EXTRACTED_TEXT_CHARS = 50000
 
 
 def _build_segments(text: str, min_chars: int = MIN_SEGMENT_CHARS, max_segments: int = MAX_SEGMENTS) -> list[dict]:
@@ -137,6 +147,28 @@ async def detect_text(request: Request, data: DetectionRequest) -> DetectionResp
     except TimeoutError:
         raise HTTPException(status_code=503, detail="Server busy, please retry later")
 
+    # Optional linguistic-stylistic diagnostics. Computed on a fresh
+    # CPU-only extractor (no shared state with the pipeline). M5/M6 require
+    # per-token log-probs from a reference LM, which we don't recompute here
+    # (those fields will be NaN — the diagnostics don't depend on them).
+    linguistic_diagnostics: dict | None = None
+    if data.include_diagnostics:
+        try:
+            diagnostics_extractor = LinguisticFeatureExtractor()
+            features = diagnostics_extractor.extract(
+                data.text,
+                lang=result.detected_language,
+                token_log_probs=None,
+            )
+            diagnostics = LinguisticDiagnostics.from_features(
+                features,
+                lang=result.detected_language,
+            )
+            linguistic_diagnostics = dataclasses.asdict(diagnostics)
+        except Exception:
+            logger.warning("Linguistic diagnostics failed", exc_info=True)
+            linguistic_diagnostics = None
+
     return DetectionResponse(
         predicted_label=result.predicted_label,
         confidence=result.confidence,
@@ -146,6 +178,201 @@ async def detect_text(request: Request, data: DetectionRequest) -> DetectionResp
         breakdown=result.breakdown,
         processing_time_ms=round(result.processing_time_ms + segment_time_ms, 1),
         segments=segments,
+        linguistic_diagnostics=linguistic_diagnostics,
+    )
+
+
+def _extract_text_from_pdf(content: bytes) -> str:
+    """Extract text from PDF bytes.
+
+    Primary: PyMuPDF (fitz) — fast, accurate text extraction.
+    Fallback: pypdf — handles some edge cases PyMuPDF misses.
+    Detection: scanned/image-only PDFs are identified and reported clearly.
+
+    Raises HTTPException with actionable messages for:
+    - Corrupted/invalid PDFs (both engines fail)
+    - Scanned PDFs (images but no extractable text)
+    - Empty PDFs (no content at all)
+    """
+    text_parts: list[str] = []
+    has_images = False
+    pymupdf_ok = False
+
+    # --- Primary: PyMuPDF ---
+    try:
+        import fitz  # PyMuPDF
+
+        with fitz.open(stream=content, filetype="pdf") as doc:
+            for page in doc:
+                text = page.get_text("text")
+                if text.strip():
+                    text_parts.append(text)
+                if page.get_images():
+                    has_images = True
+        pymupdf_ok = True
+        logger.info(
+            "PyMuPDF: extracted %d chars from %d pages (has_images=%s)",
+            len("\n".join(text_parts)),
+            len(text_parts),
+            has_images,
+        )
+    except Exception as e:
+        logger.warning("PyMuPDF failed (%s: %s), trying pypdf fallback", type(e).__name__, e)
+
+    # --- Fallback: pypdf ---
+    if not text_parts:
+        try:
+            import io
+
+            from pypdf import PdfReader
+
+            reader = PdfReader(io.BytesIO(content))
+            for page in reader.pages:
+                extracted = page.extract_text()
+                if extracted:
+                    text_parts.append(extracted)
+            logger.info("pypdf fallback: extracted %d chars", len("\n".join(text_parts)))
+        except Exception as e:
+            logger.error("pypdf also failed: %s: %s", type(e).__name__, e)
+            if not pymupdf_ok:
+                raise HTTPException(
+                    status_code=422,
+                    detail="PDF解析失败，文件可能已损坏或不是有效的PDF。"
+                    "PyMuPDF and pypdf both failed.",
+                )
+
+    raw = "\n".join(text_parts)
+
+    # --- Diagnose empty extraction ---
+    if not raw.strip():
+        if has_images:
+            raise HTTPException(
+                status_code=422,
+                detail="PDF包含图片但无可提取文本（可能是扫描件）。"
+                "请先用OCR工具（如Tesseract）将图片转换为文本后重试。",
+            )
+        raise HTTPException(
+            status_code=422,
+            detail="PDF中未找到任何文本内容。",
+        )
+
+    # --- Normalize whitespace ---
+    lines = [ln.strip() for ln in raw.split("\n")]
+    cleaned = "\n".join(ln for ln in lines if ln)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    return cleaned[:MAX_EXTRACTED_TEXT_CHARS]
+
+
+def _extract_text_from_file(filename: str, content: bytes) -> str:
+    """Dispatch text extraction based on file extension.
+
+    Returns extracted plain text (UTF-8). Raises HTTPException on failure.
+    """
+    ext = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    if ext == ".pdf":
+        # _extract_text_from_pdf handles its own HTTPException raises
+        return _extract_text_from_pdf(content)
+    elif ext in (".txt", ".md"):
+        # Try common encodings
+        for encoding in ("utf-8", "gbk", "gb2312", "latin-1"):
+            try:
+                return content.decode(encoding)[:MAX_EXTRACTED_TEXT_CHARS]
+            except (UnicodeDecodeError, ValueError):
+                continue
+        raise HTTPException(status_code=422, detail="Could not decode text file (tried utf-8/gbk/latin-1)")
+    else:
+        allowed = ", ".join(sorted(ALLOWED_EXTENSIONS))
+        raise HTTPException(
+            status_code=415,
+            detail=f"Unsupported file type '{ext}'. Allowed: {allowed}",
+        )
+
+
+@router.post("/detect/file", response_model=DetectionResponse)
+@limiter.limit("10/minute")
+async def detect_file(
+    request: Request,
+    file: UploadFile = File(...),
+    include_segments: bool = True,
+    include_diagnostics: bool = False,
+) -> DetectionResponse:
+    """Upload a PDF or text file, extract text, and run AI detection.
+
+    Supported formats: PDF (.pdf), plain text (.txt), Markdown (.md).
+    Max file size: 20 MB. Extracted text is truncated at 50,000 characters.
+
+    Rate limited to 10 requests per minute per IP.
+    """
+    pipeline = request.app.state.pipeline
+    if pipeline is None:
+        raise HTTPException(status_code=503, detail="Detection pipeline not initialized")
+
+    # Validate file extension
+    filename = file.filename or "unknown"
+    ext = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=415,
+            detail=f"Unsupported file type '{ext}'. Allowed: {', '.join(sorted(ALLOWED_EXTENSIONS))}",
+        )
+
+    # Read file content with size limit
+    content = await file.read()
+    if len(content) > MAX_FILE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large ({len(content) // 1024 // 1024} MB). Max: {MAX_FILE_SIZE_MB} MB.",
+        )
+    if len(content) == 0:
+        raise HTTPException(status_code=422, detail="Uploaded file is empty.")
+
+    logger.info("File upload: '%s' (%d bytes, %s)", filename, len(content), ext)
+
+    # Extract text (CPU-bound, run in threadpool)
+    text = await run_in_threadpool(_extract_text_from_file, filename, content)
+
+    if len(text.strip()) < 50:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Extracted text too short ({len(text.strip())} chars). Need at least 50 characters for detection.",
+        )
+
+    logger.info("Extracted %d characters from '%s'", len(text), filename)
+
+    # Run detection (same pipeline as /detect)
+    try:
+        async with asyncio.timeout(QUEUE_TIMEOUT_SECONDS):
+            async with _semaphore:
+                result = await run_in_threadpool(pipeline.detect, text)
+                segments: list[dict] = []
+                segment_time_ms = 0.0
+                if include_segments:
+                    segments, segment_time_ms = await run_in_threadpool(_detect_segments, pipeline, text)
+    except TimeoutError:
+        raise HTTPException(status_code=503, detail="Server busy, please retry later")
+
+    # Optional linguistic diagnostics
+    linguistic_diagnostics: dict | None = None
+    if include_diagnostics:
+        try:
+            diagnostics_extractor = LinguisticFeatureExtractor()
+            features = diagnostics_extractor.extract(text, lang=result.detected_language, token_log_probs=None)
+            diagnostics = LinguisticDiagnostics.from_features(features, lang=result.detected_language)
+            linguistic_diagnostics = dataclasses.asdict(diagnostics)
+        except Exception:
+            logger.warning("Linguistic diagnostics failed", exc_info=True)
+            linguistic_diagnostics = None
+
+    return DetectionResponse(
+        predicted_label=result.predicted_label,
+        confidence=result.confidence,
+        p_ai=result.p_ai,
+        detected_language=result.detected_language,
+        stages_used=result.stages_used,
+        breakdown=result.breakdown,
+        processing_time_ms=round(result.processing_time_ms + segment_time_ms, 1),
+        segments=segments,
+        linguistic_diagnostics=linguistic_diagnostics,
     )
 
 

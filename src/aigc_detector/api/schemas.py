@@ -30,6 +30,10 @@ class DetectionRequest(BaseModel):
         default=False,
         description="If true, also return segment-level detection results.",
     )
+    include_diagnostics: bool = Field(
+        default=False,
+        description="If true, also return linguistic-stylistic diagnostics (micro/meso/macro scores).",
+    )
 
 
 class StageBreakdown(BaseModel):
@@ -55,6 +59,10 @@ class DetectionResponse(BaseModel):
     segments: list[dict] = Field(
         default_factory=list,
         description="Optional segment-level detection results.",
+    )
+    linguistic_diagnostics: dict | None = Field(
+        default=None,
+        description="Optional linguistic-stylistic diagnostics (only present when include_diagnostics=True).",
     )
 
 
