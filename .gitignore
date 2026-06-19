@@ -14,4 +14,12 @@ build/
 *.incomplete
 _archive/
 nul
-samples/
+samples/# Platform skill directories (derived from packs, not source)
+.opencode/
+.petfish/
+.sisyphus/
+opencode.json
+outputs/
+*_err.log
+*.pid
+*.new
