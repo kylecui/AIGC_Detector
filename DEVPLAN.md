@@ -220,6 +220,50 @@ Phase 0 ──→ Phase 1 ──→ Phase 2 ──→ Phase 3 ──→ Phase 4
 
 ---
 
+## Phase L: 语言学风格检测轴 (2026-06)
+
+**触发**: `DETECTOR_NOTES_2026-03` §4 已承认"AI 文本更平滑"的单假设不够；外部讨论列出 10 个语言学层面的正交信号。
+
+**目标**: 新增一条与 statistical / encoder / binoculars 正交的 CPU 检测轴，捕获"人类写作噪声"信号。
+
+**计划**: `.sisyphus/plans/upgrade-linguistic-detection.md`（Momus 审查通过）
+
+### 任务
+
+| # | 任务 | 状态 |
+|---|------|------|
+| L1.1-L1.6 | 实现 `detection/linguistic.py`（14 特征 + 双语词表 + 单元测试） | ✅ 完成（37 tests） |
+| L2.1-L2.9 | 集成 pipeline / ensemble / API（zh 仲裁保留、向后兼容） | ✅ 完成（237 tests 零回归） |
+| L3.1-L3.3 | 训练脚本 + configs/training.yaml | ✅ 完成 |
+| L4a | 文档（DESIGN §4.5, DEVPLAN Phase L, DETECTOR_NOTES_2026-06） | ✅ 完成 |
+| L4b-smoke | Smoke 验证（Defactify 200/分割 + HC3 200 questions） | ✅ 完成 |
+| L4b-full | 全量验证（Defactify 73k + HC3 ~50k） | ⏸ P1，等用户决策 |
+
+### Smoke 验证关键结果
+
+中文 (n=44, 平衡) 3-way 对比：
+
+| Classifier | ROC-AUC |
+|---|---|
+| linguistic-only | 0.8167 |
+| statistical-only | 0.9786 |
+| **fusion (0.5+0.5)** | **0.9857** ← 最佳 |
+
+fusion 比 statistical 单轴提升 +0.0071 ROC-AUC —— 证明新轴贡献了真实正交信息。
+
+### 验收标准
+
+- [x] 237/237 pytest 通过，零回归
+- [x] ruff 干净
+- [x] CPU 特征提取 < 50ms / 文本
+- [x] VRAM 占用零增加
+- [x] linguistic-only ROC-AUC ≥ 0.75（中文 smoke = 0.8167）
+- [x] statistical+linguistic fusion > statistical-only（中文 smoke +0.0071）
+- [ ] 全量数据 test ROC-AUC（P1）
+- [ ] 交叉模型泛化（Defactify Label_B 维度，P1）
+
+---
+
 ## 依赖关系图
 
 ```

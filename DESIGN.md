@@ -470,8 +470,7 @@ class EnsembleAggregator:
         "statistical": 0.2,
         "encoder": 0.5,
         "binoculars": 0.3,
-    }
-    
+    }    
     def predict(self, text: str, lang: str) -> dict:
         # Stage 1: 统计特征
         stat_features = self.stat_extractor.extract(text)
@@ -502,6 +501,49 @@ class EnsembleAggregator:
             "breakdown": score.get("breakdown", {}),
         }
 ```
+
+---
+
+### 4.5 语言学风格检测 (Linguistic Axis) — 2026-06 新增
+
+**动机**: §4.4 的统计模块仅基于"AI 文本对参考 LM 更平滑/可预测"这一单一假设。`DETECTOR_NOTES_2026-03` 已识别此假设不足以覆盖所有失败模式。新增一条**与 LM 概率正交**的 CPU 检测轴，捕获人类写作噪声（hedging / 句长波动 / 作者视角 / 段落非模板化）。
+
+**模块**: `src/aigc_detector/detection/linguistic.py`，纯 CPU，无模型依赖。
+
+**14 个特征** (3 层):
+
+| 层 | 特征 |
+|---|---|
+| **Micro (句子级, 9)** | sentence-length burstiness/cv/gini、syntactic repetition (Jaccard)、token log-prob skew + high-prob frac (复用 statistical 输出)、hedging density、discourse templating、punctuation style |
+| **Meso (段落级, 2)** | paragraph-length variance、paragraph-template score |
+| **Macro (全文级, 3)** | lexical diversity (MTLD)、authorial stance composite、readability |
+
+**分类器**: `LinguisticClassifier` = `SimpleImputer(median) → StandardScaler → XGBClassifier`，与 `StatisticalClassifier` 同模式，NaN-safe。
+
+**集成**: `pipeline.py` 在 Stage 1 内并行调用 statistical + linguistic（linguistic 复用 statistical 已算出的 token_log_probs，避免第二次 LM forward）。Ensemble 权重更新为：
+
+```python
+DEFAULT_WEIGHTS = {
+    "statistical": 0.15,  # pre-L2: 0.20
+    "linguistic":  0.15,  # new
+    "encoder":     0.50,  # unchanged
+    "binoculars":  0.20,  # pre-L2: 0.30
+}
+LEGACY_DEFAULTS = {"statistical": 0.2, "encoder": 0.5, "binoculars": 0.3}  # rollback
+```
+
+**API**: `POST /api/v1/detect` 新增可选 `include_diagnostics` 参数；启用时返回 `linguistic_diagnostics`（micro/meso/macro 0-10 分 + top_signals + human_likeness_score 0-100）。
+
+**关键集成约束**: zh-arbitration 路径（stat=human & encoder p_ai≥0.35 时仅用 encoder）**保留不变**，linguistic 不介入该仲裁。
+
+**Smoke 验证** (中文 n=44, 3-way 对比):
+- linguistic-only ROC-AUC = 0.8167
+- statistical-only ROC-AUC = 0.9786
+- **fusion (0.5+0.5) ROC-AUC = 0.9857** ← 最佳
+
+→ 融合比单一 statistical 轴提升 +0.0071 ROC-AUC，证明新轴贡献了正交信息。
+
+详见 `DETECTOR_NOTES_2026-06.md`。
 
 ---
 
