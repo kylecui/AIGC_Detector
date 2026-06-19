@@ -23,3 +23,5 @@ outputs/
 *_err.log
 *.pid
 *.new
+*.log
+initialization-report.md

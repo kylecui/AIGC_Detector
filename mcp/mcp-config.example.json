@@ -1,0 +1,27 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "<PROJECT_DIR>"
+      ]
+    },
+    "custom-threat-intel": {
+      "command": "python",
+      "args": [
+        "<PATH_TO_SERVER>/run_server.py"
+      ],
+      "env": {
+        "THREATBOOK_API_KEY": "<YOUR_API_KEY>"
+      }
+    },
+    "custom-node-mcp": {
+      "command": "node",
+      "args": [
+        "<PATH_TO_SERVER>/index.js"
+      ]
+    }
+  }
+}
