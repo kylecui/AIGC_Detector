@@ -59,3 +59,30 @@ data:
   label_map:
     human: 0
     ai: 1
+
+# ---- Linguistic Classifier Configuration ----
+# Reference: .sisyphus/plans/upgrade-linguistic-detection.md
+# CPU-only feature classifier (no GPU, no LM forward at inference)
+linguistic:
+  # Number of features (must match LinguisticClassifier.FEATURE_NAMES length)
+  n_features: 14
+  # Min text length to compute features; shorter texts return all-NaN
+  min_text_chars: 200
+  # Classifier backend (mirrors StatisticalClassifier options)
+  backend: xgboost
+  # XGBoost hyperparameters (kept in sync with the classifier's defaults)
+  xgboost:
+    n_estimators: 100
+    max_depth: 4
+    learning_rate: 0.1
+    eval_metric: logloss
+    random_state: 42
+  # Imputation for short-text NaN features
+  imputer:
+    strategy: median
+  # Calibration
+  calibration_metric: f1  # or "accuracy"
+  # Output directories per language
+  output_dirs:
+    en: models/linguistic-en
+    zh: models/linguistic-zh

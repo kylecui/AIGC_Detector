@@ -51,7 +51,18 @@
 
   <!-- ── Input Card ──────────────────────────────────────── -->
   <div class="card">
-    <div class="textarea-wrap">
+    <!-- Mode tabs -->
+    <div class="mode-tabs">
+      <button class="mode-tab" :class="{ active: mode === 'text' }" @click="switchMode('text')">
+        粘贴文本
+      </button>
+      <button class="mode-tab" :class="{ active: mode === 'file' }" @click="switchMode('file')">
+        上传文件
+      </button>
+    </div>
+
+    <!-- Text mode -->
+    <div x-show="mode === 'text'" class="textarea-wrap">
       <textarea
         x-model="text"
         placeholder="Paste or type text here to detect whether it was written by AI..."
@@ -65,11 +76,54 @@
       </div>
     </div>
 
+    <!-- File mode -->
+    <div x-show="mode === 'file'" x-cloak>
+      <div
+        class="file-drop-zone"
+        :class="{ 'drag-over': isDragOver, 'has-file': selectedFile }"
+        @dragover.prevent="isDragOver = true"
+        @dragleave.prevent="isDragOver = false"
+        @drop.prevent="handleDrop($event)"
+        @click="$refs.fileInput.click()"
+      >
+        <input type="file" x-ref="fileInput" class="file-input-hidden"
+               accept=".pdf,.txt,.md"
+               @change="handleFileSelect($event)" />
+        <template x-if="!selectedFile">
+          <div class="file-drop-content">
+            <div class="file-drop-icon">📄</div>
+            <div class="file-drop-text">
+              <strong>点击选择文件</strong> 或拖拽到此区域
+            </div>
+            <div class="file-drop-hint">支持 PDF / TXT / MD 格式，最大 20MB</div>
+          </div>
+        </template>
+        <template x-if="selectedFile">
+          <div class="file-selected-info">
+            <div class="file-selected-row">
+              <span class="file-icon" x-text="fileIcon(selectedFile.name)"></span>
+              <div class="file-details">
+                <div class="file-name" x-text="selectedFile.name"></div>
+                <div class="file-meta">
+                  <span x-text="formatFileSize(selectedFile.size)"></span>
+                  <span x-show="extractedTextLength > 0"> · 已提取 <span x-text="extractedTextLength"></span> 字符</span>
+                </div>
+              </div>
+              <button class="btn btn-ghost btn-sm" @click.stop="clearFile()" :disabled="loading">✕</button>
+            </div>
+          </div>
+        </template>
+      </div>
+      <div class="file-mode-hint" x-show="selectedFile && !loading && !result">
+        点击下方"开始检测"按钮，系统将提取文件内容并运行 AI 检测。
+      </div>
+    </div>
+
       <div class="actions">
         <button
           class="btn btn-primary"
         :disabled="!canSubmit"
-        @click="detect"
+        @click="mode === 'file' ? detectFile() : detect()"
       >
         <template x-if="loading">
           <span class="spinner"></span>
@@ -292,6 +346,10 @@
 function detector() {
   return {
     text: '',
+    mode: 'text',
+    selectedFile: null,
+    isDragOver: false,
+    extractedTextLength: 0,
     loading: false,
     healthLoading: false,
     error: null,
@@ -306,11 +364,76 @@ function detector() {
     },
 
     get canSubmit() {
-      return !this.loading && this.text.length >= 50 && this.text.length <= 10000;
+      if (this.loading) return false;
+      if (this.mode === 'text') {
+        return this.text.length >= 50 && this.text.length <= 10000;
+      }
+      return this.selectedFile !== null;
+    },
+
+    switchMode(newMode) {
+      if (this.loading) return;
+      this.mode = newMode;
+      this.error = null;
+    },
+
+    handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (file) this.setFile(file);
+    },
+
+    handleDrop(event) {
+      this.isDragOver = false;
+      const file = event.dataTransfer.files[0];
+      if (file) this.setFile(file);
+    },
+
+    setFile(file) {
+      const ext = '.' + (file.name.split('.').pop() || '').toLowerCase();
+      if (!['.pdf', '.txt', '.md'].includes(ext)) {
+        this.error = '不支持的文件类型。请上传 PDF / TXT / MD 文件。';
+        return;
+      }
+      if (file.size > 20 * 1024 * 1024) {
+        this.error = '文件过大（最大 20MB）。';
+        return;
+      }
+      this.selectedFile = file;
+      this.error = null;
+      this.result = null;
+      // For text files, preview character count; for PDF, extraction happens server-side
+      if (ext === '.txt' || ext === '.md') {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.extractedTextLength = (e.target.result || '').length;
+        };
+        reader.readAsText(file);
+      } else {
+        this.extractedTextLength = 0;
+      }
+    },
+
+    clearFile() {
+      this.selectedFile = null;
+      this.extractedTextLength = 0;
+      if (this.$refs.fileInput) this.$refs.fileInput.value = '';
+    },
+
+    fileIcon(name) {
+      const ext = (name.split('.').pop() || '').toLowerCase();
+      if (ext === 'pdf') return '📕';
+      return '📄';
+    },
+
+    formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1024 / 1024).toFixed(1) + ' MB';
     },
 
     reset() {
       this.text = '';
+      this.clearFile();
       this.error = null;
       this.result = null;
     },
@@ -475,6 +598,63 @@ function detector() {
         this.result = await resp.json();
       } catch (e) {
         this.error = 'Network error — could not reach the server.';
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async detectFile() {
+      if (!this.selectedFile) return;
+      this.loading = true;
+      this.error = null;
+      this.result = null;
+
+      try {
+        const formData = new FormData();
+        formData.append('file', this.selectedFile);
+
+        const params = new URLSearchParams();
+        if (this.includeSegments) params.set('include_segments', 'true');
+
+        const resp = await fetch('/api/v1/detect/file?' + params.toString(), {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (resp.status === 429) {
+          this.error = '请求过于频繁，请稍后再试。';
+          return;
+        }
+        if (resp.status === 503) {
+          this.error = '服务器繁忙，请稍后重试。';
+          return;
+        }
+        if (resp.status === 413) {
+          this.error = '文件过大（最大 20MB）。';
+          return;
+        }
+        if (resp.status === 415) {
+          this.error = '不支持的文件类型。请上传 PDF / TXT / MD 文件。';
+          return;
+        }
+        if (resp.status === 422) {
+          const body = await resp.json().catch(() => null);
+          this.error = (body && body.detail) || '文件内容不足以进行检测（提取文本不足 50 字符）。';
+          return;
+        }
+        if (!resp.ok) {
+          const body = await resp.json().catch(() => null);
+          this.error = (body && body.detail) || '检测失败 (HTTP ' + resp.status + ')';
+          return;
+        }
+
+        this.result = await resp.json();
+        // Update extracted text length from result segments if available
+        if (this.result.segments && this.result.segments.length > 0) {
+          this.extractedTextLength = this.result.segments.reduce((sum, s) => sum + (s.text || '').length, 0);
+        }
+      } catch (e) {
+        this.error = '网络错误 — 无法连接服务器。';
       } finally {
         this.loading = false;
       }

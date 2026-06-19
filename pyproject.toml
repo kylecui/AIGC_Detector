@@ -23,6 +23,8 @@ dependencies = [
     "bitsandbytes>=0.43",
     "safetensors>=0.4",
     "sentencepiece>=0.2",
+    "huggingface_hub>=0.23",
+    "hf-transfer>=0.1.6",  # Rust-backed multi-connection downloader for HF Hub
     # PyTorch (via CUDA index)
     "torch>=2.2",
     "torchvision>=0.17",
@@ -41,6 +43,8 @@ dependencies = [
     "protobuf>=7.34.0",
     "paramiko>=4.0.0",
     "pypdf>=6.9.0",
+    "pymupdf>=1.27.2.3",
+    "python-multipart>=0.0.32",
 ]
 
 [dependency-groups]

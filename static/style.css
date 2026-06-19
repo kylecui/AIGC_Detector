@@ -605,3 +605,142 @@ body {
     gap: 0.15rem;
   }
 }
+
+/* ── Mode Tabs ────────────────────────────────────────────── */
+.mode-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 1.25rem;
+}
+
+.mode-tab {
+  padding: 0.6rem 1.5rem;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: -2px;
+}
+
+.mode-tab:hover {
+  color: var(--text);
+  background: rgba(67, 97, 238, 0.05);
+}
+
+.mode-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+/* ── File Upload Zone ─────────────────────────────────────── */
+.file-drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 2rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--bg);
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-drop-zone:hover {
+  border-color: var(--primary);
+  background: rgba(67, 97, 238, 0.03);
+}
+
+.file-drop-zone.drag-over {
+  border-color: var(--primary);
+  background: rgba(67, 97, 238, 0.08);
+  transform: scale(1.01);
+}
+
+.file-drop-zone.has-file {
+  border-style: solid;
+  border-color: var(--success);
+  background: rgba(6, 214, 160, 0.04);
+}
+
+.file-input-hidden {
+  display: none;
+}
+
+.file-drop-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.file-drop-icon {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.file-drop-text {
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.file-drop-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Selected file display */
+.file-selected-info {
+  width: 100%;
+}
+
+.file-selected-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: left;
+}
+
+.file-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.file-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+.file-mode-hint {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  background: rgba(67, 97, 238, 0.05);
+  border-radius: 6px;
+  border-left: 3px solid var(--primary);
+}
+
+[x-cloak] {
+  display: none !important;
+}
