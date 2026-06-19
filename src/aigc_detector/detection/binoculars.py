@@ -99,7 +99,13 @@ class BinocularsDetector:
 
         load_kwargs: dict = {"trust_remote_code": True}
         if self.load_in_4bit:
-            load_kwargs["load_in_4bit"] = True
+            from transformers import BitsAndBytesConfig
+
+            load_kwargs["quantization_config"] = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=torch.bfloat16,
+                bnb_4bit_quant_type="nf4",
+            )
             load_kwargs["device_map"] = "auto"
         else:
             load_kwargs["torch_dtype"] = torch.bfloat16
