@@ -1,0 +1,3184 @@
+中英文AI生成文本检测系统 V1.0                                              第 1 页
+------------------------------------------------------------------------
+# ============================================================
+# File: src/aigc_detector/__init__.py
+# ============================================================
+
+# AIGC Detector - Bilingual AI-generated text detection system
+
+
+# ============================================================
+# File: src/aigc_detector/config.py
+# ============================================================
+
+from pathlib import Path
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    hf_token: str = ""
+    openai_api_key: str = ""
+    model_dir: Path = Path("models")
+    dataset_dir: Path = Path("dataset")
+    log_dir: Path = Path("logs")
+    device: str = "cuda"
+    max_vram_gb: float = 11.0
+
+    model_config = SettingsConfigDict(env_file=".env")
+
+
+settings = Settings()
+
+
+# ============================================================
+# File: src/aigc_detector/detection/__init__.py
+# ============================================================
+
+"""Detection subpackage — public API."""
+
+from aigc_detector.detection.binoculars import BinocularsDetector, BinocularsResult
+from aigc_detector.detection.encoder import EncoderClassifier, EncoderResult
+from aigc_detector.detection.ensemble import EnsembleAggregator, EnsembleResult
+from aigc_detector.detection.language import LanguageResult, LanguageRouter
+from aigc_detector.detection.linguistic import (
+    LinguisticClassifier,
+    LinguisticDiagnostics,
+    LinguisticFeatureExtractor,
+    LinguisticFeatures,
+)
+from aigc_detector.detection.statistical import (
+    StatisticalClassifier,
+    StatisticalFeatureExtractor,
+
+中英文AI生成文本检测系统 V1.0                                              第 2 页
+------------------------------------------------------------------------
+    StatisticalFeatures,
+)
+
+__all__ = [
+    "BinocularsDetector",
+    "BinocularsResult",
+    "EncoderClassifier",
+    "EncoderResult",
+    "EnsembleAggregator",
+    "EnsembleResult",
+    "LanguageResult",
+    "LanguageRouter",
+    "LinguisticClassifier",
+    "LinguisticDiagnostics",
+    "LinguisticFeatureExtractor",
+    "LinguisticFeatures",
+    "StatisticalClassifier",
+    "StatisticalFeatureExtractor",
+    "StatisticalFeatures",
+]
+
+
+# ============================================================
+# File: src/aigc_detector/detection/language.py
+# ============================================================
+
+"""Language detection router using xlm-roberta-base-language-detection.
+
+Routes input text to the appropriate language-specific detection pipeline
+(Chinese or English). Falls back to heuristic detection when the model
+is unavailable.
+"""
+
+from __future__ import annotations
+
+import logging
+import re
+from dataclasses import dataclass
+
+import torch
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
+logger = logging.getLogger(__name__)
+
+# Supported language codes mapped from model output labels
+_SUPPORTED_LANGUAGES = {"zh", "en"}
+
+
+@dataclass
+class LanguageResult:
+
+中英文AI生成文本检测系统 V1.0                                              第 3 页
+------------------------------------------------------------------------
+    """Result of language detection."""
+
+    lang: str  # "zh" or "en"
+    confidence: float  # 0.0–1.0
+    method: str  # "model" or "heuristic"
+
+
+class LanguageRouter:
+    """Detect text language and route to the correct detection pipeline.
+
+    Uses ``papluca/xlm-roberta-base-language-detection`` when available,
+    with a fast heuristic fallback based on Unicode character ratios.
+
+    Parameters
+    ----------
+    model_name : str
+        HuggingFace model ID or local path.
+    device : str
+        ``"cuda"`` or ``"cpu"``.
+    """
+
+    def __init__(
+        self,
+        model_name: str = "papluca/xlm-roberta-base-language-detection",
+        device: str = "cuda",
+    ):
+        self.device = device
+        self.model_name = model_name
+        self._model = None
+        self._tokenizer = None
+
+    # ------------------------------------------------------------------
+    # Lazy loading
+    # ------------------------------------------------------------------
+
+    def load(self) -> None:
+        """Load the language detection model into memory."""
+        if self._model is not None:
+            return
+        logger.info("Loading language detection model: %s", self.model_name)
+        self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        self._model = AutoModelForSequenceClassification.from_pretrained(
+            self.model_name,
+        ).to(self.device)
+        self._model.eval()
+        logger.info("Language detection model loaded on %s", self.device)
+
+    def unload(self) -> None:
+        """Release model from memory."""
+        if self._model is not None:
+
+中英文AI生成文本检测系统 V1.0                                              第 4 页
+------------------------------------------------------------------------
+            del self._model
+            del self._tokenizer
+            self._model = None
+            self._tokenizer = None
+            if self.device == "cuda":
+                torch.cuda.empty_cache()
+            logger.info("Language detection model unloaded")
+
+    @property
+    def is_loaded(self) -> bool:
+        return self._model is not None
+
+    # ------------------------------------------------------------------
+    # Detection
+    # ------------------------------------------------------------------
+
+    def detect(self, text: str, max_length: int = 512) -> LanguageResult:
+        """Detect the language of *text*.
+
+        Tries the transformer model first; if it's not loaded or fails,
+        falls back to the heuristic method.
+
+        Returns ``"zh"`` or ``"en"`` (defaults to ``"en"`` for unsupported
+        languages).
+        """
+        if self._model is not None:
+            try:
+                return self._detect_with_model(text, max_length)
+            except Exception:
+                logger.warning("Model-based detection failed, falling back to heuristic", exc_info=True)
+
+        return self._detect_heuristic(text)
+
+    def _detect_with_model(self, text: str, max_length: int) -> LanguageResult:
+        """Run the xlm-roberta language detection model."""
+        assert self._model is not None and self._tokenizer is not None
+        inputs = self._tokenizer(
+            text,
+            return_tensors="pt",
+            truncation=True,
+            max_length=max_length,
+            padding=True,
+        )
+        inputs = {k: v.to(self.device) for k, v in inputs.items()}
+
+        with torch.no_grad():
+            outputs = self._model(**inputs)
+            probs = torch.softmax(outputs.logits, dim=-1)
+
+        predicted_idx = probs.argmax(dim=-1).item()
+
+中英文AI生成文本检测系统 V1.0                                              第 5 页
+------------------------------------------------------------------------
+        confidence = probs[0, predicted_idx].item()
+        predicted_label = self._model.config.id2label[predicted_idx]
+
+        # Map model label to our supported set
+        lang = self._map_label(predicted_label)
+        return LanguageResult(lang=lang, confidence=confidence, method="model")
+
+    @staticmethod
+    def _map_label(label: str) -> str:
+        """Map model output label to ``"zh"`` or ``"en"``.
+
+        The xlm-roberta-language-detection model uses ISO-639 codes
+        (``"zh"``, ``"en"``, ``"fr"``, …).  Unsupported languages
+        default to ``"en"``.
+        """
+        label_lower = label.lower()
+        if label_lower in ("zh", "chinese"):
+            return "zh"
+        if label_lower in ("en", "english"):
+            return "en"
+        # Unsupported language — default to English pipeline
+        return "en"
+
+    @staticmethod
+    def _detect_heuristic(text: str) -> LanguageResult:
+        """Fast heuristic: ratio of CJK characters to total alphanumeric."""
+        chinese_chars = len(re.findall(r"[\u4e00-\u9fff]", text))
+        total_alpha = len(re.findall(r"[\w]", text))
+        if total_alpha == 0:
+            return LanguageResult(lang="en", confidence=0.5, method="heuristic")
+
+        ratio = chinese_chars / total_alpha
+        if ratio > 0.3:
+            return LanguageResult(lang="zh", confidence=min(ratio + 0.3, 1.0), method="heuristic")
+        return LanguageResult(lang="en", confidence=min(1.0 - ratio + 0.3, 1.0), method="heuristic")
+
+
+# ============================================================
+# File: src/aigc_detector/detection/statistical.py
+# ============================================================
+
+"""Statistical feature extraction and classification for AI text detection.
+
+Extracts per-token entropy and perplexity features from a reference language
+model (GPT-2-XL for English, Qwen2.5-7B-Instruct for Chinese) and trains /
+applies an XGBoost or Logistic Regression classifier on top.
+
+Key features:
+- perplexity, avg_entropy, std_entropy, burstiness, max_entropy, min_entropy
+
+
+中英文AI生成文本检测系统 V1.0                                              第 6 页
+------------------------------------------------------------------------
+References:
+- DESIGN.md §4.1 for the full specification
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Literal
+
+import joblib
+import numpy as np
+import torch
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from xgboost import XGBClassifier
+
+logger = logging.getLogger(__name__)
+
+FEATURE_NAMES = [
+    "perplexity",
+    "avg_entropy",
+    "std_entropy",
+    "burstiness",
+    "max_entropy",
+    "min_entropy",
+]
+
+
+@dataclass
+class StatisticalFeatures:
+    """Container for extracted statistical features."""
+
+    perplexity: float
+    avg_entropy: float
+    std_entropy: float
+    burstiness: float
+    max_entropy: float
+    min_entropy: float
+
+    def to_array(self) -> np.ndarray:
+        """Return features as a 1-D numpy array in canonical order."""
+        return np.array(
+            [self.perplexity, self.avg_entropy, self.std_entropy, self.burstiness, self.max_entropy, self.min_entropy],
+            dtype=np.float64,
+        )
+
+中英文AI生成文本检测系统 V1.0                                              第 7 页
+------------------------------------------------------------------------
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
+class StatisticalFeatureExtractor:
+    """Extract perplexity and entropy features from text using a reference LM.
+
+    Parameters
+    ----------
+    model_name : str
+        HuggingFace model ID or local path for the reference LM.
+    device : str
+        ``"cuda"`` or ``"cpu"``.
+    load_in_4bit : bool
+        Use 4-bit quantisation (bitsandbytes). Required for large models on
+        12 GB VRAM.
+    max_length : int
+        Maximum token length for input truncation.
+    """
+
+    def __init__(
+        self,
+        model_name: str,
+        device: str = "cuda",
+        load_in_4bit: bool = False,
+        max_length: int = 2048,
+    ):
+        self.model_name = model_name
+        self.device = device
+        self.load_in_4bit = load_in_4bit
+        self.max_length = max_length
+        self._model = None
+        self._tokenizer = None
+        # Per-token log-probs from the most recent extract() call. Exposed so
+        # that :class:`LinguisticFeatureExtractor` can compute M5/M6 without
+        # a second LM forward pass. Reset to None at the start of each
+        # extract() call and on unload().
+        self._last_token_log_probs: list[float] | None = None
+
+    # ------------------------------------------------------------------
+    # Lazy loading
+    # ------------------------------------------------------------------
+
+    def load(self) -> None:
+        """Load model and tokenizer into memory."""
+        if self._model is not None:
+            return
+        logger.info("Loading statistical reference model: %s (4bit=%s)", self.model_name, self.load_in_4bit)
+
+
+中英文AI生成文本检测系统 V1.0                                              第 8 页
+------------------------------------------------------------------------
+        self._tokenizer = AutoTokenizer.from_pretrained(self.model_name, trust_remote_code=True)
+        if self._tokenizer.pad_token is None:
+            self._tokenizer.pad_token = self._tokenizer.eos_token
+
+        load_kwargs: dict = {"trust_remote_code": True}
+        if self.load_in_4bit:
+            from transformers import BitsAndBytesConfig
+
+            load_kwargs["quantization_config"] = BitsAndBytesConfig(load_in_4bit=True)
+            load_kwargs["device_map"] = "auto"
+        else:
+            load_kwargs["torch_dtype"] = torch.float16
+            load_kwargs["device_map"] = "auto"
+
+        self._model = AutoModelForCausalLM.from_pretrained(self.model_name, **load_kwargs)
+
+        # Resize embeddings to match tokenizer — prevents out-of-range token IDs
+        # crashing CUDA with unrecoverable device-side assertion failures.
+        # GPT-2 tokenizer can produce IDs beyond model's vocab_size for some
+        # byte-level fallback tokens or added special tokens.
+        if len(self._tokenizer) != self._model.config.vocab_size:
+            logger.info(
+                "Resizing embeddings: model vocab_size=%d, tokenizer len=%d",
+                self._model.config.vocab_size,
+                len(self._tokenizer),
+            )
+            self._model.resize_token_embeddings(len(self._tokenizer))
+
+        # Cap max_length to the model's positional embedding size to prevent
+        # CUDA assertion failures in nn.Embedding for position IDs.
+        # GPT-2-XL has max_position_embeddings=1024 but our default is 2048.
+        model_max_pos = getattr(self._model.config, "max_position_embeddings", None)
+        if model_max_pos and self.max_length > model_max_pos:
+            logger.info(
+                "Capping max_length from %d to model's max_position_embeddings=%d",
+                self.max_length,
+                model_max_pos,
+            )
+            self.max_length = model_max_pos
+
+        self._model.eval()
+        logger.info("Statistical reference model loaded")
+
+    def unload(self) -> None:
+        """Release model from memory."""
+        if self._model is not None:
+            del self._model
+            del self._tokenizer
+            self._model = None
+            self._tokenizer = None
+
+中英文AI生成文本检测系统 V1.0                                              第 9 页
+------------------------------------------------------------------------
+            if self.device == "cuda":
+                try:
+                    torch.cuda.empty_cache()
+                except RuntimeError:
+                    pass  # CUDA may be in unrecoverable state
+            logger.info("Statistical reference model unloaded")
+        # Always clear the cached log-probs, even if no model was loaded.
+        self._last_token_log_probs = None
+
+    @property
+    def is_loaded(self) -> bool:
+        return self._model is not None
+
+    # ------------------------------------------------------------------
+    # Feature extraction
+    # ------------------------------------------------------------------
+
+    def extract(self, text: str) -> StatisticalFeatures:
+        """Extract statistical features from *text*.
+
+        Raises ``RuntimeError`` if the model has not been loaded.
+        """
+        if self._model is None or self._tokenizer is None:
+            raise RuntimeError("Model not loaded. Call .load() first.")
+
+        # Reset cached log-probs at the start so partial failures don't leak
+        # stale data from a previous call.
+        self._last_token_log_probs = None
+
+        inputs = self._tokenizer(
+            text,
+            return_tensors="pt",
+            truncation=True,
+            max_length=self.max_length,
+        )
+
+        # Safety clamp: even after resize_token_embeddings, guard against any
+        # edge-case where a token ID exceeds the embedding table size.
+        try:
+            vocab_size = self._model.config.vocab_size
+            input_ids = inputs["input_ids"]
+            if isinstance(vocab_size, int) and input_ids.max().item() >= vocab_size:
+                inputs["input_ids"] = input_ids.clamp(max=vocab_size - 1)
+        except (TypeError, AttributeError):
+            pass  # skip clamp if model config is unavailable (e.g. in tests)
+
+        inputs = {k: v.to(self._model.device) for k, v in inputs.items()}
+
+        with torch.no_grad():
+            outputs = self._model(**inputs, labels=inputs["input_ids"])
+
+中英文AI生成文本检测系统 V1.0                                              第 10 页
+------------------------------------------------------------------------
+            logits = outputs.logits  # (1, seq_len, vocab_size)
+
+        # Shift logits and labels for next-token prediction alignment
+        # logits[:, :-1, :] predicts token at position 1..N
+        # labels[:, 1:]     is the ground truth at position 1..N
+        shifted_logits = logits[:, :-1, :].contiguous()
+        target_ids = inputs["input_ids"][:, 1:].contiguous()
+
+        # Per-token log-softmax for perplexity computation
+        log_probs = torch.log_softmax(shifted_logits, dim=-1)
+        token_log_probs = log_probs.gather(2, target_ids.unsqueeze(-1)).squeeze(-1).squeeze(0)
+
+        # Expose the per-token log-probs (as a plain Python list) so that
+        # downstream CPU-only feature extractors (e.g. LinguisticFeatureExtractor)
+        # can reuse them for M5/M6 without a second LM forward pass.
+        self._last_token_log_probs = (
+            token_log_probs.detach().cpu().tolist()
+            if isinstance(token_log_probs, torch.Tensor)
+            else None
+        )
+
+        # Per-token entropy: H = -sum(p * log(p))
+        probs = torch.softmax(shifted_logits, dim=-1)
+        token_entropies = -(probs * log_probs).sum(dim=-1).squeeze(0)
+
+        # Guard against single-token inputs
+        if token_entropies.numel() < 2:
+            return StatisticalFeatures(
+                perplexity=torch.exp(-token_log_probs.mean()).item(),
+                avg_entropy=token_entropies.mean().item(),
+                std_entropy=0.0,
+                burstiness=0.0,
+                max_entropy=token_entropies.max().item(),
+                min_entropy=token_entropies.min().item(),
+            )
+
+        perplexity_val = torch.exp(-token_log_probs.mean()).item()
+        avg_entropy = token_entropies.mean().item()
+        std_entropy = token_entropies.std().item()
+        max_entropy = token_entropies.max().item()
+        min_entropy = token_entropies.min().item()
+        burstiness = self._burstiness(token_entropies)
+
+        return StatisticalFeatures(
+            perplexity=perplexity_val,
+            avg_entropy=avg_entropy,
+            std_entropy=std_entropy,
+            burstiness=burstiness,
+            max_entropy=max_entropy,
+            min_entropy=min_entropy,
+
+中英文AI生成文本检测系统 V1.0                                              第 11 页
+------------------------------------------------------------------------
+        )
+
+    def extract_batch(self, texts: list[str]) -> list[StatisticalFeatures]:
+        """Extract features from multiple texts (sequential, no batched inference)."""
+        return [self.extract(text) for text in texts]
+
+    @staticmethod
+    def _burstiness(entropies: torch.Tensor) -> float:
+        """Burstiness = (std - mean) / (std + mean).
+
+        Human text has higher burstiness (more entropy variance);
+        AI text tends to be flatter.
+        """
+        std = entropies.std().item()
+        mean = entropies.mean().item()
+        return (std - mean) / (std + mean + 1e-8)
+
+
+# ======================================================================
+# Classifier wrapper
+# ======================================================================
+
+
+class StatisticalClassifier:
+    """Lightweight classifier on top of statistical features.
+
+    Supports XGBoost and Logistic Regression backends, wrapped in an
+    sklearn ``Pipeline`` with ``StandardScaler``.
+
+    Parameters
+    ----------
+    backend : str
+        ``"xgboost"`` or ``"logistic_regression"``.
+    """
+
+    def __init__(self, backend: Literal["xgboost", "logistic_regression"] = "xgboost"):
+        self.backend = backend
+        self._pipeline: Pipeline | None = None
+        self.threshold: float = 0.5
+        self._build_pipeline()
+
+    def _build_pipeline(self) -> None:
+        if self.backend == "xgboost":
+            clf = XGBClassifier(
+                n_estimators=100,
+                max_depth=4,
+                learning_rate=0.1,
+                eval_metric="logloss",
+                random_state=42,
+                use_label_encoder=False,
+
+中英文AI生成文本检测系统 V1.0                                              第 12 页
+------------------------------------------------------------------------
+            )
+        else:
+            clf = LogisticRegression(
+                C=1.0,
+                max_iter=10_000,
+                penalty="l2",
+                random_state=42,
+            )
+        self._pipeline = Pipeline([("scaler", StandardScaler()), ("classifier", clf)])
+
+    # ------------------------------------------------------------------
+    # Training
+    # ------------------------------------------------------------------
+
+    def fit(
+        self,
+        features: np.ndarray | list[StatisticalFeatures],
+        labels: np.ndarray,
+    ) -> dict:
+        """Train the classifier.
+
+        Parameters
+        ----------
+        features : array-like of shape (n_samples, 6) or list of StatisticalFeatures
+        labels : array-like of shape (n_samples,)  — 0 = human, 1 = AI
+
+        Returns
+        -------
+        dict with training stats.
+        """
+        x_train = self._ensure_array(features)
+        self._pipeline.fit(x_train, labels)
+        train_acc = self._pipeline.score(x_train, labels)
+        logger.info("StatisticalClassifier trained: backend=%s, accuracy=%.4f", self.backend, train_acc)
+        return {"backend": self.backend, "train_accuracy": train_acc, "n_samples": len(labels)}
+
+    # ------------------------------------------------------------------
+    # Prediction
+    # ------------------------------------------------------------------
+
+    def predict(self, features: np.ndarray | StatisticalFeatures) -> dict:
+        """Predict on a single sample or batch.
+
+        Returns
+        -------
+        dict with ``label``, ``p_ai``, ``confidence``.
+        """
+        if self._pipeline is None:
+            raise RuntimeError("Classifier not trained. Call .fit() or .load() first.")
+
+
+中英文AI生成文本检测系统 V1.0                                              第 13 页
+------------------------------------------------------------------------
+        x_arr = self._ensure_array(features)
+        proba = self._pipeline.predict_proba(x_arr)  # (n, 2) — col 0 = human, col 1 = AI
+        p_ai = float(proba[0, 1]) if x_arr.shape[0] == 1 else proba[:, 1].tolist()
+
+        if x_arr.shape[0] == 1:
+            label = "ai" if p_ai > self.threshold else "human"
+            confidence = max(p_ai, 1.0 - p_ai)
+            return {"label": label, "p_ai": p_ai, "confidence": confidence}
+
+        # Batch
+        labels = ["ai" if p > self.threshold else "human" for p in p_ai]
+        confidences = [max(p, 1.0 - p) for p in p_ai]
+        return {"labels": labels, "p_ai": p_ai, "confidences": confidences}
+
+    def set_threshold(self, threshold: float) -> None:
+        """Override the AI decision threshold for inference."""
+        self.threshold = float(threshold)
+        logger.info("StatisticalClassifier threshold updated: %.6f", self.threshold)
+
+    def predict_proba(self, features: np.ndarray | list[StatisticalFeatures]) -> np.ndarray:
+        """Return raw probability array (n_samples, 2)."""
+        x_arr = self._ensure_array(features)
+        return self._pipeline.predict_proba(x_arr)
+
+    # ------------------------------------------------------------------
+    # Persistence
+    # ------------------------------------------------------------------
+
+    def save(self, path: str | Path) -> None:
+        """Save the trained pipeline to disk."""
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        joblib.dump(
+            {"pipeline": self._pipeline, "backend": self.backend},
+            path,
+            compress=3,
+        )
+        logger.info("StatisticalClassifier saved to %s", path)
+
+    def load(self, path: str | Path) -> None:
+        """Load a trained pipeline from disk."""
+        path = Path(path)
+        data = joblib.load(path)
+        self._pipeline = data["pipeline"]
+        self.backend = data["backend"]
+        logger.info("StatisticalClassifier loaded from %s (backend=%s)", path, self.backend)
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+中英文AI生成文本检测系统 V1.0                                              第 14 页
+------------------------------------------------------------------------
+
+    @staticmethod
+    def _ensure_array(features) -> np.ndarray:
+        """Convert various input types to a 2-D numpy array."""
+        if isinstance(features, StatisticalFeatures):
+            return features.to_array().reshape(1, -1)
+        if isinstance(features, list) and features and isinstance(features[0], StatisticalFeatures):
+            return np.stack([f.to_array() for f in features])
+        arr = np.asarray(features, dtype=np.float64)
+        if arr.ndim == 1:
+            arr = arr.reshape(1, -1)
+        return arr
+
+
+# ======================================================================
+# Convenience: extract features from JSONL and save
+# ======================================================================
+
+
+def extract_features_from_jsonl(
+    extractor: StatisticalFeatureExtractor,
+    input_path: str | Path,
+    output_path: str | Path,
+) -> dict:
+    """Extract features for all records in a JSONL file.
+
+    Each output line is a JSON object with the original record fields plus
+    a ``"features"`` dict containing the six statistical features.
+
+    Supports **resume**: if *output_path* already has partial results, counting
+    completed lines and skipping that many input records.
+
+    Returns a summary dict.
+    """
+    input_path = Path(input_path)
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Count existing output lines for resume support
+    already_done = 0
+    if output_path.exists():
+        with open(output_path, encoding="utf-8") as f:
+            already_done = sum(1 for _ in f)
+        if already_done > 0:
+            logger.info("Resuming feature extraction: skipping %d already-done records", already_done)
+
+    # Count total input lines for progress
+    total = 0
+    with open(input_path, encoding="utf-8") as f:
+        total = sum(1 for _ in f)
+
+中英文AI生成文本检测系统 V1.0                                              第 15 页
+------------------------------------------------------------------------
+
+    processed = already_done
+    errors = 0
+    consecutive_cuda_errors = 0
+    max_consecutive_cuda_errors = 5  # abort if GPU is likely in unrecoverable state
+
+    mode = "a" if already_done > 0 else "w"
+    with open(input_path, encoding="utf-8") as fin, open(output_path, mode, encoding="utf-8") as fout:
+        for i, line in enumerate(fin):
+            # Skip already-processed records on resume
+            if i < already_done:
+                continue
+
+            record = json.loads(line)
+            try:
+                feats = extractor.extract(record["text"])
+                record["features"] = feats.to_dict()
+                fout.write(json.dumps(record, ensure_ascii=False) + "\n")
+                processed += 1
+                consecutive_cuda_errors = 0  # reset on success
+
+                # Progress logging every 500 records
+                if processed % 500 == 0:
+                    logger.info("Feature extraction progress: %d / %d (errors=%d)", processed, total, errors)
+
+            except RuntimeError as e:
+                err_msg = str(e)
+                if "CUDA" in err_msg:
+                    consecutive_cuda_errors += 1
+                    logger.warning(
+                        "CUDA error on record %d (%s): %s",
+                        i,
+                        record.get("id", "?"),
+                        err_msg[:120],
+                    )
+                    if consecutive_cuda_errors >= max_consecutive_cuda_errors:
+                        logger.error(
+                            "Aborting: %d consecutive CUDA errors — GPU likely in unrecoverable state. "
+                            "Processed %d records before failure. Output is resumable.",
+                            consecutive_cuda_errors,
+                            processed,
+                        )
+                        break
+                    # Try to recover GPU state
+                    try:
+                        torch.cuda.empty_cache()
+                    except Exception:
+                        pass
+                else:
+                    logger.warning("RuntimeError on record %d (%s): %s", i, record.get("id", "?"), err_msg[:120])
+
+中英文AI生成文本检测系统 V1.0                                              第 16 页
+------------------------------------------------------------------------
+                errors += 1
+
+            except Exception:
+                logger.warning("Failed to extract features for record %d (%s)", i, record.get("id", "?"), exc_info=True)
+                errors += 1
+
+    logger.info("Feature extraction complete: processed=%d, errors=%d, total=%d", processed, errors, total)
+    return {"processed": processed, "errors": errors, "output_path": str(output_path)}
+
+
+# ============================================================
+# File: src/aigc_detector/detection/linguistic.py
+# ============================================================
+
+"""Linguistic-stylistic feature extraction for AI text detection.
+
+A CPU-only, dependency-free feature engine that captures "human writing
+noise" signals orthogonal to the LM-probability features produced by
+:class:`StatisticalFeatureExtractor`. No LM/GPU calls are made from this
+module — :meth:`LinguisticFeatureExtractor.extract` accepts an optional
+``token_log_probs`` array (typically produced upstream by
+``StatisticalFeatureExtractor``) for the two token-probability features.
+
+Feature groups
+--------------
+- **M1-M6**: micro / sentence-level signals (length burstiness, repetition,
+  token-logprob distribution shape).
+- **M7-M9**: micro / lexical signals (hedging, discourse templating,
+  punctuation style).
+- **S1-S2**: meso / paragraph-level signals (paragraph-length variance,
+  template-structure score).
+- **D1-D3**: macro / document-level signals (lexical diversity MTLD,
+  authorial stance, readability).
+
+References
+----------
+- DESIGN.md §4.x for the linguistic-feature specification.
+- McCarthy & Jarvis (2010) for the MTLD algorithm.
+- Flesch (1948) for Reading Ease.
+
+All per-1000-char features are robust to the empty-text edge case
+(return 0.0 rather than raising).
+"""
+
+from __future__ import annotations
+
+import logging
+import math
+import re
+from dataclasses import asdict, dataclass, fields
+
+中英文AI生成文本检测系统 V1.0                                              第 17 页
+------------------------------------------------------------------------
+from pathlib import Path
+
+import joblib
+import numpy as np
+from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from xgboost import XGBClassifier
+
+from aigc_detector.utils.text import is_chinese, split_sentences_bilingual
+
+logger = logging.getLogger(__name__)
+
+# ======================================================================
+# Lexicons (case-insensitive substring match)
+# ======================================================================
+
+# fmt: off
+HEDGING_WORDS_EN: list[str] = [
+    "appears to", "tends to", "seems to", "somewhat", "in our experience",
+    "we found", "we find", "somewhat unexpectedly", "interestingly",
+    "in practice", "to some extent", "in our observations",
+    "a closer examination", "presumably", "arguably", "likely",
+    "may", "might", "could", "possibly", "perhaps",
+]
+
+HEDGING_WORDS_ZH: list[str] = [
+    "似乎", "往往", "我们发现", "出人意料", "实践中", "某种程度上",
+    "据我们观察", "更仔细的观察", "可能", "也许", "或许", "大概",
+    "不一定", "未必", "似乎可以",
+]
+
+AI_TEMPLATE_MARKERS_EN: list[str] = [
+    "furthermore", "moreover", "in addition", "additionally",
+    "therefore", "thus", "consequently", "as a result",
+    "in conclusion", "to summarize", "firstly", "secondly", "finally",
+]
+
+AI_TEMPLATE_MARKERS_ZH: list[str] = [
+    "此外", "另外", "因此", "综上", "总而言之", "首先", "其次", "最后",
+    "由此可见", "不难看出",
+]
+
+PUNCTUATION_EN: list[str] = ["\u2014", "\u2013", "(", ")", ";"]  # em-dash, en-dash, parens, semicolon
+PUNCTUATION_ZH: list[str] = ["\u2014\u2014", "\u2026\u2026", "\u3001", "\uff1b"]  # ——, ……, 、, ;
+
+# Template-y openers for paragraph_template_score (S2)
+TEMPLATE_OPENERS_EN: tuple[str, ...] = ("the", "this", "these", "we", "in", "a")
+TEMPLATE_OPENERS_ZH: tuple[str, ...] = ("本文", "本研究", "通过", "为了", "基于")
+
+
+中英文AI生成文本检测系统 V1.0                                              第 18 页
+------------------------------------------------------------------------
+# First-person / opinion markers for authorial_stance_score (D2)
+FIRST_PERSON_EN: list[str] = ["we", "our", "us", "i", "my", "me"]
+FIRST_PERSON_ZH: list[str] = ["我们", "笔者", "本人", "我"]
+# fmt: on
+
+
+# ======================================================================
+# Feature names (canonical order — keep in sync with LinguisticFeatures)
+# ======================================================================
+
+FEATURE_NAMES: list[str] = [
+    "sentence_length_burstiness",
+    "sentence_length_cv",
+    "sentence_length_gini",
+    "syntactic_repetition_rate",
+    "token_logprob_skew",
+    "token_logprob_high_prob_frac",
+    "hedging_density",
+    "discourse_templating",
+    "punctuation_style",
+    "paragraph_length_variance",
+    "paragraph_template_score",
+    "lexical_diversity_mtld",
+    "authorial_stance_score",
+    "readability_index",
+]
+
+# Common English stopwords used by syntactic_repetition_rate (M4).
+# Small, conservative list — we only need a rough "opener token" filter.
+_STOPWORDS_EN: frozenset[str] = frozenset(
+    {
+        "the", "a", "an", "and", "or", "but", "of", "in", "on", "at",
+        "to", "for", "with", "by", "from", "as", "is", "are", "was",
+        "were", "be", "been", "being", "that", "this", "these", "those",
+        "it", "its", "i", "we", "you", "they", "he", "she",
+        "has", "have", "had", "do", "does", "did", "will", "would",
+        "can", "could", "should", "may", "might", "must", "shall",
+        "not", "no", "so", "than", "then", "there", "here",
+    }
+)
+
+
+# ======================================================================
+# LinguisticFeatures dataclass
+# ======================================================================
+
+
+@dataclass
+class LinguisticFeatures:
+    """Container for the 14 linguistic-stylistic features.
+
+中英文AI生成文本检测系统 V1.0                                              第 19 页
+------------------------------------------------------------------------
+
+    Some fields may be ``float("nan")`` when the input text is too short
+    or when a required input (e.g. ``token_log_probs``) is not provided.
+    """
+
+    # Micro / sentence-level
+    sentence_length_burstiness: float       # M1: (std-mean)/(std+mean) of sentence lengths
+    sentence_length_cv: float               # M2: std/mean of sentence lengths
+    sentence_length_gini: float             # M3: Gini coefficient of sentence lengths
+    syntactic_repetition_rate: float        # M4: avg pairwise Jaccard of sentence opener token sets
+    token_logprob_skew: float               # M5: skewness of per-token log-probs (NaN if no probs)
+    token_logprob_high_prob_frac: float     # M6: fraction of tokens with log-prob > -1.0 (NaN if no probs)
+    hedging_density: float                  # M7: hedging word hits per 1000 chars
+    discourse_templating: float             # M8: AI-template discourse marker hits per 1000 chars
+    punctuation_style: float                # M9: combined em-dash/parenthetical/semicolon per 1000 chars
+    # Meso / paragraph-level
+    paragraph_length_variance: float        # S1: log-variance of paragraph char counts
+    paragraph_template_score: float         # S2: heuristic 0-1 score for "Bg->Method->Result->Conclusion" symmetry
+    # Macro / document-level
+    lexical_diversity_mtld: float           # D1: MTLD (Measure of Textual Lexical Diversity)
+    authorial_stance_score: float           # D2: first-person + opinion + hedging combined density
+    readability_index: float                # D3: Flesch-Kincaid (en) / avg-sentence-length proxy (zh)
+
+    def to_array(self) -> np.ndarray:
+        """Return features as a 1-D float64 numpy array in canonical order.
+
+        NaN-safe: callers (e.g. the classifier pipeline) are expected to
+        handle NaNs via ``SimpleImputer``.
+        """
+        return np.array(
+            [
+                self.sentence_length_burstiness,
+                self.sentence_length_cv,
+                self.sentence_length_gini,
+                self.syntactic_repetition_rate,
+                self.token_logprob_skew,
+                self.token_logprob_high_prob_frac,
+                self.hedging_density,
+                self.discourse_templating,
+                self.punctuation_style,
+                self.paragraph_length_variance,
+                self.paragraph_template_score,
+                self.lexical_diversity_mtld,
+                self.authorial_stance_score,
+                self.readability_index,
+            ],
+            dtype=np.float64,
+        )
+
+    def to_dict(self) -> dict:
+
+中英文AI生成文本检测系统 V1.0                                              第 20 页
+------------------------------------------------------------------------
+        """Return features as a plain dict (preserves field order)."""
+        return asdict(self)
+
+
+def _nan_features() -> LinguisticFeatures:
+    """Build a LinguisticFeatures with every field set to NaN."""
+    nan = float("nan")
+    return LinguisticFeatures(
+        sentence_length_burstiness=nan,
+        sentence_length_cv=nan,
+        sentence_length_gini=nan,
+        syntactic_repetition_rate=nan,
+        token_logprob_skew=nan,
+        token_logprob_high_prob_frac=nan,
+        hedging_density=nan,
+        discourse_templating=nan,
+        punctuation_style=nan,
+        paragraph_length_variance=nan,
+        paragraph_template_score=nan,
+        lexical_diversity_mtld=nan,
+        authorial_stance_score=nan,
+        readability_index=nan,
+    )
+
+
+# ======================================================================
+# LinguisticFeatureExtractor
+# ======================================================================
+
+
+class LinguisticFeatureExtractor:
+    """Extract the 14 linguistic-stylistic features from text.
+
+    Pure-CPU, dependency-free. No LM call is performed inside this class;
+    the two token-probability features (M5/M6) require an optional
+    ``token_log_probs`` argument typically supplied by
+    :class:`StatisticalFeatureExtractor`.
+
+    Parameters
+    ----------
+    min_text_chars : int
+        Inputs shorter than this threshold return an all-NaN
+        :class:`LinguisticFeatures` (the signals are too noisy on short
+        text). Default 200.
+    """
+
+    def __init__(self, min_text_chars: int = 200):
+        self.min_text_chars = int(min_text_chars)
+
+    # ------------------------------------------------------------------
+
+中英文AI生成文本检测系统 V1.0                                              第 21 页
+------------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    def extract(
+        self,
+        text: str,
+        lang: str | None = None,
+        token_log_probs: list[float] | np.ndarray | None = None,
+    ) -> LinguisticFeatures:
+        """Extract linguistic features from *text*.
+
+        Parameters
+        ----------
+        text : str
+            Input text (paragraph or full document).
+        lang : str or None
+            ``"en"`` / ``"zh"``; if None, inferred via :func:`is_chinese`.
+        token_log_probs : sequence of float or None
+            Per-token log-probabilities from a reference LM. If None,
+            M5/M6 are set to NaN.
+
+        Returns
+        -------
+        LinguisticFeatures
+            14-field feature container (some fields NaN for short text).
+        """
+        # Empty / whitespace-only text: never crash.
+        if text is None or len(text.strip()) == 0:
+            return _nan_features()
+
+        if lang is None:
+            lang = "zh" if is_chinese(text) else "en"
+
+        # Short text guard: all-NaN result (matches spec).
+        if len(text) < self.min_text_chars:
+            return _nan_features()
+
+        sentences = split_sentences_bilingual(text)
+        char_count = len(text)
+
+        m1, m2, m3 = self._sentence_length_stats(sentences)
+        m4 = self._syntactic_repetition_rate(sentences, lang)
+        m5, m6 = self._token_logprob_features(token_log_probs)
+        m7 = self._density_from_lexicon(text, char_count, lang, hedging=True)
+        m8 = self._density_from_lexicon(text, char_count, lang, hedging=False, templating=True)
+        m9 = self._punctuation_density(text, char_count, lang)
+        s1 = self._paragraph_length_variance(text)
+        s2 = self._paragraph_template_score(text, lang)
+        d1 = self._lexical_diversity_mtld(text, lang)
+        # Hedging count (raw) reused for the stance composite.
+
+中英文AI生成文本检测系统 V1.0                                              第 22 页
+------------------------------------------------------------------------
+        hedge_count = self._count_lexicon(text, lang, hedging=True)
+        d2 = self._authorial_stance_density(text, char_count, lang, hedge_count)
+        d3 = self._readability_index(sentences, text, lang)
+
+        return LinguisticFeatures(
+            sentence_length_burstiness=m1,
+            sentence_length_cv=m2,
+            sentence_length_gini=m3,
+            syntactic_repetition_rate=m4,
+            token_logprob_skew=m5,
+            token_logprob_high_prob_frac=m6,
+            hedging_density=m7,
+            discourse_templating=m8,
+            punctuation_style=m9,
+            paragraph_length_variance=s1,
+            paragraph_template_score=s2,
+            lexical_diversity_mtld=d1,
+            authorial_stance_score=d2,
+            readability_index=d3,
+        )
+
+    # ------------------------------------------------------------------
+    # M1-M3: sentence-length statistics
+    # ------------------------------------------------------------------
+
+    def _sentence_length_stats(self, sentences: list[str]) -> tuple[float, float, float]:
+        """Return (burstiness, cv, gini) of sentence char-lengths."""
+        if len(sentences) < 2:
+            return float("nan"), float("nan"), float("nan")
+
+        lengths = np.array([len(s) for s in sentences], dtype=np.float64)
+        mean = float(lengths.mean())
+        std = float(lengths.std())  # population std, matches StatisticalFeatures convention
+
+        # M1 burstiness: (std - mean) / (std + mean + eps) — same as StatisticalFeatures._burstiness.
+        burstiness = (std - mean) / (std + mean + 1e-8)
+
+        # M2 coefficient of variation.
+        cv = std / (abs(mean) + 1e-8) if abs(mean) > 1e-8 else 0.0
+
+        # M3 Gini coefficient.
+        gini = self._gini(lengths)
+
+        return burstiness, cv, gini
+
+    @staticmethod
+    def _gini(values: np.ndarray) -> float:
+        """Standard Gini coefficient over non-negative values.
+
+        ``G = (2 * sum(i * x_i) / (n * sum(x_i))) - (n + 1) / n``
+
+中英文AI生成文本检测系统 V1.0                                              第 23 页
+------------------------------------------------------------------------
+        after sorting ascending. Returns NaN if the total is zero.
+        """
+        values = np.sort(np.asarray(values, dtype=np.float64))
+        n = values.size
+        if n == 0:
+            return float("nan")
+        total = float(values.sum())
+        if total <= 0:
+            return float("nan")
+        weighted = float(np.sum(np.arange(1, n + 1, dtype=np.float64) * values))
+        return (2.0 * weighted / (n * total)) - (n + 1.0) / n
+
+    # ------------------------------------------------------------------
+    # M4: syntactic_repetition_rate (avg pairwise Jaccard of openers)
+    # ------------------------------------------------------------------
+
+    def _syntactic_repetition_rate(self, sentences: list[str], lang: str) -> float:
+        """Average pairwise Jaccard similarity of per-sentence opener token sets."""
+        if len(sentences) < 2:
+            return float("nan")
+
+        opener_sets: list[set[str]] = []
+        for sent in sentences:
+            tokens = self._opener_tokens(sent, lang, k=5)
+            if tokens:
+                opener_sets.append(set(tokens))
+
+        if len(opener_sets) < 2:
+            return float("nan")
+
+        total = 0.0
+        pairs = 0
+        for i in range(len(opener_sets)):
+            for j in range(i + 1, len(opener_sets)):
+                a, b = opener_sets[i], opener_sets[j]
+                union = len(a | b)
+                if union == 0:
+                    continue
+                total += len(a & b) / union
+                pairs += 1
+
+        return total / pairs if pairs > 0 else 0.0
+
+    def _opener_tokens(self, sentence: str, lang: str, k: int = 5) -> list[str]:
+        """First *k* non-stopword tokens of a sentence, lowercased.
+
+        English: whitespace tokens, stopwords filtered.
+        Chinese: per-character tokens (no whitespace), all kept — Chinese
+        has no equivalent stopword set in this conservative implementation.
+        """
+
+中英文AI生成文本检测系统 V1.0                                              第 24 页
+------------------------------------------------------------------------
+        if lang == "zh":
+            # Drop punctuation, keep CJK and ASCII letters/digits.
+            chars = re.findall(r"[\u4e00-\u9fff a-zA-Z0-9]", sentence.lower())
+            tokens = [c for c in chars if c.strip()]
+            return tokens[:k]
+        # English
+        raw = re.findall(r"[a-zA-Z'][a-zA-Z'-]*", sentence.lower())
+        tokens = [t for t in raw if t not in _STOPWORDS_EN]
+        return tokens[:k]
+
+    # ------------------------------------------------------------------
+    # M5, M6: token log-prob distribution shape
+    # ------------------------------------------------------------------
+
+    def _token_logprob_features(
+        self,
+        token_log_probs: list[float] | np.ndarray | None,
+    ) -> tuple[float, float]:
+        """Return (skewness, high-prob fraction) or (NaN, NaN) if not provided."""
+        if token_log_probs is None:
+            return float("nan"), float("nan")
+
+        arr = np.asarray(token_log_probs, dtype=np.float64)
+        if arr.size == 0:
+            return float("nan"), float("nan")
+
+        # M5 skewness. Prefer scipy.stats.skew (bias=True for population skew).
+        skew_val = self._skewness(arr)
+
+        # M6 fraction of tokens with log-prob > -1.0 (i.e. prob > e^-1 ~= 0.368).
+        high_prob_frac = float((arr > -1.0).mean())
+
+        return skew_val, high_prob_frac
+
+    @staticmethod
+    def _skewness(arr: np.ndarray) -> float:
+        """Population skewness (Fisher-Pearson with bias correction off).
+
+        Uses scipy.stats.skew when available; falls back to a manual
+        computation matching scipy's default (bias=True) definition.
+        """
+        try:
+            from scipy.stats import skew as _scipy_skew
+
+            return float(_scipy_skew(arr, bias=True))
+        except Exception:  # pragma: no cover — scipy ships with sklearn dep tree
+            n = arr.size
+            if n < 3:
+                return float("nan")
+            mean = arr.mean()
+
+中英文AI生成文本检测系统 V1.0                                              第 25 页
+------------------------------------------------------------------------
+            std = arr.std()
+            if std < 1e-12:
+                return 0.0
+            return float(np.mean(((arr - mean) / std) ** 3))
+
+    # ------------------------------------------------------------------
+    # M7, M8: lexicon densities
+    # ------------------------------------------------------------------
+
+    def _count_lexicon(self, text: str, lang: str, hedging: bool, templating: bool = False) -> int:
+        """Count substring occurrences of the requested lexicon.
+
+        Exactly one of ``hedging`` / ``templating`` must be True.
+        Case-insensitive for English; substring match for Chinese.
+        """
+        if hedging:
+            words = HEDGING_WORDS_EN if lang == "en" else HEDGING_WORDS_ZH
+        elif templating:
+            words = AI_TEMPLATE_MARKERS_EN if lang == "en" else AI_TEMPLATE_MARKERS_ZH
+        else:
+            return 0
+
+        if lang == "en":
+            haystack = text.lower()
+            return sum(haystack.count(w) for w in words)
+        return sum(text.count(w) for w in words)
+
+    def _density_from_lexicon(
+        self,
+        text: str,
+        char_count: int,
+        lang: str,
+        hedging: bool,
+        templating: bool = False,
+    ) -> float:
+        """Lexicon hits per 1000 characters (0.0 on empty text)."""
+        if char_count == 0:
+            return 0.0
+        count = self._count_lexicon(text, lang, hedging=hedging, templating=templating)
+        return count * 1000.0 / char_count
+
+    # ------------------------------------------------------------------
+    # M9: punctuation style density
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _punctuation_density(text: str, char_count: int, lang: str) -> float:
+        """Combined em-dash / parenthetical / semicolon count per 1000 chars."""
+        if char_count == 0:
+            return 0.0
+
+中英文AI生成文本检测系统 V1.0                                              第 26 页
+------------------------------------------------------------------------
+        marks = PUNCTUATION_EN if lang == "en" else PUNCTUATION_ZH
+        count = sum(text.count(m) for m in marks)
+        return count * 1000.0 / char_count
+
+    # ------------------------------------------------------------------
+    # S1: paragraph length variance (log1p of variance)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _paragraph_length_variance(text: str) -> float:
+        """log1p(var(paragraph_char_counts)); NaN if fewer than 2 paragraphs."""
+        paragraphs = LinguisticFeatureExtractor._split_paragraphs(text)
+        if len(paragraphs) < 2:
+            return float("nan")
+        lengths = np.array([len(p) for p in paragraphs], dtype=np.float64)
+        var = float(np.var(lengths))
+        return float(math.log1p(max(var, 0.0)))
+
+    @staticmethod
+    def _split_paragraphs(text: str) -> list[str]:
+        """Split on double-newline, falling back to single-newline."""
+        if "\n\n" in text:
+            parts = text.split("\n\n")
+        else:
+            parts = text.split("\n")
+        return [p.strip() for p in parts if p.strip()]
+
+    # ------------------------------------------------------------------
+    # S2: paragraph template score (heuristic 0-1)
+    # ------------------------------------------------------------------
+
+    def _paragraph_template_score(self, text: str, lang: str) -> float:
+        """Crude 0-1 score for Background->Method->Result->Conclusion symmetry.
+
+        Returns 0.0 when there are fewer than 3 paragraphs (insufficient
+        signal). Higher scores indicate more templated / AI-like structure.
+        """
+        paragraphs = self._split_paragraphs(text)
+        if len(paragraphs) < 3:
+            return 0.0
+
+        openers = TEMPLATE_OPENERS_EN if lang == "en" else TEMPLATE_OPENERS_ZH
+
+        # Per-paragraph: does it start with a template-y opener?
+        opener_hits = 0
+        signatures: list[frozenset[str]] = []
+        for para in paragraphs:
+            first_sentence = self._first_sentence(para)
+            opener_tokens = self._opener_tokens(first_sentence, lang, k=3)
+            signatures.append(frozenset(opener_tokens))
+
+中英文AI生成文本检测系统 V1.0                                              第 27 页
+------------------------------------------------------------------------
+            if opener_tokens and opener_tokens[0] in openers:
+                opener_hits += 1
+
+        # Topic signature similarity between consecutive paragraphs.
+        similar_pairs = 0
+        for i in range(len(signatures) - 1):
+            a, b = signatures[i], signatures[i + 1]
+            union = len(a | b)
+            if union == 0:
+                continue
+            jacc = len(a & b) / union
+            if jacc >= 0.5:  # TODO: calibrate threshold against labelled data.
+                similar_pairs += 1
+
+        n = len(paragraphs)
+        # Blend opener hit-rate and consecutive-similarity rate, both in [0, 1].
+        opener_rate = opener_hits / n
+        similarity_rate = similar_pairs / max(n - 1, 1)
+        return float(0.5 * opener_rate + 0.5 * similarity_rate)
+
+    @staticmethod
+    def _first_sentence(paragraph: str) -> str:
+        """Best-effort extraction of the first sentence of a paragraph."""
+        sentences = split_sentences_bilingual(paragraph)
+        return sentences[0] if sentences else paragraph.strip()
+
+    # ------------------------------------------------------------------
+    # D1: lexical diversity (MTLD)
+    # ------------------------------------------------------------------
+
+    def _lexical_diversity_mtld(self, text: str, lang: str) -> float:
+        """MTLD (McCarthy, 2005). NaN if fewer than 10 tokens."""
+        tokens = self._tokenize(text, lang)
+        if len(tokens) < 10:
+            return float("nan")
+        # Cap for performance on very long inputs.
+        if len(tokens) > 5000:
+            tokens = tokens[:5000]
+        forward = self._mtld_directional(tokens)
+        backward = self._mtld_directional(tokens[::-1])
+        return float((forward + backward) / 2.0)
+
+    def _mtld_directional(self, tokens: list[str], factor_threshold: float = 0.72) -> float:
+        """One-direction MTLD (McCarthy & Jarvis, 2010).
+
+        Walks *tokens*, counting "factors" — runs whose type-token ratio
+        drops from 1.0 to or below *factor_threshold*. A trailing partial
+        factor is converted to a fractional factor via the linearised
+        progress of TTR between 1.0 and the threshold. MTLD is then
+        ``total_tokens / (n_factors + partial_proportion)``.
+
+中英文AI生成文本检测系统 V1.0                                              第 28 页
+------------------------------------------------------------------------
+
+        ``factor_threshold`` default 0.72 follows the original paper.
+        """
+        factors = 0
+        total_tokens = 0
+        current_factor_len = 0
+        types: set[str] = set()
+
+        for token in tokens:
+            types.add(token)
+            current_factor_len += 1
+            total_tokens += 1
+            ttr = len(types) / current_factor_len
+            if ttr <= factor_threshold:
+                factors += 1
+                types = set()
+                current_factor_len = 0
+
+        # No tokens at all (should not happen — guarded upstream).
+        if total_tokens == 0:
+            return 0.0
+
+        # Trailing partial factor: convert to fractional progress.
+        if current_factor_len == 0:
+            # Ended exactly on a factor boundary.
+            if factors == 0:
+                return float(total_tokens)  # TTR never dropped below threshold.
+            return float(total_tokens / factors)
+
+        ttr_final = len(types) / current_factor_len
+        # Linearised progress from TTR=1.0 (start of factor) to TTR=threshold.
+        progress = (1.0 - ttr_final) / (1.0 - factor_threshold)
+        progress = max(0.0, min(progress, 1.0))
+
+        denominator = factors + progress
+        if denominator < 1e-8:
+            return float(total_tokens)
+        return float(total_tokens / denominator)
+
+    @staticmethod
+    def _tokenize(text: str, lang: str) -> list[str]:
+        """Whitespace tokens for en; character-level tokens for zh."""
+        if lang == "zh":
+            return re.findall(r"[\u4e00-\u9fff]", text)
+        return text.lower().split()
+
+    # ------------------------------------------------------------------
+    # D2: authorial stance density (first-person + hedging)
+    # ------------------------------------------------------------------
+
+
+中英文AI生成文本检测系统 V1.0                                              第 29 页
+------------------------------------------------------------------------
+    def _authorial_stance_density(
+        self,
+        text: str,
+        char_count: int,
+        lang: str,
+        hedging_count: int,
+    ) -> float:
+        """Combined first-person + hedging density per 1000 chars."""
+        if char_count == 0:
+            return 0.0
+        first_person_words = FIRST_PERSON_EN if lang == "en" else FIRST_PERSON_ZH
+        if lang == "en":
+            haystack = text.lower()
+            # Match as whole words to avoid counting substrings inside other words.
+            fp_count = sum(len(re.findall(rf"\b{re.escape(w)}\b", haystack)) for w in first_person_words)
+        else:
+            fp_count = sum(text.count(w) for w in first_person_words)
+
+        return (fp_count + hedging_count) * 1000.0 / char_count
+
+    # ------------------------------------------------------------------
+    # D3: readability index
+    # ------------------------------------------------------------------
+
+    def _readability_index(self, sentences: list[str], text: str, lang: str) -> float:
+        """Flesch Reading Ease (en) / negative-avg-sentence-length proxy (zh)."""
+        if len(sentences) < 2:
+            return float("nan")
+
+        if lang == "zh":
+            avg_len = float(np.mean([len(s) for s in sentences]))
+            return -1.0 * avg_len
+
+        words = text.split()
+        n_words = len(words)
+        n_sents = len(sentences)
+        if n_words == 0 or n_sents == 0:
+            return float("nan")
+
+        syllables = sum(self._count_syllables(w) for w in words)
+        words_per_sentence = n_words / n_sents
+        syllables_per_word = syllables / n_words
+        return 206.835 - 1.015 * words_per_sentence - 84.6 * syllables_per_word
+
+    @staticmethod
+    def _count_syllables(word: str) -> int:
+        """Rough vowel-group syllable counter (lower bound of 1 per word)."""
+        word = re.sub(r"[^a-zA-Z]", "", word.lower())
+        if not word:
+            return 0
+
+中英文AI生成文本检测系统 V1.0                                              第 30 页
+------------------------------------------------------------------------
+        groups = re.findall(r"[aeiouy]+", word)
+        count = len(groups)
+        # Silent trailing 'e' correction.
+        if word.endswith("e") and count > 1:
+            count -= 1
+        return max(count, 1)
+
+
+# ======================================================================
+# LinguisticClassifier wrapper
+# ======================================================================
+
+
+class LinguisticClassifier:
+    """XGBoost classifier on top of :class:`LinguisticFeatures`.
+
+    Mirrors :class:`StatisticalClassifier` API. The pipeline is
+    ``SimpleImputer(median) -> StandardScaler -> XGBClassifier`` so that
+    NaN values in the feature matrix (common for short text) are imputed
+    rather than dropped.
+
+    Parameters
+    ----------
+    backend : str
+        Kept for API symmetry with :class:`StatisticalClassifier`; only
+        ``"xgboost"`` is supported.
+    """
+
+    FEATURE_NAMES: list[str] = FEATURE_NAMES
+
+    def __init__(self, backend: str = "xgboost"):
+        if backend != "xgboost":
+            raise ValueError(f"LinguisticClassifier only supports backend='xgboost', got {backend!r}")
+        self.backend = backend
+        self._pipeline: Pipeline | None = None
+        self.threshold: float = 0.5
+        self._build_pipeline()
+
+    def _build_pipeline(self) -> None:
+        clf = XGBClassifier(
+            n_estimators=100,
+            max_depth=4,
+            learning_rate=0.1,
+            eval_metric="logloss",
+            random_state=42,
+            use_label_encoder=False,
+        )
+        self._pipeline = Pipeline(
+            [
+                ("imputer", SimpleImputer(strategy="median")),
+
+
+========================================================================
+# (中间部分省略，以下为源代码后 30 页)
+========================================================================
+
+中英文AI生成文本检测系统 V1.0                                              第 31 页
+------------------------------------------------------------------------
+    test_ratio_adjusted = test_ratio / (val_ratio + test_ratio)
+
+    val_records, test_records, _, _ = train_test_split(
+        val_test_records,
+        val_test_keys,
+        train_size=val_ratio_adjusted,
+        test_size=test_ratio_adjusted,
+        random_state=seed,
+        stratify=val_test_keys if stratify_by else None,
+    )
+
+    # Create output directory
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Write splits
+    train_path = output_dir / "train.jsonl"
+    val_path = output_dir / "val.jsonl"
+    test_path = output_dir / "test.jsonl"
+
+    _write_jsonl(train_path, train_records)
+    _write_jsonl(val_path, val_records)
+    _write_jsonl(test_path, test_records)
+
+    # Calculate statistics
+    stats = {
+        "train_count": len(train_records),
+        "val_count": len(val_records),
+        "test_count": len(test_records),
+        "label_distribution": _get_distribution(train_records + val_records + test_records, "label"),
+        "lang_distribution": _get_distribution(train_records + val_records + test_records, "lang"),
+    }
+
+    # Add per-split distributions if stratifying
+    if stratify_by:
+        stats["train_label_distribution"] = _get_distribution(train_records, "label")
+        stats["train_lang_distribution"] = _get_distribution(train_records, "lang")
+        stats["val_label_distribution"] = _get_distribution(val_records, "label")
+        stats["val_lang_distribution"] = _get_distribution(val_records, "lang")
+        stats["test_label_distribution"] = _get_distribution(test_records, "label")
+        stats["test_lang_distribution"] = _get_distribution(test_records, "lang")
+
+    return stats
+
+
+def _write_jsonl(path: Path, records: list[dict]) -> None:
+    """Write records to JSONL file."""
+    with open(path, "w", encoding="utf-8") as f:
+        for record in records:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+中英文AI生成文本检测系统 V1.0                                              第 32 页
+------------------------------------------------------------------------
+
+
+def _get_distribution(records: list[dict], key: str) -> dict[str, int]:
+    """Get count distribution for a key."""
+    dist = defaultdict(int)
+    for record in records:
+        if key in record:
+            dist[record[key]] += 1
+    return dict(sorted(dist.items()))
+
+
+def print_split_stats(stats: dict) -> None:
+    """
+    Pretty print dataset split statistics using rich tables.
+
+    Args:
+        stats: Dictionary containing split statistics.
+    """
+    # Overview table
+    table = Table(title="Dataset Split Overview")
+    table.add_column("Split", style="cyan")
+    table.add_column("Count", style="magenta")
+    table.add_column("Percentage", style="green")
+
+    total = stats["train_count"] + stats["val_count"] + stats["test_count"]
+
+    table.add_row(
+        "train",
+        str(stats["train_count"]),
+        f"{100 * stats['train_count'] / total:.1f}%",
+    )
+    table.add_row(
+        "val",
+        str(stats["val_count"]),
+        f"{100 * stats['val_count'] / total:.1f}%",
+    )
+    table.add_row(
+        "test",
+        str(stats["test_count"]),
+        f"{100 * stats['test_count'] / total:.1f}%",
+    )
+    table.add_row("Total", str(total), "100.0%")
+
+    console.print()
+    console.print(table)
+
+    # Label distribution
+    if "label_distribution" in stats:
+        label_table = Table(title="Label Distribution (Overall)")
+        label_table.add_column("Label", style="cyan")
+
+中英文AI生成文本检测系统 V1.0                                              第 33 页
+------------------------------------------------------------------------
+        label_table.add_column("Count", style="magenta")
+        label_table.add_column("Percentage", style="green")
+
+        for label, count in stats["label_distribution"].items():
+            label_table.add_row(
+                label,
+                str(count),
+                f"{100 * count / total:.1f}%",
+            )
+        console.print(label_table)
+
+    # Language distribution
+    if "lang_distribution" in stats:
+        lang_table = Table(title="Language Distribution (Overall)")
+        lang_table.add_column("Language", style="cyan")
+        lang_table.add_column("Count", style="magenta")
+        lang_table.add_column("Percentage", style="green")
+
+        for lang, count in stats["lang_distribution"].items():
+            lang_table.add_row(
+                lang,
+                str(count),
+                f"{100 * count / total:.1f}%",
+            )
+        console.print(lang_table)
+
+    # Per-split label distributions
+    if "train_label_distribution" in stats:
+        split_label_table = Table(title="Label Distribution by Split")
+        split_label_table.add_column("Label", style="cyan")
+
+        # Get all unique labels
+        all_labels = set()
+        for dist_key in [
+            "train_label_distribution",
+            "val_label_distribution",
+            "test_label_distribution",
+        ]:
+            all_labels.update(stats.get(dist_key, {}).keys())
+
+        for split in ["train", "val", "test"]:
+            split_label_table.add_column(
+                f"{split.capitalize()} Count",
+                style="magenta",
+            )
+
+        for label in sorted(all_labels):
+            row = [label]
+            for split in ["train", "val", "test"]:
+                dist_key = f"{split}_label_distribution"
+
+中英文AI生成文本检测系统 V1.0                                              第 34 页
+------------------------------------------------------------------------
+                count = stats.get(dist_key, {}).get(label, 0)
+                row.append(str(count))
+            split_label_table.add_row(*row)
+
+        console.print(split_label_table)
+
+    # Per-split language distributions
+    if "train_lang_distribution" in stats:
+        split_lang_table = Table(title="Language Distribution by Split")
+        split_lang_table.add_column("Language", style="cyan")
+
+        # Get all unique languages
+        all_langs = set()
+        for dist_key in [
+            "train_lang_distribution",
+            "val_lang_distribution",
+            "test_lang_distribution",
+        ]:
+            all_langs.update(stats.get(dist_key, {}).keys())
+
+        for split in ["train", "val", "test"]:
+            split_lang_table.add_column(
+                f"{split.capitalize()} Count",
+                style="magenta",
+            )
+
+        for lang in sorted(all_langs):
+            row = [lang]
+            for split in ["train", "val", "test"]:
+                dist_key = f"{split}_lang_distribution"
+                count = stats.get(dist_key, {}).get(lang, 0)
+                row.append(str(count))
+            split_lang_table.add_row(*row)
+
+        console.print(split_lang_table)
+
+
+def main() -> None:
+    """CLI for dataset splitting."""
+    parser = argparse.ArgumentParser(description="Split dataset into train/val/test sets")
+    parser.add_argument(
+        "--input",
+        type=str,
+        required=True,
+        help="Path to input JSONL file",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default="dataset/processed/",
+
+中英文AI生成文本检测系统 V1.0                                              第 35 页
+------------------------------------------------------------------------
+        help="Output directory for split files (default: dataset/processed/)",
+    )
+    parser.add_argument(
+        "--train-ratio",
+        type=float,
+        default=0.8,
+        help="Training set proportion (default: 0.8)",
+    )
+    parser.add_argument(
+        "--val-ratio",
+        type=float,
+        default=0.1,
+        help="Validation set proportion (default: 0.1)",
+    )
+    parser.add_argument(
+        "--test-ratio",
+        type=float,
+        default=0.1,
+        help="Test set proportion (default: 0.1)",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help="Random seed for reproducibility (default: 42)",
+    )
+
+    args = parser.parse_args()
+
+    input_path = Path(args.input)
+    output_dir = Path(args.output_dir)
+
+    print(f"Reading dataset from: {input_path}")
+    stats = split_dataset(
+        input_path,
+        output_dir,
+        train_ratio=args.train_ratio,
+        val_ratio=args.val_ratio,
+        test_ratio=args.test_ratio,
+        seed=args.seed,
+    )
+
+    print(f"Splits written to: {output_dir}")
+    print_split_stats(stats)
+
+
+if __name__ == "__main__":
+    main()
+
+
+
+中英文AI生成文本检测系统 V1.0                                              第 36 页
+------------------------------------------------------------------------
+# ============================================================
+# File: src/aigc_detector/data/crawler.py
+# ============================================================
+
+"""Bilingual human text crawler: Wikipedia API + HC3 dataset loader.
+
+Collects human-written text from:
+1. Wikipedia API (zh + en) — random article extraction via MediaWiki API
+2. HC3 dataset (HuggingFace) — human answers from the HC3-Chinese and HC3 datasets
+
+Outputs JSONL records to dataset/raw/human_raw.jsonl.
+"""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+import json
+import uuid
+from pathlib import Path
+
+import httpx
+from rich.console import Console
+from tqdm import tqdm
+
+from aigc_detector.config import settings
+from aigc_detector.utils.text import clean_text
+
+console = Console()
+
+WIKIPEDIA_API = "https://{lang}.wikipedia.org/w/api.php"
+WIKIPEDIA_PARAMS = {
+    "action": "query",
+    "generator": "random",
+    "grnnamespace": "0",
+    "grnlimit": "10",
+    "prop": "extracts",
+    "explaintext": "true",
+    "format": "json",
+}
+
+HC3_DATASETS = {
+    "zh": "Hello-SimpleAI/HC3-Chinese",
+    "en": "Hello-SimpleAI/HC3",
+}
+
+
+def _make_record(text: str, lang: str, source: str, domain: str = "general") -> dict:
+    """Create a JSONL record for a human text sample."""
+    return {
+
+中英文AI生成文本检测系统 V1.0                                              第 37 页
+------------------------------------------------------------------------
+        "id": f"h_{uuid.uuid4().hex[:8]}",
+        "text": text,
+        "label": "human",
+        "lang": lang,
+        "source": source,
+        "domain": domain,
+    }
+
+
+def _make_ai_record(text: str, lang: str, source: str, domain: str = "general") -> dict:
+    """Create a JSONL record for an AI-generated text sample."""
+    return {
+        "id": f"a_{uuid.uuid4().hex[:8]}",
+        "text": text,
+        "label": "ai",
+        "lang": lang,
+        "source": source,
+        "domain": domain,
+    }
+
+
+class WikipediaCrawler:
+    """Async Wikipedia article crawler using MediaWiki API.
+
+    Fetches random articles in plain text (no HTML parsing needed)
+    with rate limiting via semaphore and politeness delays.
+    """
+
+    def __init__(self, max_concurrent: int = 5, delay_seconds: float = 1.0):
+        self._semaphore = asyncio.Semaphore(max_concurrent)
+        self._delay = delay_seconds
+
+    async def _fetch_batch(self, client: httpx.AsyncClient, lang: str, max_retries: int = 3) -> list[dict]:
+        """Fetch a single batch of random articles from Wikipedia API."""
+        url = WIKIPEDIA_API.format(lang=lang)
+        data: dict | None = None
+        async with self._semaphore:
+            for attempt in range(max_retries):
+                try:
+                    resp = await client.get(url, params=WIKIPEDIA_PARAMS, timeout=30.0)
+                    resp.raise_for_status()
+                    data = resp.json()
+                    break
+                except (httpx.HTTPError, json.JSONDecodeError) as e:
+                    if attempt < max_retries - 1:
+                        await asyncio.sleep(2**attempt)
+                        continue
+                    console.print(f"[red]Wikipedia API error ({lang}):[/] {e}")
+                    return []
+
+
+中英文AI生成文本检测系统 V1.0                                              第 38 页
+------------------------------------------------------------------------
+        if data is None:
+            return []
+
+        pages = data.get("query", {}).get("pages", {})
+        records = []
+        for page in pages.values():
+            text = page.get("extract", "")
+            text = clean_text(text)
+            if len(text) < 200:
+                continue
+            records.append(_make_record(text, lang, "wikipedia"))
+
+        return records
+
+    async def crawl(self, lang: str, num_articles: int = 15000) -> list[dict]:
+        """Crawl random Wikipedia articles for a given language.
+
+        Args:
+            lang: Language code ("en" or "zh").
+            num_articles: Target number of articles to collect.
+
+        Returns:
+            List of JSONL-compatible record dicts.
+        """
+        collected: list[dict] = []
+        batch_size = 10  # Wikipedia API returns up to 10 random articles per request
+        num_batches = (num_articles // batch_size) + 1
+        stall_count = 0
+        max_stalls = 200  # Stop if too many consecutive empty batches
+
+        console.print(f"[bold blue]Crawling Wikipedia ({lang}):[/] target={num_articles} articles")
+
+        async with httpx.AsyncClient(
+            headers={"User-Agent": "AIGCDetector/1.0 (research; contact@example.com)"},
+            follow_redirects=True,
+        ) as client:
+            pbar = tqdm(total=num_articles, desc=f"Wikipedia ({lang})", unit="article")
+
+            for _ in range(num_batches):
+                if len(collected) >= num_articles:
+                    break
+
+                batch = await self._fetch_batch(client, lang)
+
+                if not batch:
+                    stall_count += 1
+                    if stall_count >= max_stalls:
+                        console.print(f"[yellow]Too many empty batches for {lang}, stopping early.[/]")
+                        break
+                else:
+
+中英文AI生成文本检测系统 V1.0                                              第 39 页
+------------------------------------------------------------------------
+                    stall_count = 0
+                    collected.extend(batch)
+                    pbar.update(len(batch))
+
+                await asyncio.sleep(self._delay)
+
+            pbar.close()
+
+        # Trim to exact target
+        collected = collected[:num_articles]
+        console.print(f"[bold green]Wikipedia ({lang}):[/] collected {len(collected)} articles")
+        return collected
+
+
+class HC3Loader:
+    """Loader for HC3 (Human ChatGPT Comparison) dataset from HuggingFace.
+
+    Extracts human_answers from the dataset. Each row may have multiple
+    human answers — all are extracted as separate records.
+
+    Uses the auto-converted parquet revision since the original HC3
+    loading scripts are no longer supported in datasets v3.x+.
+    """
+
+    # Map source field to domain
+    SOURCE_DOMAIN_MAP = {
+        "finance": "finance",
+        "medicine": "healthcare",
+        "open_qa": "general",
+        "reddit_eli5": "general",
+        "wiki_csai": "technology",
+        "baike": "general",
+        "law": "general",
+        "nlpcc_dbqa": "general",
+        "psychology": "healthcare",
+    }
+
+    def load(self, lang: str) -> list[dict]:
+        """Load HC3 dataset for a language and extract human answers.
+
+        Args:
+            lang: Language code ("en" or "zh").
+
+        Returns:
+            List of JSONL-compatible record dicts.
+        """
+        from datasets import load_dataset
+
+        dataset_name = HC3_DATASETS.get(lang)
+        if dataset_name is None:
+
+中英文AI生成文本检测系统 V1.0                                              第 40 页
+------------------------------------------------------------------------
+            console.print(f"[yellow]No HC3 dataset for lang={lang}, skipping.[/]")
+            return []
+
+        console.print(f"[bold blue]Loading HC3 ({lang}):[/] {dataset_name}")
+
+        try:
+            ds = load_dataset(
+                dataset_name,
+                revision="refs/convert/parquet",
+            )
+        except Exception as e:
+            console.print(f"[red]Failed to load HC3 ({lang}):[/] {e}")
+            return []
+
+        records: list[dict] = []
+
+        # Find the data split
+        split_data = ds.get("train", None)
+        if split_data is None:
+            for split_name in ds:
+                split_data = ds[split_name]
+                break
+
+        if split_data is None:
+            console.print(f"[yellow]No data splits found in HC3 ({lang}).[/]")
+            return []
+
+        for row in tqdm(split_data, desc=f"HC3 ({lang})", unit="row"):
+            human_answers = row.get("human_answers", [])
+            source = row.get("source", "unknown")
+            domain = self.SOURCE_DOMAIN_MAP.get(source, "general")
+
+            for answer in human_answers:
+                if not isinstance(answer, str):
+                    continue
+                text = clean_text(answer)
+                if len(text) < 200:
+                    continue
+                records.append(_make_record(text, lang, "hc3", domain))
+
+        console.print(f"[bold green]HC3 ({lang}):[/] extracted {len(records)} human answers")
+        return records
+
+    def load_ai(self, lang: str) -> list[dict]:
+        """Load HC3 dataset for a language and extract ChatGPT answers.
+
+        Args:
+            lang: Language code ("en" or "zh").
+
+        Returns:
+
+中英文AI生成文本检测系统 V1.0                                              第 41 页
+------------------------------------------------------------------------
+            List of JSONL-compatible record dicts with label="ai".
+        """
+        from datasets import load_dataset
+
+        dataset_name = HC3_DATASETS.get(lang)
+        if dataset_name is None:
+            console.print(f"[yellow]No HC3 dataset for lang={lang}, skipping.[/]")
+            return []
+
+        console.print(f"[bold blue]Loading HC3 AI answers ({lang}):[/] {dataset_name}")
+
+        try:
+            ds = load_dataset(
+                dataset_name,
+                revision="refs/convert/parquet",
+            )
+        except Exception as e:
+            console.print(f"[red]Failed to load HC3 ({lang}):[/] {e}")
+            return []
+
+        records: list[dict] = []
+
+        # Find the data split
+        split_data = ds.get("train", None)
+        if split_data is None:
+            for split_name in ds:
+                split_data = ds[split_name]
+                break
+
+        if split_data is None:
+            console.print(f"[yellow]No data splits found in HC3 ({lang}).[/]")
+            return []
+
+        for row in tqdm(split_data, desc=f"HC3 AI ({lang})", unit="row"):
+            chatgpt_answers = row.get("chatgpt_answers", [])
+            source = row.get("source", "unknown")
+            domain = self.SOURCE_DOMAIN_MAP.get(source, "general")
+
+            for answer in chatgpt_answers:
+                if not isinstance(answer, str):
+                    continue
+                text = clean_text(answer)
+                if len(text) < 200:
+                    continue
+                records.append(_make_ai_record(text, lang, "chatgpt", domain))
+
+        console.print(f"[bold green]HC3 AI ({lang}):[/] extracted {len(records)} ChatGPT answers")
+        return records
+
+
+
+中英文AI生成文本检测系统 V1.0                                              第 42 页
+------------------------------------------------------------------------
+def _write_records(records: list[dict], output_path: Path) -> None:
+    """Write records to JSONL file."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as f:
+        for record in records:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
+async def collect_human_texts(
+    output_dir: Path | None = None,
+    num_wiki_per_lang: int = 15000,
+    hc3: bool = True,
+) -> Path:
+    """Orchestrate human text collection from all sources.
+
+    Collects Wikipedia articles (async) and HC3 answers (sync) for both
+    Chinese and English, then writes everything to a single JSONL file.
+
+    Args:
+        output_dir: Directory for output. Defaults to settings.dataset_dir / "raw".
+        num_wiki_per_lang: Number of Wikipedia articles per language.
+        hc3: Whether to include HC3 dataset.
+
+    Returns:
+        Path to the output JSONL file.
+    """
+    if output_dir is None:
+        output_dir = settings.dataset_dir / "raw"
+
+    output_path = output_dir / "human_raw.jsonl"
+    all_records: list[dict] = []
+
+    console.rule("[bold]Human Text Collection Pipeline")
+
+    # Wikipedia crawling (async)
+    crawler = WikipediaCrawler(max_concurrent=5, delay_seconds=1.0)
+    for lang in ["zh", "en"]:
+        wiki_records = await crawler.crawl(lang, num_wiki_per_lang)
+        all_records.extend(wiki_records)
+
+    # HC3 loading (sync, but wrapped in the async context)
+    if hc3:
+        loader = HC3Loader()
+        for lang in ["zh", "en"]:
+            hc3_records = loader.load(lang)
+            all_records.extend(hc3_records)
+
+    # Write output
+    _write_records(all_records, output_path)
+
+
+中英文AI生成文本检测系统 V1.0                                              第 43 页
+------------------------------------------------------------------------
+    # Summary
+    console.rule("[bold]Collection Summary")
+    source_counts: dict[str, int] = {}
+    lang_counts: dict[str, int] = {}
+    for r in all_records:
+        src = r["source"]
+        lng = r["lang"]
+        source_counts[src] = source_counts.get(src, 0) + 1
+        lang_counts[lng] = lang_counts.get(lng, 0) + 1
+
+    console.print(f"Total records: {len(all_records)}")
+    console.print(f"By source: {source_counts}")
+    console.print(f"By language: {lang_counts}")
+    console.print(f"Output: {output_path}")
+
+    return output_path
+
+
+def collect_ai_texts(
+    output_dir: Path | None = None,
+) -> Path:
+    """Collect AI-generated text from HC3 ChatGPT answers.
+
+    Extracts chatgpt_answers from HC3 and HC3-Chinese datasets
+    and writes them to a JSONL file with label="ai".
+
+    Args:
+        output_dir: Directory for output. Defaults to settings.dataset_dir / "raw".
+
+    Returns:
+        Path to the output JSONL file.
+    """
+    if output_dir is None:
+        output_dir = settings.dataset_dir / "raw"
+
+    output_path = output_dir / "ai_raw.jsonl"
+    all_records: list[dict] = []
+
+    console.rule("[bold]AI Text Collection Pipeline (HC3 ChatGPT Answers)")
+
+    loader = HC3Loader()
+    for lang in ["zh", "en"]:
+        ai_records = loader.load_ai(lang)
+        all_records.extend(ai_records)
+
+    # Write output
+    _write_records(all_records, output_path)
+
+    # Summary
+    console.rule("[bold]AI Collection Summary")
+
+中英文AI生成文本检测系统 V1.0                                              第 44 页
+------------------------------------------------------------------------
+    lang_counts: dict[str, int] = {}
+    for r in all_records:
+        lng = r["lang"]
+        lang_counts[lng] = lang_counts.get(lng, 0) + 1
+
+    console.print(f"Total AI records: {len(all_records)}")
+    console.print(f"By language: {lang_counts}")
+    console.print(f"Output: {output_path}")
+
+    return output_path
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Collect human-written text from Wikipedia and HC3")
+    parser.add_argument("--output-dir", type=Path, default=None, help="Output directory (default: dataset/raw)")
+    parser.add_argument("--num-wiki", type=int, default=15000, help="Wikipedia articles per language (default: 15000)")
+    parser.add_argument("--no-hc3", action="store_true", help="Skip HC3 dataset loading")
+    args = parser.parse_args()
+
+    asyncio.run(
+        collect_human_texts(
+            output_dir=args.output_dir,
+            num_wiki_per_lang=args.num_wiki,
+            hc3=not args.no_hc3,
+        )
+    )
+
+
+# ============================================================
+# File: src/aigc_detector/data/generator.py
+# ============================================================
+
+"""Multi-model AI text generator for dataset construction.
+
+Loads quantized LLMs one at a time (to fit RTX 3060 12GB VRAM), generates diverse
+text using prompt templates from configs/prompts.yaml, and writes JSONL output.
+"""
+
+from __future__ import annotations
+
+import argparse
+import gc
+import json
+import os
+import uuid
+from pathlib import Path
+from typing import Any
+
+import torch
+import yaml
+
+中英文AI生成文本检测系统 V1.0                                              第 45 页
+------------------------------------------------------------------------
+from rich.console import Console
+from tqdm import tqdm
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+
+from aigc_detector.config import settings
+
+# Prefer cached models — fall back to download if not available
+os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
+
+console = Console()
+
+# Models that need special loading (GPTQ vs BnB)
+GPTQ_MODELS = {"mistral-7b-gptq", "llama-3-8b-gptq"}
+
+
+def load_prompts(path: str = "configs/prompts.yaml") -> dict:
+    """Load prompt templates from YAML config."""
+    with open(path, encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
+
+def _build_bnb_config() -> BitsAndBytesConfig:
+    """Build 4-bit quantization config for BitsAndBytes models."""
+    return BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_compute_dtype=torch.float16,
+        bnb_4bit_use_double_quant=True,
+        bnb_4bit_quant_type="nf4",
+    )
+
+
+def load_model_and_tokenizer(
+    hf_id: str,
+    model_key: str,
+    device: str = "cuda",
+) -> tuple[AutoModelForCausalLM, AutoTokenizer]:
+    """Load a single model + tokenizer. Handles GPTQ vs BnB loading."""
+    console.print(f"[bold blue]Loading model:[/] {hf_id}")
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        hf_id,
+        trust_remote_code=True,
+        local_files_only=True,
+    )
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    if model_key in GPTQ_MODELS:
+        # GPTQ models — load directly (pre-quantized weights)
+        model = AutoModelForCausalLM.from_pretrained(
+
+中英文AI生成文本检测系统 V1.0                                              第 46 页
+------------------------------------------------------------------------
+            hf_id,
+            device_map="auto",
+            trust_remote_code=True,
+            torch_dtype=torch.float16,
+            local_files_only=True,
+            low_cpu_mem_usage=True,
+        )
+    else:
+        # BitsAndBytes 4-bit quantization
+        model = AutoModelForCausalLM.from_pretrained(
+            hf_id,
+            device_map="auto",
+            quantization_config=_build_bnb_config(),
+            trust_remote_code=True,
+            local_files_only=True,
+            low_cpu_mem_usage=True,
+        )
+
+    model.eval()
+    console.print(f"[bold green]Loaded:[/] {hf_id} on {device}")
+    return model, tokenizer
+
+
+def unload_model(model: AutoModelForCausalLM, tokenizer: AutoTokenizer) -> None:
+    """Unload model from GPU and free VRAM."""
+    del model
+    del tokenizer
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+    console.print("[dim]Model unloaded, VRAM freed.[/]")
+
+
+def generate_text(
+    model: AutoModelForCausalLM,
+    tokenizer: AutoTokenizer,
+    system_prompt: str,
+    user_prompt: str,
+    temperature: float = 0.8,
+    top_p: float = 0.9,
+    max_new_tokens: int = 2048,
+    repetition_penalty: float = 1.1,
+) -> str:
+    """Generate text using chat template. Returns the model's response only."""
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt},
+    ]
+
+    # Use chat template if available, otherwise fall back to basic formatting
+
+中英文AI生成文本检测系统 V1.0                                              第 47 页
+------------------------------------------------------------------------
+    try:
+        input_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    except Exception:
+        # Fallback for models without chat template
+        input_text = f"{system_prompt}\n\nUser: {user_prompt}\n\nAssistant:"
+
+    inputs = tokenizer(input_text, return_tensors="pt", truncation=True, max_length=2048)
+    inputs = {k: v.to(model.device) for k, v in inputs.items()}
+    input_len = inputs["input_ids"].shape[1]
+
+    with torch.no_grad():
+        outputs = model.generate(
+            **inputs,
+            max_new_tokens=max_new_tokens,
+            temperature=temperature,
+            top_p=top_p,
+            repetition_penalty=repetition_penalty,
+            do_sample=True,
+            pad_token_id=tokenizer.pad_token_id,
+        )
+
+    # Decode only the new tokens (skip input)
+    generated_ids = outputs[0][input_len:]
+    response = tokenizer.decode(generated_ids, skip_special_tokens=True).strip()
+    return response
+
+
+def _resolve_model_source_name(model_key: str) -> str:
+    """Map model registry key to a short source name for JSONL records."""
+    mapping = {
+        "mistral-7b-gptq": "mistral7b",
+        "qwen2.5-7b": "qwen2.5",
+        "chatglm3-6b": "chatglm3",
+        "yi-6b-chat": "yi6b",
+        "llama-3-8b-gptq": "llama3",
+    }
+    return mapping.get(model_key, model_key)
+
+
+def _select_prompts_for_model(
+    prompt_config: dict,
+    model_langs: list[str],
+) -> list[dict[str, Any]]:
+    """Build a flat list of generation tasks from prompt config for the given languages.
+
+    Returns list of dicts: {domain, style, lang, system_prompt, user_prompt}
+    """
+    tasks: list[dict[str, Any]] = []
+    system_prompts = prompt_config["system_prompts"]
+    prompts = prompt_config["prompts"]
+
+中英文AI生成文本检测系统 V1.0                                              第 48 页
+------------------------------------------------------------------------
+
+    for domain_key, styles in prompts.items():
+        for style_key, lang_dict in styles.items():
+            sys_prompts = system_prompts[style_key]
+            for lang in model_langs:
+                if lang not in lang_dict:
+                    continue
+                user_prompt_list = lang_dict[lang]
+                sys_prompt = sys_prompts[lang]
+                for user_prompt in user_prompt_list:
+                    tasks.append(
+                        {
+                            "domain": domain_key,
+                            "style": style_key,
+                            "lang": lang,
+                            "system_prompt": sys_prompt,
+                            "user_prompt": user_prompt,
+                        }
+                    )
+    return tasks
+
+
+def generate_for_model(
+    model_key: str,
+    hf_id: str,
+    model_langs: list[str],
+    prompt_config: dict,
+    output_path: Path,
+    num_per_prompt: int = 50,
+    device: str = "cuda",
+) -> dict[str, int]:
+    """Generate AI text using a single model across all applicable prompts.
+
+    Loads model → generates → unloads. Writes JSONL records to output_path (append mode).
+
+    Args:
+        model_key: Registry key (e.g. "qwen2.5-7b")
+        hf_id: HuggingFace model ID
+        model_langs: Languages this model supports (["zh"], ["en"], or ["zh", "en"])
+        prompt_config: Loaded prompts.yaml dict
+        output_path: Path to output JSONL file (appended)
+        num_per_prompt: Number of generations per unique prompt template
+        device: Target device
+
+    Returns:
+        Stats dict with generation counts.
+    """
+    source_name = _resolve_model_source_name(model_key)
+    gen_config = prompt_config.get("generation", {})
+    temperatures = gen_config.get("temperatures", [0.7, 1.0])
+
+中英文AI生成文本检测系统 V1.0                                              第 49 页
+------------------------------------------------------------------------
+    top_p_values = gen_config.get("top_p_values", [0.9])
+    length_ranges = gen_config.get("length_ranges", {"zh": [500], "en": [400]})
+    max_new_tokens = gen_config.get("max_new_tokens", 2048)
+    rep_penalty = gen_config.get("repetition_penalty", 1.1)
+
+    tasks = _select_prompts_for_model(prompt_config, model_langs)
+    if not tasks:
+        console.print(f"[yellow]No prompts found for {model_key} (langs={model_langs}), skipping.[/]")
+        return {"model": model_key, "generated": 0, "skipped": 0}
+
+    # Load model
+    model, tokenizer = load_model_and_tokenizer(hf_id, model_key, device)
+
+    generated = 0
+    skipped = 0
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        with open(output_path, "a", encoding="utf-8") as f:
+            total_iterations = len(tasks) * num_per_prompt
+            pbar = tqdm(total=total_iterations, desc=f"Generating [{model_key}]", unit="text")
+
+            for task_info in tasks:
+                lang = task_info["lang"]
+                lengths = length_ranges.get(lang, [500])
+
+                for i in range(num_per_prompt):
+                    # Cycle through temperatures, top_p, and lengths for diversity
+                    temp = temperatures[i % len(temperatures)]
+                    tp = top_p_values[i % len(top_p_values)]
+                    target_length = lengths[i % len(lengths)]
+
+                    user_prompt = task_info["user_prompt"].replace("{length}", str(target_length))
+
+                    try:
+                        response = generate_text(
+                            model=model,
+                            tokenizer=tokenizer,
+                            system_prompt=task_info["system_prompt"],
+                            user_prompt=user_prompt,
+                            temperature=temp,
+                            top_p=tp,
+                            max_new_tokens=max_new_tokens,
+                            repetition_penalty=rep_penalty,
+                        )
+
+                        if len(response) < 100:
+                            skipped += 1
+                            pbar.update(1)
+
+中英文AI生成文本检测系统 V1.0                                              第 50 页
+------------------------------------------------------------------------
+                            continue
+
+                        record = {
+                            "id": f"a_{uuid.uuid4().hex[:8]}",
+                            "text": response,
+                            "label": "ai",
+                            "lang": lang,
+                            "source": source_name,
+                            "domain": task_info["domain"],
+                            "gen_params": {
+                                "temperature": temp,
+                                "top_p": tp,
+                                "style": task_info["style"],
+                            },
+                        }
+                        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+                        generated += 1
+
+                    except Exception as e:
+                        console.print(f"[red]Generation error:[/] {e}")
+                        skipped += 1
+
+                    pbar.update(1)
+
+            pbar.close()
+    finally:
+        unload_model(model, tokenizer)
+
+    stats = {"model": model_key, "generated": generated, "skipped": skipped}
+    console.print(f"[bold green]{model_key}:[/] generated={generated}, skipped={skipped}")
+    return stats
+
+
+def generate_all(
+    output_dir: Path | None = None,
+    num_per_prompt: int = 50,
+    models: list[str] | None = None,
+    prompt_config_path: str = "configs/prompts.yaml",
+) -> Path:
+    """Run generation across all configured models sequentially (one at a time for VRAM).
+
+    Args:
+        output_dir: Directory for output JSONL. Defaults to settings.dataset_dir / "raw".
+        num_per_prompt: Number of generations per unique prompt template.
+        models: Specific model keys to use. None = all generation models from registry.
+        prompt_config_path: Path to prompts YAML config.
+
+    Returns:
+        Path to the output JSONL file.
+    """
+
+中英文AI生成文本检测系统 V1.0                                              第 51 页
+------------------------------------------------------------------------
+    from aigc_detector.models.registry import get_registry
+
+    if output_dir is None:
+        output_dir = settings.dataset_dir / "raw"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / "ai_raw.jsonl"
+
+    prompt_config = load_prompts(prompt_config_path)
+    registry = get_registry()
+
+    # Determine which models to use
+    if models is not None:
+        model_keys = models
+    else:
+        model_keys = [k for k, v in registry.items() if v.purpose == "generation"]
+
+    # Language mapping per model
+    lang_map = {
+        "mistral-7b-gptq": ["en"],
+        "qwen2.5-7b": ["zh", "en"],
+        "chatglm3-6b": ["zh"],
+        "yi-6b-chat": ["zh", "en"],
+        "llama-3-8b-gptq": ["en"],
+    }
+
+    all_stats = []
+
+    console.rule("[bold]AI Text Generation Pipeline")
+    console.print(f"Models: {model_keys}")
+    console.print(f"Output: {output_path}")
+    console.print(f"Generations per prompt: {num_per_prompt}")
+
+    for model_key in model_keys:
+        if model_key not in registry:
+            console.print(f"[yellow]Model {model_key} not in registry, skipping.[/]")
+            continue
+
+        model_info = registry[model_key]
+        model_langs = lang_map.get(model_key, ["en"])
+
+        stats = generate_for_model(
+            model_key=model_key,
+            hf_id=model_info.hf_id,
+            model_langs=model_langs,
+            prompt_config=prompt_config,
+            output_path=output_path,
+            num_per_prompt=num_per_prompt,
+            device=settings.device,
+        )
+        all_stats.append(stats)
+
+中英文AI生成文本检测系统 V1.0                                              第 52 页
+------------------------------------------------------------------------
+
+    # Summary
+    console.rule("[bold]Generation Summary")
+    total_gen = sum(s["generated"] for s in all_stats)
+    total_skip = sum(s["skipped"] for s in all_stats)
+    console.print(f"Total generated: {total_gen}")
+    console.print(f"Total skipped: {total_skip}")
+    console.print(f"Output file: {output_path}")
+
+    return output_path
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Generate AI text dataset using local LLMs")
+    parser.add_argument("--output-dir", type=Path, default=None, help="Output directory (default: dataset/raw)")
+    parser.add_argument("--num-per-prompt", type=int, default=50, help="Generations per prompt template")
+    parser.add_argument("--models", nargs="*", default=None, help="Specific model keys to use")
+    parser.add_argument("--prompts", default="configs/prompts.yaml", help="Path to prompt config YAML")
+    args = parser.parse_args()
+
+    generate_all(
+        output_dir=args.output_dir,
+        num_per_prompt=args.num_per_prompt,
+        models=args.models,
+        prompt_config_path=args.prompts,
+    )
+
+
+# ============================================================
+# File: src/aigc_detector/data/mixer.py
+# ============================================================
+
+"""Mixed text construction: AI Completion and Sentence Insertion methods.
+
+Constructs mixed (human + AI) text samples from existing human text by:
+- AI Completion: Taking the first portion of human text and using an LLM to continue it
+- Sentence Insertion: Inserting AI-generated sentences into human text at random positions
+
+These mixed samples are used to train the detector on partially AI-written content.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import random
+import uuid
+from pathlib import Path
+
+import torch
+
+中英文AI生成文本检测系统 V1.0                                              第 53 页
+------------------------------------------------------------------------
+from rich.console import Console
+from tqdm import tqdm
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+from aigc_detector.config import settings
+from aigc_detector.utils.text import clean_text, is_chinese, split_sentences_bilingual
+
+console = Console()
+
+
+def _generate_continuation(
+    model: AutoModelForCausalLM,
+    tokenizer: AutoTokenizer,
+    prompt: str,
+    max_new_tokens: int = 512,
+    temperature: float = 0.8,
+    top_p: float = 0.9,
+) -> str:
+    """Generate a text continuation using the model."""
+    inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=1024)
+    inputs = {k: v.to(model.device) for k, v in inputs.items()}
+
+    with torch.no_grad():
+        outputs = model.generate(
+            **inputs,
+            max_new_tokens=max_new_tokens,
+            temperature=temperature,
+            top_p=top_p,
+            do_sample=True,
+            repetition_penalty=1.1,
+            pad_token_id=tokenizer.pad_token_id,
+        )
+
+    input_len = inputs["input_ids"].shape[1]
+    generated_ids = outputs[0][input_len:]
+    return tokenizer.decode(generated_ids, skip_special_tokens=True).strip()
+
+
+def ai_completion(
+    human_text: str,
+    model: AutoModelForCausalLM,
+    tokenizer: AutoTokenizer,
+    split_ratio: float = 0.5,
+    lang: str | None = None,
+) -> dict | None:
+    """Construct mixed text via AI completion of human text prefix.
+
+    Takes the first `split_ratio` portion of the human text (by sentences),
+    then uses the LLM to continue writing in the same style.
+
+
+中英文AI生成文本检测系统 V1.0                                              第 54 页
+------------------------------------------------------------------------
+    Args:
+        human_text: The original human-written text.
+        model: Loaded language model.
+        tokenizer: Corresponding tokenizer.
+        split_ratio: Proportion of human text to keep (default: 0.5).
+        lang: Language code. Auto-detected if None.
+
+    Returns:
+        Mixed text record dict, or None if generation fails.
+    """
+    if lang is None:
+        lang = "zh" if is_chinese(human_text) else "en"
+
+    sentences = split_sentences_bilingual(human_text)
+    if len(sentences) < 4:
+        return None  # Too few sentences to split meaningfully
+
+    split_point = max(2, int(len(sentences) * split_ratio))
+    human_part_sentences = sentences[:split_point]
+
+    if lang == "zh":
+        human_part = "".join(human_part_sentences)
+        prompt = f"请继续以下文本，保持相同的风格和主题：\n\n{human_part}"
+    else:
+        human_part = " ".join(human_part_sentences)
+        prompt = f"Continue the following text, maintaining the same style and topic:\n\n{human_part}"
+
+    # Estimate how much to generate based on remaining text length
+    remaining_sentences = sentences[split_point:]
+    if lang == "zh":
+        remaining_len = len("".join(remaining_sentences))
+    else:
+        remaining_len = len(" ".join(remaining_sentences).split())
+
+    max_new_tokens = min(max(remaining_len * 2, 128), 1024)
+
+    try:
+        ai_part = _generate_continuation(model, tokenizer, prompt, max_new_tokens=max_new_tokens)
+    except Exception as e:
+        console.print(f"[red]Completion generation error:[/] {e}")
+        return None
+
+    if len(ai_part) < 50:
+        return None  # Too short, discard
+
+    mixed_text = human_part + ai_part
+    if len(mixed_text) < 200:
+        return None
+
+    return {
+
+中英文AI生成文本检测系统 V1.0                                              第 55 页
+------------------------------------------------------------------------
+        "id": f"m_{uuid.uuid4().hex[:8]}",
+        "text": mixed_text,
+        "label": "mixed",
+        "lang": lang,
+        "method": "ai_completion",
+        "boundary_char_idx": len(human_part),
+        "human_ratio": len(human_part) / len(mixed_text),
+    }
+
+
+def sentence_insertion(
+    human_text: str,
+    model: AutoModelForCausalLM,
+    tokenizer: AutoTokenizer,
+    insert_ratio: float = 0.3,
+    lang: str | None = None,
+) -> dict | None:
+    """Construct mixed text by inserting AI-generated sentences into human text.
+
+    Randomly selects positions in the human text and generates contextually
+    appropriate AI sentences to insert at those positions.
+
+    Args:
+        human_text: The original human-written text.
+        model: Loaded language model.
+        tokenizer: Corresponding tokenizer.
+        insert_ratio: Proportion of sentences to insert (default: 0.3).
+        lang: Language code. Auto-detected if None.
+
+    Returns:
+        Mixed text record dict, or None if generation fails.
+    """
+    if lang is None:
+        lang = "zh" if is_chinese(human_text) else "en"
+
+    sentences = split_sentences_bilingual(human_text)
+    if len(sentences) < 5:
+        return None  # Too few sentences for meaningful insertion
+
+    num_insertions = max(1, int(len(sentences) * insert_ratio))
+    # Choose insertion positions (indices after which to insert)
+    insert_positions = sorted(random.sample(range(len(sentences)), min(num_insertions, len(sentences))))
+
+    sentence_labels = ["human"] * len(sentences)
+    offset = 0
+
+    for pos in insert_positions:
+        actual_pos = pos + offset
+        # Build context from surrounding sentences
+        context_start = max(0, actual_pos - 1)
+
+中英文AI生成文本检测系统 V1.0                                              第 56 页
+------------------------------------------------------------------------
+        context_end = min(len(sentences), actual_pos + 2)
+        context_sentences = sentences[context_start:context_end]
+
+        if lang == "zh":
+            context = "".join(context_sentences)
+            prompt = f"根据以下文本的上下文，生成一个自然衔接的句子：\n\n{context}\n\n请只输出一个句子："
+        else:
+            context = " ".join(context_sentences)
+            prompt = (
+                f"Based on the following context, generate one sentence that fits naturally:"
+                f"\n\n{context}\n\nGenerate only one sentence:"
+            )
+
+        try:
+            ai_sentence = _generate_continuation(model, tokenizer, prompt, max_new_tokens=128, temperature=0.9)
+        except Exception:
+            continue
+
+        # Clean and validate the generated sentence
+        ai_sentence = clean_text(ai_sentence)
+        # Take only the first sentence if multiple were generated
+        ai_sents = split_sentences_bilingual(ai_sentence)
+        if not ai_sents:
+            continue
+        ai_sentence = ai_sents[0]
+
+        if len(ai_sentence) < 10:
+            continue
+
+        # Insert after the current position
+        sentences.insert(actual_pos + 1, ai_sentence)
+        sentence_labels.insert(actual_pos + 1, "ai")
+        offset += 1
+
+    # Check that we actually inserted something
+    ai_count = sum(1 for label in sentence_labels if label == "ai")
+    if ai_count == 0:
+        return None
+
+    if lang == "zh":
+        mixed_text = "".join(sentences)
+    else:
+        mixed_text = " ".join(sentences)
+
+    if len(mixed_text) < 200:
+        return None
+
+    return {
+        "id": f"m_{uuid.uuid4().hex[:8]}",
+        "text": mixed_text,
+
+中英文AI生成文本检测系统 V1.0                                              第 57 页
+------------------------------------------------------------------------
+        "label": "mixed",
+        "lang": lang,
+        "method": "sentence_insertion",
+        "sentence_labels": sentence_labels,
+        "human_ratio": sum(1 for lbl in sentence_labels if lbl == "human") / len(sentence_labels),
+    }
+
+
+def generate_mixed_texts(
+    human_jsonl_path: Path,
+    output_path: Path,
+    model: AutoModelForCausalLM,
+    tokenizer: AutoTokenizer,
+    num_completion: int = 5000,
+    num_insertion: int = 5000,
+    split_ratios: list[float] | None = None,
+    insert_ratios: list[float] | None = None,
+    seed: int = 42,
+) -> dict:
+    """Generate mixed text samples from a human text JSONL file.
+
+    Args:
+        human_jsonl_path: Path to JSONL file with human text records.
+        output_path: Path to write mixed text JSONL output.
+        model: Loaded language model for generation.
+        tokenizer: Corresponding tokenizer.
+        num_completion: Number of AI completion samples to generate.
+        num_insertion: Number of sentence insertion samples to generate.
+        split_ratios: List of split ratios for AI completion (cycled). Default: [0.3, 0.5, 0.7].
+        insert_ratios: List of insert ratios for sentence insertion (cycled). Default: [0.2, 0.3, 0.4].
+        seed: Random seed for reproducibility.
+
+    Returns:
+        Stats dict with generation summary.
+    """
+    random.seed(seed)
+
+    if split_ratios is None:
+        split_ratios = [0.3, 0.5, 0.7]
+    if insert_ratios is None:
+        insert_ratios = [0.2, 0.3, 0.4]
+
+    # Read human texts
+    human_records: list[dict] = []
+    with open(human_jsonl_path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                human_records.append(json.loads(line))
+
+
+中英文AI生成文本检测系统 V1.0                                              第 58 页
+------------------------------------------------------------------------
+    if not human_records:
+        console.print("[red]No human records found.[/]")
+        return {"completion_generated": 0, "insertion_generated": 0}
+
+    random.shuffle(human_records)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    completion_count = 0
+    insertion_count = 0
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        # AI Completion
+        console.print(f"[bold blue]Generating AI completion samples:[/] target={num_completion}")
+        pbar = tqdm(total=num_completion, desc="AI Completion", unit="sample")
+
+        for i, record in enumerate(human_records):
+            if completion_count >= num_completion:
+                break
+
+            ratio = split_ratios[i % len(split_ratios)]
+            result = ai_completion(
+                human_text=record["text"],
+                model=model,
+                tokenizer=tokenizer,
+                split_ratio=ratio,
+                lang=record.get("lang"),
+            )
+
+            if result is not None:
+                result["source_id"] = record.get("id", "")
+                f.write(json.dumps(result, ensure_ascii=False) + "\n")
+                completion_count += 1
+                pbar.update(1)
+
+        pbar.close()
+
+        # Sentence Insertion — use a different portion of human records
+        console.print(f"[bold blue]Generating sentence insertion samples:[/] target={num_insertion}")
+        remaining = human_records[num_completion:]
+        if len(remaining) < num_insertion:
+            # Wrap around if we don't have enough
+            remaining = human_records
+
+        pbar = tqdm(total=num_insertion, desc="Sentence Insertion", unit="sample")
+
+        for i, record in enumerate(remaining):
+            if insertion_count >= num_insertion:
+                break
+
+            ratio = insert_ratios[i % len(insert_ratios)]
+
+中英文AI生成文本检测系统 V1.0                                              第 59 页
+------------------------------------------------------------------------
+            result = sentence_insertion(
+                human_text=record["text"],
+                model=model,
+                tokenizer=tokenizer,
+                insert_ratio=ratio,
+                lang=record.get("lang"),
+            )
+
+            if result is not None:
+                result["source_id"] = record.get("id", "")
+                f.write(json.dumps(result, ensure_ascii=False) + "\n")
+                insertion_count += 1
+                pbar.update(1)
+
+        pbar.close()
+
+    stats = {
+        "completion_generated": completion_count,
+        "insertion_generated": insertion_count,
+        "total_mixed": completion_count + insertion_count,
+    }
+
+    console.rule("[bold]Mixed Text Generation Summary")
+    console.print(f"AI Completion: {completion_count}")
+    console.print(f"Sentence Insertion: {insertion_count}")
+    console.print(f"Total: {completion_count + insertion_count}")
+    console.print(f"Output: {output_path}")
+
+    return stats
+
+
+def generate_mixed_all(
+    human_jsonl_path: Path | None = None,
+    output_dir: Path | None = None,
+    model_id: str = "Qwen/Qwen2.5-7B-Instruct",
+    num_per_method_per_lang: int = 5000,
+    seed: int = 42,
+) -> Path:
+    """End-to-end mixed text generation: load model, process per-language, unload.
+
+    Args:
+        human_jsonl_path: Path to processed human text JSONL. Default: dataset/raw/human_processed.jsonl.
+        output_dir: Output directory. Default: dataset/raw.
+        model_id: HuggingFace model ID for generation.
+        num_per_method_per_lang: Samples per method per language.
+        seed: Random seed.
+
+    Returns:
+        Path to the output JSONL file.
+    """
+
+中英文AI生成文本检测系统 V1.0                                              第 60 页
+------------------------------------------------------------------------
+    from aigc_detector.data.generator import load_model_and_tokenizer, unload_model
+
+    if human_jsonl_path is None:
+        human_jsonl_path = settings.dataset_dir / "raw" / "human_processed.jsonl"
+    if output_dir is None:
+        output_dir = settings.dataset_dir / "raw"
+
+    output_path = output_dir / "mixed_raw.jsonl"
+
+    console.rule("[bold]Mixed Text Generation Pipeline")
+    console.print(f"Model: {model_id}")
+    console.print(f"Input: {human_jsonl_path}")
+    console.print(f"Output: {output_path}")
+
+    model, tokenizer = load_model_and_tokenizer(model_id, model_id, settings.device)
+
+    try:
+        generate_mixed_texts(
+            human_jsonl_path=human_jsonl_path,
+            output_path=output_path,
+            model=model,
+            tokenizer=tokenizer,
+            num_completion=num_per_method_per_lang,
+            num_insertion=num_per_method_per_lang,
+            seed=seed,
+        )
+    finally:
+        unload_model(model, tokenizer)
+
+    return output_path
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Generate mixed (human+AI) text samples")
+    parser.add_argument("--input", type=Path, default=None, help="Input JSONL with human texts")
+    parser.add_argument("--output-dir", type=Path, default=None, help="Output directory (default: dataset/raw)")
+    parser.add_argument("--model", default="Qwen/Qwen2.5-7B-Instruct", help="HuggingFace model ID")
+    parser.add_argument("--num-per-method", type=int, default=5000, help="Samples per method (default: 5000)")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    args = parser.parse_args()
+
+    generate_mixed_all(
+        human_jsonl_path=args.input,
+        output_dir=args.output_dir,
+        model_id=args.model,
+        num_per_method_per_lang=args.num_per_method,
+        seed=args.seed,
+    )
+
+
