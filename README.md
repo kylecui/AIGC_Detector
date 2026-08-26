@@ -34,12 +34,32 @@
 # 安装依赖
 uv sync
 
-# 启动 API 服务
-uv run python main.py
+# 启动 API 服务（首次启动会从 HuggingFace 下载基础模型，见下方 Model Bootstrap）
+uv run uvicorn aigc_detector.api.main:app --host 0.0.0.0 --port 8000
 
 # 运行测试
 uv run pytest
 ```
+
+服务就绪后：WebUI 在 `http://localhost:8000/`，交互式 API 文档在 `/docs`，健康检查在 `/api/v1/health`（Binoculars 大模型对约 14GB/语言会在后台断点续传下载，就绪前服务以降级模式运行）。
+
+### Model Bootstrap
+
+完整部署需要本地模型文件（LoRA 适配器与校准工件已随仓库分发，基础模型需下载）：
+
+```bash
+# 下载基础模型（gpt2-xl / Wenzhong-GPT2 / DeBERTa-v3 / Chinese-RoBERTa / XLM-RoBERTa，约 4-8 GB）
+uv run python scripts/download_models.py
+
+# （可选，检测能力增强）预取 Binoculars 观察者/表演者模型对（falcon-7b 系 / Qwen2-7B 系，约 28 GB）
+uv run python scripts/prefetch_binoculars.py
+```
+
+不运行任何下载脚本也可启动：基础模型在首次请求时自动按需下载；显存预算按 RTX 3060 12GB 设计（4-bit 量化 + LRU 逐出，`src/aigc_detector/models/manager.py`）。
+
+### License Note
+
+本项目代码以 Apache-2.0 发布（见 [LICENSE](LICENSE)）。依赖 `pymupdf` 为 AGPL-3.0 许可：若你的分发场景需要规避 AGPL，可卸载它（`uv remove pymupdf`）——PDF 提取会自动回退到 `pypdf`（Apache/BSD 系许可），功能保持可用。
 
 ## Project Structure
 
