@@ -53,6 +53,10 @@ STATIC_DIR = _resolve_static_dir()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan: load models on startup, unload on shutdown."""
+    # P0-4: logging with sanitizing guard BEFORE any request can be logged
+    from aigc_detector.utils.log_hygiene import setup_service_logging
+
+    setup_service_logging(log_dir=settings.log_dir)
     logger.info("Starting AIGC Detector service...")
     app.state.start_time = time.time()
 
