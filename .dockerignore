@@ -1,0 +1,52 @@
+# Build context hygiene — keep the image lean and secrets out.
+# NOTE: static/ and configs/ are intentionally NOT ignored (runtime-required:
+# WebUI + models.yaml registry).
+
+# VCS / tooling
+.git
+.venv
+.opencode/
+.sisyphus/
+.petfish/
+.vscode/
+node_modules
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+dist/
+
+# Heavy local data — never bake into the image
+dataset/
+logs/
+tmp/
+outputs/
+reports/
+samples/
+docs/
+tests/
+_archive/
+*.pdf
+*.zip
+*.log
+
+# models/ excluded by design (31+GB: base checkpoints, experiment dumps).
+# RISK: it also contains the TRAINED runtime artifacts that are NOT on HF
+# (encoder LoRA ~77MB, statistical/linguistic joblib ~KB each). Without them
+# EN degrades to linguistic-only and ZH loses its 0.60-weight encoder axis.
+# To bake the small artifacts in (~77MB), uncomment:
+# !models/statistical-en/**
+# !models/statistical-zh/**
+# !models/linguistic-en/**
+# !models/linguistic-zh/**
+# !models/encoder-en/**
+# !models/encoder-zh/**
+# (requires adding `COPY models ./models` to the Dockerfile), or mount the
+# host dir at run time: -v /path/models:/app/models:ro
+
+# Secrets — NEVER bake
+.env
+
+# Misc scratch
+nul
+pyproject.toml.new

@@ -33,8 +33,9 @@ def _run_doctor() -> int:
     ok &= registry.is_file()
 
     # repo-layout fallback: static/configs at repo root (dev checkout)
+    # root = <pkg>/aigc_detector -> parent=src|site-packages -> parent=repo root
     if not ok:
-        repo_root = root.parent.parent.parent
+        repo_root = root.parent.parent
         alt_static = repo_root / "static"
         alt_reg = repo_root / "configs" / "models.yaml"
         if alt_static.is_dir() and alt_reg.is_file():
