@@ -1,0 +1,82 @@
+{
+  "_doc": "Reproducibility pins: calibration (T=5.645, floor=0.46) and probe baselines are valid ONLY against these revisions. Regenerate via scripts/pin_model_versions.py after any model update.",
+  "pinned_at": "2026-08-21",
+  "models": {
+    "chatglm3-6b": {
+      "registry_name": "chatglm3-6b"
+    },
+    "chinese-roberta-large": {
+      "registry_name": "chinese-roberta-large",
+      "hf_id": "hfl/chinese-roberta-wwm-ext-large",
+      "revision": "a25cc9e05974bd9687e528edd516f2cfdb3f5db9",
+      "size_on_disk_gb": 1.31
+    },
+    "deberta-v3-large": {
+      "registry_name": "deberta-v3-large",
+      "hf_id": "microsoft/deberta-v3-large",
+      "revision": "71e5b576e857743818fc210401735a3d7f341ec8",
+      "size_on_disk_gb": 1.75
+    },
+    "falcon-7b": {
+      "registry_name": "falcon-7b",
+      "hf_id": "tiiuae/falcon-7b",
+      "revision": "ec89142b67d748a1865ea4451372db8313ada0d8",
+      "size_on_disk_gb": 14.43
+    },
+    "falcon-7b-instruct": {
+      "registry_name": "falcon-7b-instruct",
+      "hf_id": "tiiuae/falcon-7b-instruct",
+      "revision": "8782b5c5d8c9290412416618f36a133653e85285",
+      "size_on_disk_gb": 14.44
+    },
+    "gpt2-xl": {
+      "registry_name": "gpt2-xl",
+      "hf_id": "openai-community/gpt2-xl",
+      "revision": "15ea56dee5df4983c59b2538573817e1667135e2",
+      "size_on_disk_gb": 6.43
+    },
+    "llama-3-8b-gptq": {
+      "registry_name": "llama-3-8b-gptq",
+      "hf_id": "meta-llama/Meta-Llama-3-8B-Instruct",
+      "revision": "8afb486c1db24fe5011ec46dfbe5b5dccdb575c2",
+      "size_on_disk_gb": 16.07
+    },
+    "mistral-7b-gptq": {
+      "registry_name": "mistral-7b-gptq",
+      "source": "local:models/mistral7b-gptq"
+    },
+    "qwen2-7b": {
+      "registry_name": "qwen2-7b",
+      "hf_id": "Qwen/Qwen2-7B",
+      "revision": "453ed1575b739b5b03ce3758b23befdb0967f40e",
+      "size_on_disk_gb": 15.24
+    },
+    "qwen2-7b-instruct": {
+      "registry_name": "qwen2-7b-instruct",
+      "hf_id": "Qwen/Qwen2-7B-Instruct",
+      "revision": "f2826a00ceef68f0f2b946d945ecc0477ce4450c",
+      "size_on_disk_gb": 15.24
+    },
+    "qwen2.5-7b": {
+      "registry_name": "qwen2.5-7b",
+      "hf_id": "Qwen/Qwen2.5-7B-Instruct",
+      "revision": "a09a35458c702b33eeacc393d103063234e8bc28",
+      "size_on_disk_gb": 15.24
+    },
+    "wenzhong-gpt2-110m": {
+      "registry_name": "wenzhong-gpt2-110m",
+      "hf_id": "IDEA-CCNL/Wenzhong-GPT2-110M",
+      "revision": "2d61cfe8803b5281f361f2dbda67ad169fed32da",
+      "size_on_disk_gb": 0.28
+    },
+    "xlm-roberta-lang-detect": {
+      "registry_name": "xlm-roberta-lang-detect",
+      "hf_id": "papluca/xlm-roberta-base-language-detection",
+      "revision": "9865598389ca9d95637462f743f683b51d75b87b",
+      "size_on_disk_gb": 1.13
+    },
+    "yi-6b-chat": {
+      "registry_name": "yi-6b-chat"
+    }
+  }
+}
