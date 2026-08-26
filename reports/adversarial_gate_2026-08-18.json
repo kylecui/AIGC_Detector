@@ -1,0 +1,386 @@
+{
+  "candidate": "models\\encoder-zh-adversarial-candidate",
+  "verdict": "FAIL",
+  "g1_probe_fpr": 0.8225806451612904,
+  "baseline_fpr": 0.1935483870967742,
+  "g3_formality_spearman": 0.250067005254538,
+  "g2_fn1_max_seg": 0.8057,
+  "fn1_doc": {
+    "label": "Human-written",
+    "conf": 0.9701
+  },
+  "per_doc": [
+    {
+      "file": "01-apology-chongqing-beer.md",
+      "label": "Human-written",
+      "p_ai": 0.0336,
+      "formality": 1.0
+    },
+    {
+      "file": "01-gengzheng-tianhongshangchang-2010.md",
+      "label": "AI-generated",
+      "p_ai": 0.9976,
+      "formality": 1.0
+    },
+    {
+      "file": "01-gov-samr-recall-regulation-notice.md",
+      "label": "AI-generated",
+      "p_ai": 0.8662,
+      "formality": 1.0
+    },
+    {
+      "file": "01-tongbao-ndrc-website-q4-2021.md",
+      "label": "AI-generated",
+      "p_ai": 0.9805,
+      "formality": 0.7303439803439804
+    },
+    {
+      "file": "01-zhiqian-shengming-mezh.md",
+      "label": "Human-written",
+      "p_ai": 0.0704,
+      "formality": 1.0
+    },
+    {
+      "file": "02-apology-wanfu-shengke.md",
+      "label": "AI-generated",
+      "p_ai": 0.9932,
+      "formality": 1.0
+    },
+    {
+      "file": "02-chengqing-guangzhoulangqi-2010.md",
+      "label": "Human-written",
+      "p_ai": 0.1683,
+      "formality": 1.0
+    },
+    {
+      "file": "02-recall-gac-toyota-bota7.md",
+      "label": "AI-generated",
+      "p_ai": 0.999,
+      "formality": 0.631440588853838
+    },
+    {
+      "file": "02-tongbao-shenyang-website-jun-2021.md",
+      "label": "AI-generated",
+      "p_ai": 0.998,
+      "formality": 0.8102836879432624
+    },
+    {
+      "file": "02-zhiqian-shengming-ctrip.md",
+      "label": "Human-written",
+      "p_ai": 0.0172,
+      "formality": 1.0
+    },
+    {
+      "file": "03-chengqing-xinzhoubang-2011.md",
+      "label": "AI-generated",
+      "p_ai": 0.9873,
+      "formality": 0.9874350086655113
+    },
+    {
+      "file": "03-company-haimo-correction.md",
+      "label": "AI-generated",
+      "p_ai": 0.9868,
+      "formality": 0.7830900855561147
+    },
+    {
+      "file": "03-qingkuang-tongbao-hfut.md",
+      "label": "AI-generated",
+      "p_ai": 0.9585,
+      "formality": 0.890625
+    },
+    {
+      "file": "03-tongbao-changde-safety-jan-apr-2021.md",
+      "label": "Human-written",
+      "p_ai": 0.2291,
+      "formality": 0.6719732704402516
+    },
+    {
+      "file": "04-apology-xintai-electric.md",
+      "label": "AI-generated",
+      "p_ai": 0.9956,
+      "formality": 1.0
+    },
+    {
+      "file": "04-company-shanghai-xinyang-apology.md",
+      "label": "AI-generated",
+      "p_ai": 0.9976,
+      "formality": 1.0
+    },
+    {
+      "file": "04-gengzheng-dakangmuye-2012.md",
+      "label": "AI-generated",
+      "p_ai": 0.999,
+      "formality": 1.0
+    },
+    {
+      "file": "05-apology-xinlai-materials.md",
+      "label": "AI-generated",
+      "p_ai": 0.9985,
+      "formality": 1.0
+    },
+    {
+      "file": "05-chengqing-guizhoubailing-2013.md",
+      "label": "AI-generated",
+      "p_ai": 0.9888,
+      "formality": 1.0
+    },
+    {
+      "file": "05-chengqing-shengming-jxut.md",
+      "label": "AI-generated",
+      "p_ai": 0.999,
+      "formality": 1.0
+    },
+    {
+      "file": "05-company-doushen-clarification.md",
+      "label": "AI-generated",
+      "p_ai": 0.9985,
+      "formality": 1.0
+    },
+    {
+      "file": "05-tongbao-mee-yulin-lantan-2021.md",
+      "label": "Human-written",
+      "p_ai": 0.0199,
+      "formality": 0.5
+    },
+    {
+      "file": "06-apology-yuxin-tech.md",
+      "label": "AI-generated",
+      "p_ai": 0.998,
+      "formality": 1.0
+    },
+    {
+      "file": "06-bank-ccb-system-maintenance.md",
+      "label": "AI-generated",
+      "p_ai": 0.999,
+      "formality": 0.9194630872483222
+    },
+    {
+      "file": "06-gengzheng-lanseguangbiao-2014.md",
+      "label": "AI-generated",
+      "p_ai": 0.9932,
+      "formality": 0.9310344827586207
+    },
+    {
+      "file": "06-tongbao-csrc-hlj-investor-2018.md",
+      "label": "AI-generated",
+      "p_ai": 0.999,
+      "formality": 0.9327398615232443
+    },
+    {
+      "file": "07-apology-hehua-co.md",
+      "label": "AI-generated",
+      "p_ai": 0.9917,
+      "formality": 1.0
+    },
+    {
+      "file": "07-bank-citic-system-maintenance.md",
+      "label": "AI-generated",
+      "p_ai": 0.9707,
+      "formality": 0.7934272300469484
+    },
+    {
+      "file": "07-chengnuoshu-hunan-ggzy-38qiye-2021.md",
+      "label": "AI-generated",
+      "p_ai": 0.855,
+      "formality": 0.9128819157720891
+    },
+    {
+      "file": "07-chengqing-jianghuaiqiche-2015.md",
+      "label": "AI-generated",
+      "p_ai": 0.999,
+      "formality": 1.0
+    },
+    {
+      "file": "08-chengnuoshu-cac-tencent-hegui-2021.md",
+      "label": "AI-generated",
+      "p_ai": 0.9937,
+      "formality": 1.0
+    },
+    {
+      "file": "08-commitment-qixing-tower.md",
+      "label": "AI-generated",
+      "p_ai": 0.9976,
+      "formality": 1.0
+    },
+    {
+      "file": "08-gengzheng-fangdahuagong-2016.md",
+      "label": "AI-generated",
+      "p_ai": 0.9922,
+      "formality": 1.0
+    },
+    {
+      "file": "08-university-shanghai-statement.md",
+      "label": "Human-written",
+      "p_ai": 0.0279,
+      "formality": 0.7828054298642534
+    },
+    {
+      "file": "08-yanzheng-shengming-amac.md",
+      "label": "AI-generated",
+      "p_ai": 0.999,
+      "formality": 1.0
+    },
+    {
+      "file": "09-chengnuoshu-xinzheng-jiaoyuju-2021.md",
+      "label": "AI-generated",
+      "p_ai": 0.998,
+      "formality": 1.0
+    },
+    {
+      "file": "09-chengqing-baiyunshan-2017.md",
+      "label": "AI-generated",
+      "p_ai": 0.998,
+      "formality": 1.0
+    },
+    {
+      "file": "09-university-wuhan-statement.md",
+      "label": "Human-written",
+      "p_ai": 0.0648,
+      "formality": 0.8346720214190093
+    },
+    {
+      "file": "09-yanzheng-shengming-caop.md",
+      "label": "Human-written",
+      "p_ai": 0.0788,
+      "formality": 1.0
+    },
+    {
+      "file": "10-association-zibo-lawyers-statement.md",
+      "label": "Human-written",
+      "p_ai": 0.1176,
+      "formality": 0.7088305489260143
+    },
+    {
+      "file": "10-chengnuoshu-chaoyang-baojiaheng-huanbao-2020.md",
+      "label": "Human-written",
+      "p_ai": 0.1795,
+      "formality": 1.0
+    },
+    {
+      "file": "10-chengqing-shengming-thu.md",
+      "label": "AI-generated",
+      "p_ai": 0.9985,
+      "formality": 1.0
+    },
+    {
+      "file": "10-gengzheng-lianchuanghulian-2018.md",
+      "label": "AI-generated",
+      "p_ai": 0.999,
+      "formality": 1.0
+    },
+    {
+      "file": "11-chengqing-jiuguijiu-2019.md",
+      "label": "AI-generated",
+      "p_ai": 0.9927,
+      "formality": 0.8140703517587939
+    },
+    {
+      "file": "11-qingkuang-tongbao-upc.md",
+      "label": "AI-generated",
+      "p_ai": 0.998,
+      "formality": 1.0
+    },
+    {
+      "file": "11-zhaohui-gac-honda-fit-2022.md",
+      "label": "AI-generated",
+      "p_ai": 0.918,
+      "formality": 0.6275510204081632
+    },
+    {
+      "file": "12-chengqing-shengming-hnsfjy.md",
+      "label": "AI-generated",
+      "p_ai": 0.9951,
+      "formality": 1.0
+    },
+    {
+      "file": "12-commitment-huihong-group.md",
+      "label": "AI-generated",
+      "p_ai": 0.998,
+      "formality": 1.0
+    },
+    {
+      "file": "12-gengzheng-maidikeji-2020.md",
+      "label": "AI-generated",
+      "p_ai": 0.9985,
+      "formality": 1.0
+    },
+    {
+      "file": "12-zhaohui-subaru-2022.md",
+      "label": "AI-generated",
+      "p_ai": 0.999,
+      "formality": 0.5312421894526368
+    },
+    {
+      "file": "13-chengqing-longjigufen-2021.md",
+      "label": "AI-generated",
+      "p_ai": 0.9976,
+      "formality": 1.0
+    },
+    {
+      "file": "13-commitment-zhongshui-fishery.md",
+      "label": "AI-generated",
+      "p_ai": 0.9976,
+      "formality": 1.0
+    },
+    {
+      "file": "13-shengming-hunan-finrb-yanzheng-2020.md",
+      "label": "AI-generated",
+      "p_ai": 0.9985,
+      "formality": 1.0
+    },
+    {
+      "file": "14-chengqing-shengming-fjnu.md",
+      "label": "AI-generated",
+      "p_ai": 0.9971,
+      "formality": 1.0
+    },
+    {
+      "file": "14-commitment-maijie-tech.md",
+      "label": "AI-generated",
+      "p_ai": 0.999,
+      "formality": 1.0
+    },
+    {
+      "file": "14-gengzheng-tianaozidian-2022.md",
+      "label": "AI-generated",
+      "p_ai": 0.999,
+      "formality": 1.0
+    },
+    {
+      "file": "14-shengming-beijing-epb-2013.md",
+      "label": "AI-generated",
+      "p_ai": 0.9106,
+      "formality": 1.0
+    },
+    {
+      "file": "15-commitment-lianying-medical.md",
+      "label": "AI-generated",
+      "p_ai": 0.999,
+      "formality": 1.0
+    },
+    {
+      "file": "15-tongbao-guoban-website-2020.md",
+      "label": "AI-generated",
+      "p_ai": 0.998,
+      "formality": 0.5576036866359447
+    },
+    {
+      "file": "16-apology-meihao-group.md",
+      "label": "AI-generated",
+      "p_ai": 0.9985,
+      "formality": 1.0
+    },
+    {
+      "file": "17-commitment-lugang-culture.md",
+      "label": "AI-generated",
+      "p_ai": 0.9985,
+      "formality": 1.0
+    },
+    {
+      "file": "18-commitment-huashu-media.md",
+      "label": "AI-generated",
+      "p_ai": 0.9917,
+      "formality": 1.0
+    }
+  ]
+}
