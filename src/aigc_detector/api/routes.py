@@ -26,8 +26,10 @@ from aigc_detector.api.middleware import limiter
 from aigc_detector.api.schemas import DetectionRequest, DetectionResponse, HealthResponse
 from aigc_detector.detection.linguistic import LinguisticDiagnostics, LinguisticFeatureExtractor
 from aigc_detector.detection.register import (
+    EN_FORMAL_DOWNGRADE,
     FORMAL_ZH_CAVEAT,
     binoculars_floor,
+    detect_register_en_formal,
     detect_register_zh,
     formal_temperature,
 )
@@ -104,6 +106,27 @@ def _build_segments(text: str, min_chars: int = MIN_SEGMENT_CHARS, max_segments:
         )
 
     return segment_results
+
+
+def _en_formal_downgrade(result, text: str) -> dict | None:
+    """W16/P0-3: product-level guard on the EN formal blind spot.
+
+    Measured basis: 71% [55%,84%] of human EN formal docs flagged as AI
+    (n=35 probe). On register hit we DOWNGRADE instead of issuing a
+    normal-confidence verdict: confidence is capped at 0.49 (below the
+    decision threshold) and a strong warning payload is attached. Verdict
+    and p_ai are NOT rewritten — the score stays visible for ranking; we
+    refuse to present it as a confident call. Fail-safe on any error.
+    """
+    try:
+        hit, score = detect_register_en_formal(text)
+    except Exception:  # noqa: BLE001
+        return None
+    if not hit:
+        return None
+    if result.confidence > 0.49:
+        result.confidence = 0.49
+    return {**EN_FORMAL_DOWNGRADE, "register_score": score}
 
 
 def _register_caveat(text: str) -> dict | None:
@@ -305,7 +328,10 @@ async def detect_text(request: Request, data: DetectionRequest) -> DetectionResp
             linguistic_diagnostics = None
 
     caveat = _register_caveat(data.text)
-    decision_rule = _apply_binoculars_floor(result, caveat, data.text, pipeline)
+    en_downgrade = _en_formal_downgrade(result, data.text)
+    if en_downgrade:
+        caveat = en_downgrade
+    decision_rule = _apply_binoculars_floor(result, caveat if not en_downgrade else None, data.text, pipeline)
     confidence, calibration = _calibrate_confidence(caveat, result.confidence, result.p_ai)
     return DetectionResponse(
         predicted_label=result.predicted_label,
@@ -506,7 +532,10 @@ async def detect_file(
             linguistic_diagnostics = None
 
     caveat = _register_caveat(text)
-    decision_rule = _apply_binoculars_floor(result, caveat, text, pipeline)
+    en_downgrade = _en_formal_downgrade(result, text)
+    if en_downgrade:
+        caveat = en_downgrade
+    decision_rule = _apply_binoculars_floor(result, caveat if not en_downgrade else None, text, pipeline)
     confidence, calibration = _calibrate_confidence(caveat, result.confidence, result.p_ai)
     return DetectionResponse(
         predicted_label=result.predicted_label,

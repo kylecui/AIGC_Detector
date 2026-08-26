@@ -116,6 +116,65 @@ def detect_register_zh(text: str) -> RegisterResult:
     )
 
 
+# ---- EN formal register (W16/P0-3): the EN path's measured blind spot ----
+# Measured basis: 71% [55%, 84%] of human EN formal docs flagged as AI on
+# the EN probe (reports/human_probe_results_en_human.json, n=35); recall-
+# notice/correction/termination types 100% flagged. Product-level guard:
+# on register hit the response is DOWNGRADED (strong warning), matching
+# capability-statement.md — we refuse to issue a normal-confidence verdict
+# where our own measurement says the verdict is worse than a coin flip.
+_MARKERS_EN_FORMAL: dict[str, int] = {
+    "pursuant to": 3, "hereby": 2, "in accordance with": 2,
+    "We are writing to": 2, "shall": 1, "undertake": 2,
+    "Effective Date": 2, "Issued by": 2, "REGARDING:": 3,
+    "We hereby affirm": 3, "notice is issued": 2, "consumers should stop": 2,
+    "report to the Commission": 2, "immediately discontinue": 2,
+}
+_STRUCTURE_EN_FORMAL: list[tuple["re.Pattern[str]", int, int]] = [
+    (re.compile(r"(?im)^(FOR IMMEDIATE RELEASE|REGARDING:)"), 3, 1),
+    (re.compile(r"(?im)^To:\s*(Consumers|Customers|Shareholders|Whom)", ), 2, 1),
+    (re.compile(r"(?m)^Field:\s*\S"), 2, 1),
+    (re.compile(r"(?m)^\s*(I|II|III|IV)\.\s+[A-Z]"), 2, 2),
+    (re.compile(r"(?i)(recall|termination of|correction of|clarification)"), 2, 1),
+]
+THRESHOLD_EN_FORMAL = 5
+
+
+def detect_register_en_formal(text: str) -> tuple[bool, int]:
+    """Lexical EN formal-register check (notice/announcement/correction style).
+
+    Deliberately conservative (threshold 5 with 2+ structure hits implied by
+    weight): the cost of missing formal EN is one normal verdict; the cost
+    of a false gate is wrongly downgrading casual English — measured probe
+    showed 0/20 casual zh false-fires for the zh gate; EN gate aims lower.
+    """
+    score = 0
+    for m, w in _MARKERS_EN_FORMAL.items():
+        if m.lower() in text.lower():
+            score += w
+    for pat, w, need in _STRUCTURE_EN_FORMAL:
+        if len(pat.findall(text)) >= need:
+            score += w
+    return score >= THRESHOLD_EN_FORMAL, score
+
+
+# Canonical EN-formal downgrade payload (product-level guard, W16).
+EN_FORMAL_DOWNGRADE: dict = {
+    "code": "formal_register_en_downgrade",
+    "message": (
+        "This text is in the English formal/announcement register. On this "
+        "register our measured error rate is 71% (35-document probe: most "
+        "human formal documents are misclassified as AI). We do not issue "
+        "normal-confidence verdicts here."
+    ),
+    "action_guidance": (
+        "Recommendations: 1) treat any verdict on this text as unreliable; "
+        "2) use human review or creation-process evidence instead; "
+        "3) see docs/capability-statement.md for the full boundary list."
+    ),
+}
+
+
 # Canonical caveat payload attached to responses when formal register hits
 # (W3b). Wording checked for non-expert readability (D2: warning + concrete
 # action guidance, no internal jargon).
