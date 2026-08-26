@@ -973,3 +973,24 @@ recorded stage lists). Fix in flight: complete the falcon-7b-instruct
 download, then verify is_model_cached->True and EN binoculars activation.
 Lesson recorded: "misreport" claims need the same evidence bar as any
 other claim.
+
+---
+
+## E1 closed: falcon-7b-instruct downloaded; EN binoculars blocked by transformers 5.x incompatibility (2026-08-26)
+
+Download completed via detached self-healing retry (52.68 GB on disk,
+cached=True; the resume-capable detached-process pattern again survived
+multiple writer deaths). Activation smoke: models LOAD (62s) but forward
+fails with AttributeError: FalconModel has no attribute get_head_mask -
+the falcon implementation is broken under transformers 5.3.0 (the
+get_head_mask API was removed/reworked in the 5.x line) while Qwen2-7B
+(zh binoculars) works fine on the same version.
+
+**Decision: mark known-incompatible, do NOT downgrade transformers.**
+Rationale: EN binoculars has never been active in any experiment or
+deployment (all W4-EN results ran without it); the EN capability statement
+does not depend on it; downgrading transformers to 4.x to enable one
+never-used component risks the entire working stack (Qwen2/DeBERTa/
+all 367 tests) - asymmetric risk for zero current value. Revisit only if
+EN binoculars becomes a requirement: then run a transformers version
+matrix (4.46/4.55/5.x) with full regression, as its own batch.
