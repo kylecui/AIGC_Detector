@@ -1,6 +1,6 @@
 .venv
 dataset/
-/models/
+/models/*
 logs/
 __pycache__/
 *.pyc
@@ -30,3 +30,4 @@ tmp/
 
 # Deployed calibration artifacts are config, not model weights
 !/models/calibration/
+!/models/calibration/**

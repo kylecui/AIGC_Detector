@@ -1,0 +1,10 @@
+{
+  "enabled": true,
+  "cutoff": 0.46,
+  "register": "formal_zh",
+  "evidence": "reports/w3b_floor_analysis.json (82-doc probe sweep, 2026-08-21)",
+  "knee_rationale": "cutoff 0.46: above-floor contract cells -> ~0% miss (Wilson [0,12%]) at +1.6pp point FPR vs 19.4% baseline; FN-1 (edited text, bino 0.343) missed at every cutoff",
+  "deployment": "CANDIDATE — enable only after gate review (dual-layer W12 pipeline) and deployment-side regression sign-off; enabling is a human action: flip enabled to true in this file",
+  "latency_note": "when enabled, formal-register texts force a binoculars run (~15-40s zh, Qwen2-7B pair) even when the encoder early-exited",
+  "enabled_at": "2026-08-21 gate review PASSED (reports/w15_gate_review.md): L1/L2 PASS, live 4/4, 298 tests green"
+}

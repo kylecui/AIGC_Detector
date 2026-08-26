@@ -1,0 +1,22 @@
+{
+  "T": 5.645336154051357,
+  "method": "global temperature scaling on cached ensemble p_ai (logit domain)",
+  "fit": {
+    "n": 382,
+    "human": 62,
+    "ai": 320,
+    "weighting": "class-balanced 50:50"
+  },
+  "safety": {
+    "label_flips": 0,
+    "ranking_invariance": "monotone map (T>0)"
+  },
+  "fn1_replay": {
+    "p_ai": 0.1091,
+    "conf_before": 0.8909,
+    "conf_after": 0.5919379777807963
+  },
+  "applied": true,
+  "applied_at": "2026-08-18",
+  "deployment": "register-conditioned: formal_zh only (routes._calibrate_confidence); T=1 elsewhere"
+}
