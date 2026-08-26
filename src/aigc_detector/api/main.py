@@ -24,11 +24,12 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from aigc_detector.api.middleware import setup_middleware
-from aigc_detector.api.routes import router
+from aigc_detector.api.middleware import log_auth_disabled_once, setup_middleware
+from aigc_detector.api.routes import metrics_router, router
 from aigc_detector.config import settings
 from aigc_detector.detection.binoculars import BinocularsDetector
 from aigc_detector.detection.encoder import EncoderClassifier
+from aigc_detector.detection.ensemble import EnsembleResult
 from aigc_detector.detection.language import LanguageRouter
 from aigc_detector.detection.linguistic import LinguisticClassifier, LinguisticFeatureExtractor
 from aigc_detector.detection.pipeline import DetectionPipeline
@@ -37,6 +38,35 @@ from aigc_detector.models.manager import ModelManager
 from aigc_detector.utils.hf_cache import is_model_cached
 
 logger = logging.getLogger(__name__)
+
+_TESTING_ENV_VALUES = {"1", "true", "yes", "on"}
+
+
+def testing_mode() -> bool:
+    """AIGC_TESTING=1 (or true/yes/on): boot without any models/GPU."""
+    return os.environ.get("AIGC_TESTING", "").strip().lower() in _TESTING_ENV_VALUES
+
+
+class StubPipeline:
+    """Deterministic stand-in used when AIGC_TESTING is enabled.
+
+    Lets the real app boot in milliseconds (no models, no GPU) for
+    smoke/e2e tests. Readiness checks treat the stub as ready.
+    """
+
+    is_stub: bool = True
+
+    def detect(self, text: str) -> EnsembleResult:
+        return EnsembleResult(
+            predicted_label="Human-written",
+            confidence=0.5,
+            p_ai=0.5,
+            detected_language="zh",
+            stages_used=["stub"],
+            breakdown={},
+            processing_time_ms=1.0,
+        )
+
 
 # Static files directory (relative to project root)
 def _resolve_static_dir() -> Path:
@@ -59,6 +89,24 @@ async def lifespan(app: FastAPI):
     setup_service_logging(log_dir=settings.log_dir)
     logger.info("Starting AIGC Detector service...")
     app.state.start_time = time.time()
+
+    log_auth_disabled_once()
+
+    # ------------------------------------------------------------------
+    # AIGC_TESTING=1: skip ALL model loading; inject a deterministic stub
+    # pipeline so the real app boots in milliseconds without models/GPU.
+    # Readiness (/health, /ready) reports ready for the stub.
+    # ------------------------------------------------------------------
+    if testing_mode():
+        logger.warning("AIGC_TESTING=1 active: skipping model loading, injecting stub pipeline")
+        app.state.model_manager = ModelManager(max_vram_gb=settings.max_vram_gb)
+        app.state.pipeline = StubPipeline()
+        logger.info("AIGC Detector service started (TESTING mode, stub pipeline)")
+        yield
+        logger.info("Shutting down AIGC Detector service (TESTING mode)...")
+        app.state.model_manager.unload_all()
+        logger.info("Service stopped")
+        return
 
     # Model manager
     model_manager = ModelManager(max_vram_gb=settings.max_vram_gb)
@@ -172,9 +220,7 @@ async def lifespan(app: FastAPI):
             logger.info("Binoculars enabled for %s (%s + %s)", lang, observer, performer)
         else:
             missing_binoculars.append((lang, observer, performer))
-            logger.info(
-                "Binoculars pending for %s — will download in background", lang
-            )
+            logger.info("Binoculars pending for %s — will download in background", lang)
 
     # Detection pipeline (detectors instantiated here, weights loaded lazily on first use)
     #
@@ -215,6 +261,7 @@ async def lifespan(app: FastAPI):
     #   - ignore_patterns: skip redundant *.bin/*.pt/*.onnx (safetensors only)
     #   - Retry with exponential backoff per repo
     if missing_binoculars:
+
         def _bg_download_binoculars():
             import time as _time
 
@@ -231,15 +278,15 @@ async def lifespan(app: FastAPI):
             from huggingface_hub import snapshot_download
 
             _ignore = [
-                "*.bin",           # PyTorch native (duplicate of safetensors)
-                "*.pt",            # PyTorch checkpoint
-                "*.h5",            # TensorFlow weights
-                "*.msgpack",       # Flax weights
-                "*.onnx",          # ONNX inference format
-                "*.gguf",          # GGUF quantized format
-                "original/*",      # Pre-conversion original weights
-                "tf_model*",       # TF model directory
-                "flax_model*",     # Flax model directory
+                "*.bin",  # PyTorch native (duplicate of safetensors)
+                "*.pt",  # PyTorch checkpoint
+                "*.h5",  # TensorFlow weights
+                "*.msgpack",  # Flax weights
+                "*.onnx",  # ONNX inference format
+                "*.gguf",  # GGUF quantized format
+                "original/*",  # Pre-conversion original weights
+                "tf_model*",  # TF model directory
+                "flax_model*",  # Flax model directory
                 "pytorch_model*",  # Legacy PyTorch model directory
             ]
 
@@ -252,10 +299,7 @@ async def lifespan(app: FastAPI):
             ]
             # Deduplicate while preserving order
             seen: set[str] = set()
-            repos_needed = [
-                r for r in repos_needed
-                if not (r in seen or seen.add(r))
-            ]
+            repos_needed = [r for r in repos_needed if not (r in seen or seen.add(r))]
 
             # Download each repo sequentially with retry
             for repo_id in repos_needed:
@@ -264,7 +308,9 @@ async def lifespan(app: FastAPI):
                     try:
                         logger.info(
                             "[Binoculars BG] Downloading %s (attempt %d/%d)...",
-                            repo_id, attempt, max_retries,
+                            repo_id,
+                            attempt,
+                            max_retries,
                         )
                         snapshot_download(
                             repo_id,
@@ -277,23 +323,25 @@ async def lifespan(app: FastAPI):
                         if attempt < max_retries:
                             wait = 5 * (2 ** (attempt - 1))
                             logger.warning(
-                                "[Binoculars BG] %s failed (attempt %d): %s — "
-                                "retrying in %ds",
-                                repo_id, attempt, e, wait,
+                                "[Binoculars BG] %s failed (attempt %d): %s — retrying in %ds",
+                                repo_id,
+                                attempt,
+                                e,
+                                wait,
                             )
                             _time.sleep(wait)
                         else:
                             logger.warning(
                                 "[Binoculars BG] %s failed after %d attempts: %s",
-                                repo_id, max_retries, e,
+                                repo_id,
+                                max_retries,
+                                e,
                             )
 
             # Phase 2: activate detectors for pairs where both models cached
             for lang, observer, performer in missing_binoculars:
                 if not (is_model_cached(observer) and is_model_cached(performer)):
-                    logger.warning(
-                        "[Binoculars BG] Skipping %s: incomplete download", lang
-                    )
+                    logger.warning("[Binoculars BG] Skipping %s: incomplete download", lang)
                     continue
                 try:
                     detector = BinocularsDetector(
@@ -306,13 +354,9 @@ async def lifespan(app: FastAPI):
                     pipeline.binoculars_detectors[lang] = detector
                     logger.info("[Binoculars BG] Binoculars now active for %s", lang)
                 except Exception as e:
-                    logger.warning(
-                        "[Binoculars BG] Detector creation failed for %s: %s", lang, e
-                    )
+                    logger.warning("[Binoculars BG] Detector creation failed for %s: %s", lang, e)
 
-        bg_thread = threading.Thread(
-            target=_bg_download_binoculars, daemon=True, name="binoculars-dl"
-        )
+        bg_thread = threading.Thread(target=_bg_download_binoculars, daemon=True, name="binoculars-dl")
         bg_thread.start()
         logger.info(
             "Binoculars background download started (%d pairs). "
@@ -343,6 +387,7 @@ def create_app() -> FastAPI:
 
     # API routes
     app.include_router(router)
+    app.include_router(metrics_router)
 
     # Static files (frontend)
     if STATIC_DIR.exists():

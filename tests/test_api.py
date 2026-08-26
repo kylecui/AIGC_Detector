@@ -556,7 +556,7 @@ class TestAPIRoutes:
         assert resp.status_code == 422
 
     def test_health_no_manager(self):
-        """Health endpoint works even without model manager."""
+        """Health endpoint reports 503/not-ready without a pipeline (v0.2 readiness contract)."""
         from contextlib import asynccontextmanager
 
         from fastapi import FastAPI
@@ -577,8 +577,9 @@ class TestAPIRoutes:
 
         with TestClient(app) as c:
             resp = c.get("/api/v1/health")
-            assert resp.status_code == 200
-            assert resp.json()["status"] == "ok"
+            assert resp.status_code == 503
+            assert resp.json()["pipeline_ready"] is False
+            assert resp.json()["status"] == "not_ready"
 
     def test_detect_no_pipeline(self):
         """Detect endpoint returns 503 when pipeline is not initialized."""

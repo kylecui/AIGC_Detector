@@ -3,7 +3,9 @@
 Endpoints:
     POST /api/v1/detect        — Run AI text detection on submitted text
     POST /api/v1/detect/file   — Upload PDF/TXT file, extract text, detect
-    GET  /api/v1/health        — Health check with GPU status
+    GET  /api/v1/health        — Health check with GPU status (503 when not ready)
+    GET  /api/v1/ready         — Orchestrator readiness probe (204/503)
+    GET  /metrics              — Prometheus text-format metrics
 
 References:
     - DESIGN.md §5 (API specification)
@@ -19,9 +21,11 @@ import re
 import time
 from time import perf_counter
 
-from fastapi import APIRouter, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, File, HTTPException, Request, Response, UploadFile
+from fastapi.responses import PlainTextResponse
 from starlette.concurrency import run_in_threadpool
 
+from aigc_detector.api.metrics import metrics_registry
 from aigc_detector.api.middleware import limiter
 from aigc_detector.api.schemas import DetectionRequest, DetectionResponse, HealthResponse
 from aigc_detector.detection.linguistic import LinguisticDiagnostics, LinguisticFeatureExtractor
@@ -38,6 +42,7 @@ from aigc_detector.utils.text import split_sentences_bilingual
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1", tags=["detection"])
+metrics_router = APIRouter(tags=["metrics"])
 
 # Concurrency semaphore: max 2 concurrent GPU inference requests
 MAX_CONCURRENT_REQUESTS = 2
@@ -51,6 +56,10 @@ MAX_FILE_SIZE_MB = 20
 MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 ALLOWED_EXTENSIONS = {".pdf", ".txt", ".md"}
 MAX_EXTRACTED_TEXT_CHARS = 50000
+
+# PDF hardening limits (decompression-bomb / oversized-doc guards)
+MAX_PDF_PAGES = 150
+MAX_PDF_PAGE_CHARS = 500_000
 
 
 def _build_segments(text: str, min_chars: int = MIN_SEGMENT_CHARS, max_segments: int = MAX_SEGMENTS) -> list[dict]:
@@ -290,64 +299,81 @@ async def detect_text(request: Request, data: DetectionRequest) -> DetectionResp
     Rate limited to 10 requests per minute per IP.
     Queued with a 120-second timeout if the server is busy.
     """
-    pipeline = request.app.state.pipeline
-    if pipeline is None:
-        raise HTTPException(status_code=503, detail="Detection pipeline not initialized")
-
+    metrics_registry.inc_in_flight()
+    t0 = perf_counter()
+    status_code = 500
     try:
-        async with asyncio.timeout(QUEUE_TIMEOUT_SECONDS):
-            async with _semaphore:
-                result = await run_in_threadpool(pipeline.detect, data.text)
-                segments: list[dict] = []
-                segment_time_ms = 0.0
-                if data.include_segments:
-                    segments, segment_time_ms = await run_in_threadpool(_detect_segments, pipeline, data.text)
-    except TimeoutError:
-        raise HTTPException(status_code=503, detail="Server busy, please retry later")
+        pipeline = request.app.state.pipeline
+        if pipeline is None:
+            status_code = 503
+            raise HTTPException(status_code=503, detail="Detection pipeline not initialized")
 
-    # Optional linguistic-stylistic diagnostics. Computed on a fresh
-    # CPU-only extractor (no shared state with the pipeline). M5/M6 require
-    # per-token log-probs from a reference LM, which we don't recompute here
-    # (those fields will be NaN — the diagnostics don't depend on them).
-    linguistic_diagnostics: dict | None = None
-    if data.include_diagnostics:
         try:
-            diagnostics_extractor = LinguisticFeatureExtractor()
-            features = diagnostics_extractor.extract(
-                data.text,
-                lang=result.detected_language,
-                token_log_probs=None,
-            )
-            diagnostics = LinguisticDiagnostics.from_features(
-                features,
-                lang=result.detected_language,
-            )
-            linguistic_diagnostics = dataclasses.asdict(diagnostics)
-        except Exception:
-            logger.warning("Linguistic diagnostics failed", exc_info=True)
-            linguistic_diagnostics = None
+            async with asyncio.timeout(QUEUE_TIMEOUT_SECONDS):
+                async with _semaphore:
+                    result = await run_in_threadpool(pipeline.detect, data.text)
+                    segments: list[dict] = []
+                    segment_time_ms = 0.0
+                    if data.include_segments:
+                        segments, segment_time_ms = await run_in_threadpool(_detect_segments, pipeline, data.text)
+        except TimeoutError:
+            status_code = 503
+            raise HTTPException(status_code=503, detail="Server busy, please retry later")
 
-    caveat = _register_caveat(data.text)
-    en_downgrade = _en_formal_downgrade(result, data.text)
-    if en_downgrade:
-        caveat = en_downgrade
-    decision_rule = _apply_binoculars_floor(result, caveat if not en_downgrade else None, data.text, pipeline)
-    confidence, calibration = _calibrate_confidence(caveat, result.confidence, result.p_ai)
-    return DetectionResponse(
-        predicted_label=result.predicted_label,
-        confidence=round(confidence, 4),
-        p_ai=result.p_ai,
-        detected_language=result.detected_language,
-        stages_used=result.stages_used,
-        breakdown=result.breakdown,
-        decision_rule=decision_rule,
-        processing_time_ms=round(result.processing_time_ms + segment_time_ms, 1),
-        segments=segments,
-        segment_highlights=_segment_highlights(segments),
-        caveat=caveat,
-        calibration=calibration,
-        linguistic_diagnostics=linguistic_diagnostics,
-    )
+        # Optional linguistic-stylistic diagnostics. Computed on a fresh
+        # CPU-only extractor (no shared state with the pipeline). M5/M6 require
+        # per-token log-probs from a reference LM, which we don't recompute here
+        # (those fields will be NaN — the diagnostics don't depend on them).
+        linguistic_diagnostics: dict | None = None
+        if data.include_diagnostics:
+            try:
+                diagnostics_extractor = LinguisticFeatureExtractor()
+                features = diagnostics_extractor.extract(
+                    data.text,
+                    lang=result.detected_language,
+                    token_log_probs=None,
+                )
+                diagnostics = LinguisticDiagnostics.from_features(
+                    features,
+                    lang=result.detected_language,
+                )
+                linguistic_diagnostics = dataclasses.asdict(diagnostics)
+            except Exception:
+                logger.warning("Linguistic diagnostics failed", exc_info=True)
+                linguistic_diagnostics = None
+
+        caveat = _register_caveat(data.text)
+        en_downgrade = _en_formal_downgrade(result, data.text)
+        if en_downgrade:
+            caveat = en_downgrade
+        decision_rule = _apply_binoculars_floor(result, caveat if not en_downgrade else None, data.text, pipeline)
+        confidence, calibration = _calibrate_confidence(caveat, result.confidence, result.p_ai)
+        status_code = 200
+        return DetectionResponse(
+            predicted_label=result.predicted_label,
+            confidence=round(confidence, 4),
+            p_ai=result.p_ai,
+            detected_language=result.detected_language,
+            stages_used=result.stages_used,
+            breakdown=result.breakdown,
+            decision_rule=decision_rule,
+            processing_time_ms=round(result.processing_time_ms + segment_time_ms, 1),
+            segments=segments,
+            segment_highlights=_segment_highlights(segments),
+            caveat=caveat,
+            calibration=calibration,
+            linguistic_diagnostics=linguistic_diagnostics,
+        )
+    except HTTPException as exc:
+        status_code = exc.status_code
+        raise
+    except Exception:
+        status_code = 500
+        raise
+    finally:
+        metrics_registry.observe_seconds("detect", perf_counter() - t0)
+        metrics_registry.inc_request("detect", status_code)
+        metrics_registry.dec_in_flight()
 
 
 def _extract_text_from_pdf(content: bytes) -> str:
@@ -361,6 +387,8 @@ def _extract_text_from_pdf(content: bytes) -> str:
     - Corrupted/invalid PDFs (both engines fail)
     - Scanned PDFs (images but no extractable text)
     - Empty PDFs (no content at all)
+    - Oversized PDFs (> MAX_PDF_PAGES) and decompression bombs
+      (any single page yielding > MAX_PDF_PAGE_CHARS)
     """
     text_parts: list[str] = []
     has_images = False
@@ -371,8 +399,21 @@ def _extract_text_from_pdf(content: bytes) -> str:
         import fitz  # PyMuPDF
 
         with fitz.open(stream=content, filetype="pdf") as doc:
+            page_count = doc.page_count
+            if page_count > MAX_PDF_PAGES:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"PDF too large: {page_count} pages",
+                )
             for page in doc:
                 text = page.get_text("text")
+                if not isinstance(text, str):
+                    continue
+                if len(text) > MAX_PDF_PAGE_CHARS:
+                    raise HTTPException(
+                        status_code=422,
+                        detail="suspicious PDF structure",
+                    )
                 if text.strip():
                     text_parts.append(text)
                 if page.get_images():
@@ -384,6 +425,8 @@ def _extract_text_from_pdf(content: bytes) -> str:
             len(text_parts),
             has_images,
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.warning("PyMuPDF failed (%s: %s), trying pypdf fallback", type(e).__name__, e)
 
@@ -395,18 +438,30 @@ def _extract_text_from_pdf(content: bytes) -> str:
             from pypdf import PdfReader
 
             reader = PdfReader(io.BytesIO(content))
+            if len(reader.pages) > MAX_PDF_PAGES:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"PDF too large: {len(reader.pages)} pages",
+                )
             for page in reader.pages:
                 extracted = page.extract_text()
-                if extracted:
-                    text_parts.append(extracted)
+                if isinstance(extracted, str):
+                    if len(extracted) > MAX_PDF_PAGE_CHARS:
+                        raise HTTPException(
+                            status_code=422,
+                            detail="suspicious PDF structure",
+                        )
+                    if extracted:
+                        text_parts.append(extracted)
             logger.info("pypdf fallback: extracted %d chars", len("\n".join(text_parts)))
+        except HTTPException:
+            raise
         except Exception as e:
             logger.error("pypdf also failed: %s: %s", type(e).__name__, e)
             if not pymupdf_ok:
                 raise HTTPException(
                     status_code=422,
-                    detail="PDF解析失败，文件可能已损坏或不是有效的PDF。"
-                    "PyMuPDF and pypdf both failed.",
+                    detail="PDF解析失败，文件可能已损坏或不是有效的PDF。PyMuPDF and pypdf both failed.",
                 )
 
     raw = "\n".join(text_parts)
@@ -468,95 +523,141 @@ async def detect_file(
 
     Supported formats: PDF (.pdf), plain text (.txt), Markdown (.md).
     Max file size: 20 MB. Extracted text is truncated at 50,000 characters.
+    PDFs over 150 pages or with bomb-like page structure are rejected (422).
 
     Rate limited to 10 requests per minute per IP.
     """
-    pipeline = request.app.state.pipeline
-    if pipeline is None:
-        raise HTTPException(status_code=503, detail="Detection pipeline not initialized")
-
-    # Validate file extension
-    filename = file.filename or "unknown"
-    ext = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
-    if ext not in ALLOWED_EXTENSIONS:
-        raise HTTPException(
-            status_code=415,
-            detail=f"Unsupported file type '{ext}'. Allowed: {', '.join(sorted(ALLOWED_EXTENSIONS))}",
-        )
-
-    # Read file content with size limit
-    content = await file.read()
-    if len(content) > MAX_FILE_SIZE_BYTES:
-        raise HTTPException(
-            status_code=413,
-            detail=f"File too large ({len(content) // 1024 // 1024} MB). Max: {MAX_FILE_SIZE_MB} MB.",
-        )
-    if len(content) == 0:
-        raise HTTPException(status_code=422, detail="Uploaded file is empty.")
-
-    logger.info("File upload: '%s' (%d bytes, %s)", filename, len(content), ext)
-
-    # Extract text (CPU-bound, run in threadpool)
-    text = await run_in_threadpool(_extract_text_from_file, filename, content)
-
-    if len(text.strip()) < 50:
-        raise HTTPException(
-            status_code=422,
-            detail=f"Extracted text too short ({len(text.strip())} chars). Need at least 50 characters for detection.",
-        )
-
-    logger.info("Extracted %d characters from '%s'", len(text), filename)
-
-    # Run detection (same pipeline as /detect)
+    metrics_registry.inc_in_flight()
+    t0 = perf_counter()
+    status_code = 500
     try:
-        async with asyncio.timeout(QUEUE_TIMEOUT_SECONDS):
-            async with _semaphore:
-                result = await run_in_threadpool(pipeline.detect, text)
-                segments: list[dict] = []
-                segment_time_ms = 0.0
-                if include_segments:
-                    segments, segment_time_ms = await run_in_threadpool(_detect_segments, pipeline, text)
-    except TimeoutError:
-        raise HTTPException(status_code=503, detail="Server busy, please retry later")
+        pipeline = request.app.state.pipeline
+        if pipeline is None:
+            status_code = 503
+            raise HTTPException(status_code=503, detail="Detection pipeline not initialized")
 
-    # Optional linguistic diagnostics
-    linguistic_diagnostics: dict | None = None
-    if include_diagnostics:
+        # Validate file extension
+        filename = file.filename or "unknown"
+        ext = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+        if ext not in ALLOWED_EXTENSIONS:
+            status_code = 415
+            raise HTTPException(
+                status_code=415,
+                detail=f"Unsupported file type '{ext}'. Allowed: {', '.join(sorted(ALLOWED_EXTENSIONS))}",
+            )
+
+        # Read file content with size limit
+        content = await file.read()
+        if len(content) > MAX_FILE_SIZE_BYTES:
+            status_code = 413
+            raise HTTPException(
+                status_code=413,
+                detail=f"File too large ({len(content) // 1024 // 1024} MB). Max: {MAX_FILE_SIZE_MB} MB.",
+            )
+        if len(content) == 0:
+            status_code = 422
+            raise HTTPException(status_code=422, detail="Uploaded file is empty.")
+
+        logger.info("File upload: '%s' (%d bytes, %s)", filename, len(content), ext)
+
+        # Extract text (CPU-bound, run in threadpool)
+        text = await run_in_threadpool(_extract_text_from_file, filename, content)
+
+        if len(text.strip()) < 50:
+            status_code = 422
+            short_detail = (
+                f"Extracted text too short ({len(text.strip())} chars). Need at least 50 characters for detection."
+            )
+            raise HTTPException(status_code=422, detail=short_detail)
+
+        logger.info("Extracted %d characters from '%s'", len(text), filename)
+
+        # Run detection (same pipeline as /detect)
         try:
-            diagnostics_extractor = LinguisticFeatureExtractor()
-            features = diagnostics_extractor.extract(text, lang=result.detected_language, token_log_probs=None)
-            diagnostics = LinguisticDiagnostics.from_features(features, lang=result.detected_language)
-            linguistic_diagnostics = dataclasses.asdict(diagnostics)
-        except Exception:
-            logger.warning("Linguistic diagnostics failed", exc_info=True)
-            linguistic_diagnostics = None
+            async with asyncio.timeout(QUEUE_TIMEOUT_SECONDS):
+                async with _semaphore:
+                    result = await run_in_threadpool(pipeline.detect, text)
+                    segments: list[dict] = []
+                    segment_time_ms = 0.0
+                    if include_segments:
+                        segments, segment_time_ms = await run_in_threadpool(_detect_segments, pipeline, text)
+        except TimeoutError:
+            status_code = 503
+            raise HTTPException(status_code=503, detail="Server busy, please retry later")
 
-    caveat = _register_caveat(text)
-    en_downgrade = _en_formal_downgrade(result, text)
-    if en_downgrade:
-        caveat = en_downgrade
-    decision_rule = _apply_binoculars_floor(result, caveat if not en_downgrade else None, text, pipeline)
-    confidence, calibration = _calibrate_confidence(caveat, result.confidence, result.p_ai)
-    return DetectionResponse(
-        predicted_label=result.predicted_label,
-        confidence=round(confidence, 4),
-        p_ai=result.p_ai,
-        detected_language=result.detected_language,
-        stages_used=result.stages_used,
-        breakdown=result.breakdown,
-        decision_rule=decision_rule,
-        processing_time_ms=round(result.processing_time_ms + segment_time_ms, 1),
-        segments=segments,
-        segment_highlights=_segment_highlights(segments),
-        caveat=caveat,
-        calibration=calibration,
-        linguistic_diagnostics=linguistic_diagnostics,
-    )
+        # Optional linguistic diagnostics
+        linguistic_diagnostics: dict | None = None
+        if include_diagnostics:
+            try:
+                diagnostics_extractor = LinguisticFeatureExtractor()
+                features = diagnostics_extractor.extract(text, lang=result.detected_language, token_log_probs=None)
+                diagnostics = LinguisticDiagnostics.from_features(features, lang=result.detected_language)
+                linguistic_diagnostics = dataclasses.asdict(diagnostics)
+            except Exception:
+                logger.warning("Linguistic diagnostics failed", exc_info=True)
+                linguistic_diagnostics = None
+
+        caveat = _register_caveat(text)
+        en_downgrade = _en_formal_downgrade(result, text)
+        if en_downgrade:
+            caveat = en_downgrade
+        decision_rule = _apply_binoculars_floor(result, caveat if not en_downgrade else None, text, pipeline)
+        confidence, calibration = _calibrate_confidence(caveat, result.confidence, result.p_ai)
+        status_code = 200
+        return DetectionResponse(
+            predicted_label=result.predicted_label,
+            confidence=round(confidence, 4),
+            p_ai=result.p_ai,
+            detected_language=result.detected_language,
+            stages_used=result.stages_used,
+            breakdown=result.breakdown,
+            decision_rule=decision_rule,
+            processing_time_ms=round(result.processing_time_ms + segment_time_ms, 1),
+            segments=segments,
+            segment_highlights=_segment_highlights(segments),
+            caveat=caveat,
+            calibration=calibration,
+            linguistic_diagnostics=linguistic_diagnostics,
+        )
+    except HTTPException as exc:
+        status_code = exc.status_code
+        raise
+    except Exception:
+        status_code = 500
+        raise
+    finally:
+        metrics_registry.observe_seconds("detect_file", perf_counter() - t0)
+        metrics_registry.inc_request("detect_file", status_code)
+        metrics_registry.dec_in_flight()
+
+
+def _pipeline_ready(request: Request) -> bool:
+    """Readiness: pipeline present AND its language router loaded.
+
+    The AIGC_TESTING=1 stub pipeline (``is_stub``) counts as ready so the
+    boot-check stays green in test mode even though no models are loaded.
+    """
+    pipeline = getattr(request.app.state, "pipeline", None)
+    if pipeline is None:
+        return False
+    if getattr(pipeline, "is_stub", False) is True:
+        return True
+    language_router = getattr(pipeline, "language_router", None)
+    if language_router is None:
+        return False
+    is_loaded = getattr(language_router, "is_loaded", False)
+    if callable(is_loaded):
+        return bool(is_loaded())
+    return bool(is_loaded)
 
 
 @router.get("/health", response_model=HealthResponse)
-async def health_check(request: Request) -> HealthResponse:
-    """Return service health status and GPU memory usage."""
+async def health_check(request: Request, response: Response) -> HealthResponse:
+    """Return service health status and GPU memory usage.
+
+    HTTP 503 when the detection pipeline is not ready (missing/unloaded
+    language router); 200 otherwise — including AIGC_TESTING=1 stub mode.
+    """
     start_time = getattr(request.app.state, "start_time", time.time())
     model_manager = getattr(request.app.state, "model_manager", None)
 
@@ -570,10 +671,31 @@ async def health_check(request: Request) -> HealthResponse:
         gpu_used_mb = status.get("gpu_allocated_mb", 0.0)
         gpu_total_mb = status.get("gpu_total_mb", 0.0)
 
+    ready = _pipeline_ready(request)
+    if not ready:
+        response.status_code = 503
     return HealthResponse(
-        status="ok",
+        status="ok" if ready else "not_ready",
         models_loaded=models_loaded,
         gpu_memory_used_mb=round(gpu_used_mb, 1),
         gpu_memory_total_mb=round(gpu_total_mb, 1),
         uptime_seconds=round(time.time() - start_time, 1),
+        pipeline_ready=ready,
+    )
+
+
+@router.get("/ready", status_code=204)
+async def ready_check(request: Request) -> Response:
+    """Orchestrator readiness probe: 204 when ready, 503 otherwise."""
+    if not _pipeline_ready(request):
+        return Response(status_code=503)
+    return Response(status_code=204)
+
+
+@metrics_router.get("/metrics")
+async def prometheus_metrics() -> PlainTextResponse:
+    """Prometheus text-format metrics (auth-exempt)."""
+    return PlainTextResponse(
+        metrics_registry.render(),
+        media_type="text/plain; version=0.0.4; charset=utf-8",
     )

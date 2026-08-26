@@ -20,11 +20,25 @@ _SENSITIVE_KEY_RE = re.compile(
 _MAX_VALUE_LEN = 120
 
 
+def _current_request_id() -> str | None:
+    """Request id bound by the API request-id middleware, if any.
+
+    Lazy import keeps utils decoupled from the API layer at import time.
+    """
+    try:
+        from aigc_detector.api.middleware import get_request_id
+
+        return get_request_id()
+    except Exception:  # noqa: BLE001 — logging must never fail on context lookup
+        return None
+
+
 class SanitizingFormatter(logging.Formatter):
     """Redacts dict/list values under sensitive keys and truncates long strings.
 
     Defense-in-depth: if a future code path passes a payload dict into a log
-    call, the emitted line still cannot contain request text.
+    call, the emitted line still cannot contain request text. When a request
+    id is bound (API request-id middleware), it is appended as [rid=...].
     """
 
     def format(self, record: logging.LogRecord) -> str:
@@ -34,7 +48,11 @@ class SanitizingFormatter(logging.Formatter):
                 setattr(record, name, self._sanitize_dict(val))
             elif isinstance(val, str) and len(val) > _MAX_VALUE_LEN:
                 setattr(record, name, val[:_MAX_VALUE_LEN] + f"...[{len(val)} chars redacted]")
-        return super().format(record)
+        out = super().format(record)
+        rid = _current_request_id()
+        if rid:
+            out = f"{out} [rid={rid}]"
+        return out
 
     @staticmethod
     def _sanitize_dict(d: dict) -> dict:

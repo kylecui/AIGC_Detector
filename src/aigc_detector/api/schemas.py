@@ -109,6 +109,10 @@ class HealthResponse(BaseModel):
     gpu_memory_used_mb: float = Field(default=0.0)
     gpu_memory_total_mb: float = Field(default=0.0)
     uptime_seconds: float = Field(default=0.0)
+    pipeline_ready: bool = Field(
+        default=False,
+        description="True when the pipeline and its language router are loaded (testing-mode stubs count as ready).",
+    )
 
 
 class ErrorResponse(BaseModel):
