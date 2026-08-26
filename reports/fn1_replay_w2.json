@@ -1,0 +1,64 @@
+{
+  "fixture": "D:\\MyWorkSpaces\\AIGC_Detector\\tests\\fixtures\\fn1_declaration.txt",
+  "doc": {
+    "label": "Human-written",
+    "confidence": 0.8909,
+    "p_ai": 0.1091
+  },
+  "segment_highlights": {
+    "max_p_ai": 0.856,
+    "top_k_segments": [
+      {
+        "index": 7,
+        "p_ai": 0.856,
+        "text_snippet": "4. 本软件检测结果的展示与使用遵守相关法律法规，不用于非法目的。## 六、责任承担本公司对本声明各项内容的真实性、准确性、完整性承担法律责任。如有失实，本公司"
+      },
+      {
+        "index": 2,
+        "p_ai": 0.2048,
+        "text_snippet": "**依据《暂行办法》第二条第三款：\"行业组织、企业、教育和科研机构、公共文化机构、有关专业机构等研发、应用生成式人工智能技术，未向境内公众提供生成式人工智能服务"
+      },
+      {
+        "index": 4,
+        "p_ai": 0.1125,
+        "text_snippet": "## 四、软件内人工智能技术的合规说明本软件使用的人工智能技术均服务于**检测（判别）**目的，不构成向公众提供生成内容的服务：1. **检测算法组件**：软件"
+      }
+    ],
+    "n_segments": 8
+  },
+  "segment_time_ms": 43774.3,
+  "per_segment": [
+    {
+      "index": 0,
+      "p_ai": 0.0378
+    },
+    {
+      "index": 1,
+      "p_ai": 0.0735
+    },
+    {
+      "index": 2,
+      "p_ai": 0.2048
+    },
+    {
+      "index": 3,
+      "p_ai": 0.0123
+    },
+    {
+      "index": 4,
+      "p_ai": 0.1125
+    },
+    {
+      "index": 5,
+      "p_ai": 0.0131
+    },
+    {
+      "index": 6,
+      "p_ai": 0.1054
+    },
+    {
+      "index": 7,
+      "p_ai": 0.856
+    }
+  ]
+}

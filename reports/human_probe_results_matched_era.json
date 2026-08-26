@@ -1,0 +1,245 @@
+[
+  {
+    "file": "01-gengzheng-zhongliangkeji-2024.md",
+    "chars": 1065,
+    "label": "AI-generated",
+    "p_ai": 0.4985,
+    "confidence": 0.5015,
+    "stages": [
+      "encoder"
+    ]
+  },
+  {
+    "file": "02-gengzheng-shengdexintai-2025.md",
+    "chars": 2342,
+    "label": "AI-generated",
+    "p_ai": 0.5581,
+    "confidence": 0.5581,
+    "stages": [
+      "encoder"
+    ]
+  },
+  {
+    "file": "03-gengzheng-huadakeji-2026.md",
+    "chars": 2517,
+    "label": "Human-written",
+    "p_ai": 0.1388,
+    "confidence": 0.8612,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "04-chengqing-xiangcaigufen-2024.md",
+    "chars": 845,
+    "label": "AI-generated",
+    "p_ai": 0.6538,
+    "confidence": 0.6538,
+    "stages": [
+      "encoder"
+    ]
+  },
+  {
+    "file": "05-chengqing-qianheweiye-2025.md",
+    "chars": 630,
+    "label": "Human-written",
+    "p_ai": 0.0477,
+    "confidence": 0.9523,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  },
+  {
+    "file": "06-zhiqian-jinrongtianyu-2024.md",
+    "chars": 1589,
+    "label": "Human-written",
+    "p_ai": 0.0847,
+    "confidence": 0.9153,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "07-zhiqian-huaruankeji-2025.md",
+    "chars": 2309,
+    "label": "Human-written",
+    "p_ai": 0.0768,
+    "confidence": 0.9232,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "08-zhiqian-jinggulinye-2025.md",
+    "chars": 1274,
+    "label": "Human-written",
+    "p_ai": 0.1136,
+    "confidence": 0.8864,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "09-zhiqian-paisilin-2026.md",
+    "chars": 2551,
+    "label": "Human-written",
+    "p_ai": 0.1543,
+    "confidence": 0.8457,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "15-tongbao-nhc-xiaomou-2025.md",
+    "chars": 1629,
+    "label": "Human-written",
+    "p_ai": 0.0275,
+    "confidence": 0.9725,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  },
+  {
+    "file": "17-tongbao-nankai-2026.md",
+    "chars": 692,
+    "label": "Human-written",
+    "p_ai": 0.0136,
+    "confidence": 0.9864,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  },
+  {
+    "file": "18-yanzheng-ccf-2024.md",
+    "chars": 391,
+    "label": "Human-written",
+    "p_ai": 0.0993,
+    "confidence": 0.9007,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "19-yanzheng-dongyingsfj-lvxie-2025.md",
+    "chars": 1417,
+    "label": "Human-written",
+    "p_ai": 0.0601,
+    "confidence": 0.9399,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  },
+  {
+    "file": "20-yanzheng-cscp-2026.md",
+    "chars": 267,
+    "label": "Human-written",
+    "p_ai": 0.1307,
+    "confidence": 0.8693,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "21-chengnuo-gonggu-zhangjiajie-2024.md",
+    "chars": 1117,
+    "label": "Human-written",
+    "p_ai": 0.0482,
+    "confidence": 0.9518,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  },
+  {
+    "file": "22-chengnuo-gonggu-longyuan-2024.md",
+    "chars": 3868,
+    "label": "Human-written",
+    "p_ai": 0.0825,
+    "confidence": 0.9175,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  },
+  {
+    "file": "23-chengnuo-gonggu-guangzhougang-2025.md",
+    "chars": 2713,
+    "label": "Human-written",
+    "p_ai": 0.142,
+    "confidence": 0.858,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "24-chengnuo-gonggu-zhonghuaguoji-2026.md",
+    "chars": 2140,
+    "label": "Human-written",
+    "p_ai": 0.1444,
+    "confidence": 0.8556,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "25-tongbao-most-qingtuo-2024.md",
+    "chars": 845,
+    "label": "Human-written",
+    "p_ai": 0.0187,
+    "confidence": 0.9813,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  },
+  {
+    "file": "26-tongbao-xjtu-dyyy-2025.md",
+    "chars": 1727,
+    "label": "Human-written",
+    "p_ai": 0.0162,
+    "confidence": 0.9838,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  }
+]

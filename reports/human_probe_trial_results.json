@@ -1,0 +1,751 @@
+[
+  {
+    "file": "01-apology-chongqing-beer.md",
+    "chars": 1043,
+    "label": "Human-written",
+    "p_ai": 0.0325,
+    "confidence": 0.9675,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  },
+  {
+    "file": "01-gengzheng-tianhongshangchang-2010.md",
+    "chars": 1362,
+    "label": "Human-written",
+    "p_ai": 0.1613,
+    "confidence": 0.8387,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "01-gov-samr-recall-regulation-notice.md",
+    "chars": 1231,
+    "label": "Human-written",
+    "p_ai": 0.1594,
+    "confidence": 0.8406,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "01-tongbao-ndrc-website-q4-2021.md",
+    "chars": 814,
+    "label": "Human-written",
+    "p_ai": 0.2027,
+    "confidence": 0.7973,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "01-zhiqian-shengming-mezh.md",
+    "chars": 500,
+    "label": "Human-written",
+    "p_ai": 0.0075,
+    "confidence": 0.9925,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  },
+  {
+    "file": "02-apology-wanfu-shengke.md",
+    "chars": 1794,
+    "label": "Human-written",
+    "p_ai": 0.256,
+    "confidence": 0.744,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "02-chengqing-guangzhoulangqi-2010.md",
+    "chars": 897,
+    "label": "Human-written",
+    "p_ai": 0.1748,
+    "confidence": 0.8252,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "02-recall-gac-toyota-bota7.md",
+    "chars": 951,
+    "label": "Human-written",
+    "p_ai": 0.1369,
+    "confidence": 0.8631,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "02-tongbao-shenyang-website-jun-2021.md",
+    "chars": 1410,
+    "label": "Human-written",
+    "p_ai": 0.0984,
+    "confidence": 0.9016,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "02-zhiqian-shengming-ctrip.md",
+    "chars": 875,
+    "label": "Human-written",
+    "p_ai": 0.0171,
+    "confidence": 0.9829,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  },
+  {
+    "file": "03-chengqing-xinzhoubang-2011.md",
+    "chars": 1154,
+    "label": "Human-written",
+    "p_ai": 0.141,
+    "confidence": 0.859,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "03-company-haimo-correction.md",
+    "chars": 1987,
+    "label": "AI-generated",
+    "p_ai": 0.7432,
+    "confidence": 0.7432,
+    "stages": [
+      "encoder"
+    ]
+  },
+  {
+    "file": "03-qingkuang-tongbao-hfut.md",
+    "chars": 320,
+    "label": "Human-written",
+    "p_ai": 0.0061,
+    "confidence": 0.9939,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  },
+  {
+    "file": "03-tongbao-changde-safety-jan-apr-2021.md",
+    "chars": 2544,
+    "label": "Human-written",
+    "p_ai": 0.0894,
+    "confidence": 0.9106,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "04-apology-xintai-electric.md",
+    "chars": 1631,
+    "label": "Human-written",
+    "p_ai": 0.2027,
+    "confidence": 0.7973,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "04-company-shanghai-xinyang-apology.md",
+    "chars": 906,
+    "label": "Human-written",
+    "p_ai": 0.1035,
+    "confidence": 0.8965,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "04-gengzheng-dakangmuye-2012.md",
+    "chars": 538,
+    "label": "Human-written",
+    "p_ai": 0.0893,
+    "confidence": 0.9107,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "05-apology-xinlai-materials.md",
+    "chars": 1461,
+    "label": "Human-written",
+    "p_ai": 0.0518,
+    "confidence": 0.9482,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  },
+  {
+    "file": "05-chengqing-guizhoubailing-2013.md",
+    "chars": 1668,
+    "label": "Human-written",
+    "p_ai": 0.3884,
+    "confidence": 0.6116,
+    "stages": [
+      "encoder"
+    ]
+  },
+  {
+    "file": "05-chengqing-shengming-jxut.md",
+    "chars": 534,
+    "label": "Human-written",
+    "p_ai": 0.1283,
+    "confidence": 0.8717,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "05-company-doushen-clarification.md",
+    "chars": 1023,
+    "label": "Human-written",
+    "p_ai": 0.0979,
+    "confidence": 0.9021,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "05-tongbao-mee-yulin-lantan-2021.md",
+    "chars": 1502,
+    "label": "Human-written",
+    "p_ai": 0.019,
+    "confidence": 0.981,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  },
+  {
+    "file": "06-apology-yuxin-tech.md",
+    "chars": 1262,
+    "label": "Human-written",
+    "p_ai": 0.1476,
+    "confidence": 0.8524,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "06-bank-ccb-system-maintenance.md",
+    "chars": 596,
+    "label": "AI-generated",
+    "p_ai": 0.9868,
+    "confidence": 0.9868,
+    "stages": [
+      "encoder"
+    ]
+  },
+  {
+    "file": "06-gengzheng-lanseguangbiao-2014.md",
+    "chars": 435,
+    "label": "Human-written",
+    "p_ai": 0.1027,
+    "confidence": 0.8973,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "06-tongbao-csrc-hlj-investor-2018.md",
+    "chars": 1011,
+    "label": "AI-generated",
+    "p_ai": 0.939,
+    "confidence": 0.939,
+    "stages": [
+      "encoder"
+    ]
+  },
+  {
+    "file": "07-apology-hehua-co.md",
+    "chars": 1784,
+    "label": "Human-written",
+    "p_ai": 0.0813,
+    "confidence": 0.9187,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  },
+  {
+    "file": "07-bank-citic-system-maintenance.md",
+    "chars": 426,
+    "label": "Human-written",
+    "p_ai": 0.0204,
+    "confidence": 0.9796,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  },
+  {
+    "file": "07-chengnuoshu-hunan-ggzy-38qiye-2021.md",
+    "chars": 1211,
+    "label": "Human-written",
+    "p_ai": 0.2369,
+    "confidence": 0.7631,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "07-chengqing-jianghuaiqiche-2015.md",
+    "chars": 1313,
+    "label": "AI-generated",
+    "p_ai": 0.9834,
+    "confidence": 0.9834,
+    "stages": [
+      "encoder"
+    ]
+  },
+  {
+    "file": "08-chengnuoshu-cac-tencent-hegui-2021.md",
+    "chars": 667,
+    "label": "AI-generated",
+    "p_ai": 0.9927,
+    "confidence": 0.9927,
+    "stages": [
+      "encoder"
+    ]
+  },
+  {
+    "file": "08-commitment-qixing-tower.md",
+    "chars": 683,
+    "label": "Human-written",
+    "p_ai": 0.2023,
+    "confidence": 0.7977,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "08-gengzheng-fangdahuagong-2016.md",
+    "chars": 672,
+    "label": "Human-written",
+    "p_ai": 0.2028,
+    "confidence": 0.7972,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "08-university-shanghai-statement.md",
+    "chars": 884,
+    "label": "Human-written",
+    "p_ai": 0.1309,
+    "confidence": 0.8691,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "08-yanzheng-shengming-amac.md",
+    "chars": 306,
+    "label": "AI-generated",
+    "p_ai": 0.9355,
+    "confidence": 0.9355,
+    "stages": [
+      "encoder"
+    ]
+  },
+  {
+    "file": "09-chengnuoshu-xinzheng-jiaoyuju-2021.md",
+    "chars": 435,
+    "label": "AI-generated",
+    "p_ai": 0.6504,
+    "confidence": 0.6504,
+    "stages": [
+      "encoder"
+    ]
+  },
+  {
+    "file": "09-chengqing-baiyunshan-2017.md",
+    "chars": 1466,
+    "label": "Human-written",
+    "p_ai": 0.0714,
+    "confidence": 0.9286,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "09-university-wuhan-statement.md",
+    "chars": 2241,
+    "label": "Human-written",
+    "p_ai": 0.0181,
+    "confidence": 0.9819,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  },
+  {
+    "file": "09-yanzheng-shengming-caop.md",
+    "chars": 592,
+    "label": "Human-written",
+    "p_ai": 0.0064,
+    "confidence": 0.9936,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  },
+  {
+    "file": "10-association-zibo-lawyers-statement.md",
+    "chars": 2095,
+    "label": "Human-written",
+    "p_ai": 0.0336,
+    "confidence": 0.9664,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  },
+  {
+    "file": "10-chengnuoshu-chaoyang-baojiaheng-huanbao-2020.md",
+    "chars": 240,
+    "label": "Human-written",
+    "p_ai": 0.0205,
+    "confidence": 0.9795,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  },
+  {
+    "file": "10-chengqing-shengming-thu.md",
+    "chars": 393,
+    "label": "AI-generated",
+    "p_ai": 0.9961,
+    "confidence": 0.9961,
+    "stages": [
+      "encoder"
+    ]
+  },
+  {
+    "file": "10-gengzheng-lianchuanghulian-2018.md",
+    "chars": 487,
+    "label": "AI-generated",
+    "p_ai": 0.5166,
+    "confidence": 0.5166,
+    "stages": [
+      "encoder"
+    ]
+  },
+  {
+    "file": "11-chengqing-jiuguijiu-2019.md",
+    "chars": 2388,
+    "label": "Human-written",
+    "p_ai": 0.1812,
+    "confidence": 0.8188,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "11-qingkuang-tongbao-upc.md",
+    "chars": 679,
+    "label": "Human-written",
+    "p_ai": 0.0143,
+    "confidence": 0.9857,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  },
+  {
+    "file": "11-zhaohui-gac-honda-fit-2022.md",
+    "chars": 980,
+    "label": "AI-generated",
+    "p_ai": 0.998,
+    "confidence": 0.998,
+    "stages": [
+      "encoder"
+    ]
+  },
+  {
+    "file": "12-chengqing-shengming-hnsfjy.md",
+    "chars": 463,
+    "label": "Human-written",
+    "p_ai": 0.0133,
+    "confidence": 0.9867,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  },
+  {
+    "file": "12-commitment-huihong-group.md",
+    "chars": 1433,
+    "label": "Human-written",
+    "p_ai": 0.0915,
+    "confidence": 0.9085,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "12-gengzheng-maidikeji-2020.md",
+    "chars": 1764,
+    "label": "Human-written",
+    "p_ai": 0.1377,
+    "confidence": 0.8623,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "12-zhaohui-subaru-2022.md",
+    "chars": 4001,
+    "label": "AI-generated",
+    "p_ai": 0.9961,
+    "confidence": 0.9961,
+    "stages": [
+      "encoder"
+    ]
+  },
+  {
+    "file": "13-chengqing-longjigufen-2021.md",
+    "chars": 1818,
+    "label": "AI-generated",
+    "p_ai": 0.73,
+    "confidence": 0.73,
+    "stages": [
+      "encoder"
+    ]
+  },
+  {
+    "file": "13-commitment-zhongshui-fishery.md",
+    "chars": 831,
+    "label": "Human-written",
+    "p_ai": 0.2965,
+    "confidence": 0.7035,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "13-shengming-hunan-finrb-yanzheng-2020.md",
+    "chars": 201,
+    "label": "Human-written",
+    "p_ai": 0.0786,
+    "confidence": 0.9214,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "14-chengqing-shengming-fjnu.md",
+    "chars": 463,
+    "label": "Human-written",
+    "p_ai": 0.0144,
+    "confidence": 0.9856,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder"
+    ]
+  },
+  {
+    "file": "14-commitment-maijie-tech.md",
+    "chars": 639,
+    "label": "Human-written",
+    "p_ai": 0.3921,
+    "confidence": 0.6079,
+    "stages": [
+      "encoder"
+    ]
+  },
+  {
+    "file": "14-gengzheng-tianaozidian-2022.md",
+    "chars": 1589,
+    "label": "Human-written",
+    "p_ai": 0.1309,
+    "confidence": 0.8691,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "14-shengming-beijing-epb-2013.md",
+    "chars": 405,
+    "label": "Human-written",
+    "p_ai": 0.1716,
+    "confidence": 0.8284,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "15-commitment-lianying-medical.md",
+    "chars": 542,
+    "label": "Human-written",
+    "p_ai": 0.1384,
+    "confidence": 0.8616,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "15-tongbao-guoban-website-2020.md",
+    "chars": 4340,
+    "label": "Human-written",
+    "p_ai": 0.2052,
+    "confidence": 0.7948,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "16-apology-meihao-group.md",
+    "chars": 512,
+    "label": "Human-written",
+    "p_ai": 0.0679,
+    "confidence": 0.9321,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "17-commitment-lugang-culture.md",
+    "chars": 871,
+    "label": "Human-written",
+    "p_ai": 0.1349,
+    "confidence": 0.8651,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  },
+  {
+    "file": "18-commitment-huashu-media.md",
+    "chars": 2003,
+    "label": "Human-written",
+    "p_ai": 0.109,
+    "confidence": 0.891,
+    "stages": [
+      "statistical",
+      "linguistic",
+      "encoder",
+      "binoculars"
+    ]
+  }
+]

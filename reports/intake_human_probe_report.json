@@ -1,0 +1,800 @@
+{
+  "total": 62,
+  "ingested": 1,
+  "families": {
+    "致歉": 10,
+    "更正": 8,
+    "声明": 6,
+    "通报": 10,
+    "澄清": 12,
+    "召回维护": 5,
+    "承诺": 11
+  },
+  "era": {
+    "pre2023": 51,
+    "post2023": 11,
+    "unknown": 0
+  },
+  "pre2023_share": 0.8225806451612904,
+  "issuers_over3": {},
+  "review": [
+    {
+      "file": "02-recall-gac-toyota-bota7.md",
+      "score": 2,
+      "family": "召回维护",
+      "tag": "main"
+    },
+    {
+      "file": "06-bank-ccb-system-maintenance.md",
+      "score": 2,
+      "family": "召回维护",
+      "tag": "main"
+    },
+    {
+      "file": "07-bank-citic-system-maintenance.md",
+      "score": 2,
+      "family": "召回维护",
+      "tag": "main"
+    },
+    {
+      "file": "04-zhiqian-shengming-gzu.md",
+      "score": 2,
+      "family": "致歉",
+      "tag": "tier_c"
+    },
+    {
+      "file": "06-qingkuang-tongbao-sdu.md",
+      "score": 5,
+      "family": "通报",
+      "tag": "tier_c"
+    },
+    {
+      "file": "07-qingkuang-tongbao-neuq.md",
+      "score": 2,
+      "family": "通报",
+      "tag": "tier_c"
+    }
+  ],
+  "human_accepted_overrides": [
+    {
+      "file": "01-zhiqian-shengming-mezh.md",
+      "score": 0,
+      "reason": "institutional apology, informal register; pairs AI-side t03 道歉声明"
+    },
+    {
+      "file": "02-zhiqian-shengming-ctrip.md",
+      "score": 5,
+      "reason": "corporate apology+explanation (score 5 borderline); pairs AI-side t03/t02"
+    },
+    {
+      "file": "08-chengnuoshu-cac-tencent-hegui-2021.md",
+      "score": 5,
+      "reason": "承诺函 subgenre (score 5 borderline); pairs AI-side 承诺书 topics"
+    },
+    {
+      "file": "10-chengnuoshu-chaoyang-baojiaheng-huanbao-2020.md",
+      "score": 0,
+      "reason": "bare 环保承诺函 (sparse formulae); pairs AI-side t15 环保承诺书"
+    },
+    {
+      "file": "11-zhaohui-gac-honda-fit-2022.md",
+      "score": 0,
+      "reason": "recall-table genre; pairs AI-side t18 产品召回公告; gate blind to table format"
+    },
+    {
+      "file": "12-zhaohui-subaru-2022.md",
+      "score": 0,
+      "reason": "recall-table genre; pairs AI-side t18 产品召回公告; gate blind to table format"
+    },
+    {
+      "file": "05-tongbao-mee-yulin-lantan-2021.md",
+      "score": 2,
+      "reason": "中央督察组典型案例通报 (clauses are bolded headers, gate sees half); pairs AI-side t02/t12 情况说明/报告; pre-2023 high-value genre"
+    }
+  ],
+  "dupes": [
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_cc\\01-gengzheng-tianhongshangchang-2010.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\01-gengzheng-tianhongshangchang-2010.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_cc\\02-chengqing-guangzhoulangqi-2010.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\02-chengqing-guangzhoulangqi-2010.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_cc\\03-chengqing-xinzhoubang-2011.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\03-chengqing-xinzhoubang-2011.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_cc\\04-gengzheng-dakangmuye-2012.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\04-gengzheng-dakangmuye-2012.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_cc\\05-chengqing-guizhoubailing-2013.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\05-chengqing-guizhoubailing-2013.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_cc\\06-gengzheng-lanseguangbiao-2014.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\06-gengzheng-lanseguangbiao-2014.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_cc\\07-chengqing-jianghuaiqiche-2015.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\07-chengqing-jianghuaiqiche-2015.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_cc\\08-gengzheng-fangdahuagong-2016.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\08-gengzheng-fangdahuagong-2016.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_cc\\09-chengqing-baiyunshan-2017.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\09-chengqing-baiyunshan-2017.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_cc\\10-gengzheng-lianchuanghulian-2018.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\10-gengzheng-lianchuanghulian-2018.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_cc\\11-chengqing-jiuguijiu-2019.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\11-chengqing-jiuguijiu-2019.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_cc\\12-gengzheng-maidikeji-2020.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\12-gengzheng-maidikeji-2020.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_cc\\13-chengqing-longjigufen-2021.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\13-chengqing-longjigufen-2021.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_cc\\14-gengzheng-tianaozidian-2022.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\14-gengzheng-tianaozidian-2022.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_ac\\01-apology-chongqing-beer.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\01-apology-chongqing-beer.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_ac\\02-apology-wanfu-shengke.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\02-apology-wanfu-shengke.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_ac\\04-apology-xintai-electric.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\04-apology-xintai-electric.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_ac\\05-apology-xinlai-materials.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\05-apology-xinlai-materials.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_ac\\06-apology-yuxin-tech.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\06-apology-yuxin-tech.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_ac\\07-apology-hehua-co.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\07-apology-hehua-co.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_ac\\08-commitment-qixing-tower.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\08-commitment-qixing-tower.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_ac\\12-commitment-huihong-group.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\12-commitment-huihong-group.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_ac\\13-commitment-zhongshui-fishery.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\13-commitment-zhongshui-fishery.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_ac\\14-commitment-maijie-tech.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\14-commitment-maijie-tech.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_ac\\15-commitment-lianying-medical.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\15-commitment-lianying-medical.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_ac\\16-apology-meihao-group.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\16-apology-meihao-group.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_ac\\17-commitment-lugang-culture.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\17-commitment-lugang-culture.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\cninfo_ac\\18-commitment-huashu-media.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\18-commitment-huashu-media.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\gov_a\\01-tongbao-ndrc-website-q4-2021.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\01-tongbao-ndrc-website-q4-2021.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\gov_a\\02-tongbao-shenyang-website-jun-2021.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\02-tongbao-shenyang-website-jun-2021.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\gov_a\\03-tongbao-changde-safety-jan-apr-2021.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\03-tongbao-changde-safety-jan-apr-2021.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\gov_a\\06-tongbao-csrc-hlj-investor-2018.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\06-tongbao-csrc-hlj-investor-2018.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\gov_a\\07-chengnuoshu-hunan-ggzy-38qiye-2021.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\07-chengnuoshu-hunan-ggzy-38qiye-2021.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\gov_a\\08-chengnuoshu-cac-tencent-hegui-2021.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\08-chengnuoshu-cac-tencent-hegui-2021.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\gov_a\\09-chengnuoshu-xinzheng-jiaoyuju-2021.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\09-chengnuoshu-xinzheng-jiaoyuju-2021.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\gov_a\\10-chengnuoshu-chaoyang-baojiaheng-huanbao-2020.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\10-chengnuoshu-chaoyang-baojiaheng-huanbao-2020.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\gov_a\\11-zhaohui-gac-honda-fit-2022.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\11-zhaohui-gac-honda-fit-2022.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\gov_a\\12-zhaohui-subaru-2022.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\12-zhaohui-subaru-2022.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\gov_a\\13-shengming-hunan-finrb-yanzheng-2020.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\13-shengming-hunan-finrb-yanzheng-2020.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\gov_a\\14-shengming-beijing-epb-2013.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\14-shengming-beijing-epb-2013.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\gov_a\\15-tongbao-guoban-website-2020.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\15-tongbao-guoban-website-2020.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\tier_c\\01-zhiqian-shengming-mezh.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\01-zhiqian-shengming-mezh.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\tier_c\\02-zhiqian-shengming-ctrip.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\02-zhiqian-shengming-ctrip.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\tier_c\\03-qingkuang-tongbao-hfut.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\03-qingkuang-tongbao-hfut.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\tier_c\\05-chengqing-shengming-jxut.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\05-chengqing-shengming-jxut.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\tier_c\\08-yanzheng-shengming-amac.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\08-yanzheng-shengming-amac.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\tier_c\\09-yanzheng-shengming-caop.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\09-yanzheng-shengming-caop.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\tier_c\\10-chengqing-shengming-thu.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\10-chengqing-shengming-thu.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\tier_c\\11-qingkuang-tongbao-upc.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\11-qingkuang-tongbao-upc.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\tier_c\\12-chengqing-shengming-hnsfjy.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\12-chengqing-shengming-hnsfjy.md"
+    },
+    {
+      "file": "C:\\Users\\kylecui\\AppData\\Local\\Temp\\opencode\\human_probe\\tier_c\\14-chengqing-shengming-fjnu.md",
+      "issue": "exact-dup-of:D:\\MyWorkSpaces\\AIGC_Detector\\dataset\\legal_declaration_zh\\human\\14-chengqing-shengming-fjnu.md"
+    }
+  ],
+  "problems": [],
+  "per_doc": [
+    {
+      "file": "01-apology-chongqing-beer.md",
+      "family": "致歉",
+      "era": "pre2023",
+      "register": 6,
+      "chars": 1043,
+      "tag": "main"
+    },
+    {
+      "file": "01-gengzheng-tianhongshangchang-2010.md",
+      "family": "更正",
+      "era": "pre2023",
+      "register": 7,
+      "chars": 1362,
+      "tag": "main"
+    },
+    {
+      "file": "01-gov-samr-recall-regulation-notice.md",
+      "family": "声明",
+      "era": "post",
+      "register": 11,
+      "chars": 1231,
+      "tag": "main"
+    },
+    {
+      "file": "01-tongbao-ndrc-website-q4-2021.md",
+      "family": "通报",
+      "era": "pre2023",
+      "register": 7,
+      "chars": 814,
+      "tag": "main"
+    },
+    {
+      "file": "01-zhiqian-shengming-mezh.md",
+      "family": "致歉",
+      "era": "pre2023",
+      "register": 0,
+      "chars": 500,
+      "tag": "main"
+    },
+    {
+      "file": "02-apology-wanfu-shengke.md",
+      "family": "致歉",
+      "era": "pre2023",
+      "register": 9,
+      "chars": 1794,
+      "tag": "main"
+    },
+    {
+      "file": "02-chengqing-guangzhoulangqi-2010.md",
+      "family": "澄清",
+      "era": "pre2023",
+      "register": 12,
+      "chars": 897,
+      "tag": "main"
+    },
+    {
+      "file": "02-recall-gac-toyota-bota7.md",
+      "family": "召回维护",
+      "era": "post",
+      "register": 2,
+      "chars": 951,
+      "tag": "main"
+    },
+    {
+      "file": "02-tongbao-shenyang-website-jun-2021.md",
+      "family": "通报",
+      "era": "pre2023",
+      "register": 9,
+      "chars": 1410,
+      "tag": "main"
+    },
+    {
+      "file": "02-zhiqian-shengming-ctrip.md",
+      "family": "致歉",
+      "era": "pre2023",
+      "register": 5,
+      "chars": 875,
+      "tag": "main"
+    },
+    {
+      "file": "03-chengqing-xinzhoubang-2011.md",
+      "family": "澄清",
+      "era": "pre2023",
+      "register": 8,
+      "chars": 1154,
+      "tag": "main"
+    },
+    {
+      "file": "03-company-haimo-correction.md",
+      "family": "更正",
+      "era": "post",
+      "register": 14,
+      "chars": 1987,
+      "tag": "main"
+    },
+    {
+      "file": "03-qingkuang-tongbao-hfut.md",
+      "family": "通报",
+      "era": "post2023",
+      "register": 7,
+      "chars": 320,
+      "tag": "main"
+    },
+    {
+      "file": "03-tongbao-changde-safety-jan-apr-2021.md",
+      "family": "通报",
+      "era": "pre2023",
+      "register": 7,
+      "chars": 2544,
+      "tag": "main"
+    },
+    {
+      "file": "04-apology-xintai-electric.md",
+      "family": "致歉",
+      "era": "pre2023",
+      "register": 14,
+      "chars": 1631,
+      "tag": "main"
+    },
+    {
+      "file": "04-company-shanghai-xinyang-apology.md",
+      "family": "致歉",
+      "era": "post",
+      "register": 12,
+      "chars": 906,
+      "tag": "main"
+    },
+    {
+      "file": "04-gengzheng-dakangmuye-2012.md",
+      "family": "更正",
+      "era": "pre2023",
+      "register": 12,
+      "chars": 538,
+      "tag": "main"
+    },
+    {
+      "file": "05-apology-xinlai-materials.md",
+      "family": "致歉",
+      "era": "pre2023",
+      "register": 9,
+      "chars": 1461,
+      "tag": "main"
+    },
+    {
+      "file": "05-chengqing-guizhoubailing-2013.md",
+      "family": "澄清",
+      "era": "pre2023",
+      "register": 9,
+      "chars": 1668,
+      "tag": "main"
+    },
+    {
+      "file": "05-chengqing-shengming-jxut.md",
+      "family": "澄清",
+      "era": "pre2023",
+      "register": 8,
+      "chars": 534,
+      "tag": "main"
+    },
+    {
+      "file": "05-company-doushen-clarification.md",
+      "family": "澄清",
+      "era": "post",
+      "register": 16,
+      "chars": 1023,
+      "tag": "main"
+    },
+    {
+      "file": "06-apology-yuxin-tech.md",
+      "family": "致歉",
+      "era": "pre2023",
+      "register": 13,
+      "chars": 1262,
+      "tag": "main"
+    },
+    {
+      "file": "06-bank-ccb-system-maintenance.md",
+      "family": "召回维护",
+      "era": "post",
+      "register": 2,
+      "chars": 596,
+      "tag": "main"
+    },
+    {
+      "file": "06-gengzheng-lanseguangbiao-2014.md",
+      "family": "更正",
+      "era": "pre2023",
+      "register": 9,
+      "chars": 435,
+      "tag": "main"
+    },
+    {
+      "file": "06-tongbao-csrc-hlj-investor-2018.md",
+      "family": "通报",
+      "era": "pre2023",
+      "register": 7,
+      "chars": 1011,
+      "tag": "main"
+    },
+    {
+      "file": "07-apology-hehua-co.md",
+      "family": "致歉",
+      "era": "pre2023",
+      "register": 9,
+      "chars": 1784,
+      "tag": "main"
+    },
+    {
+      "file": "07-bank-citic-system-maintenance.md",
+      "family": "召回维护",
+      "era": "post",
+      "register": 2,
+      "chars": 426,
+      "tag": "main"
+    },
+    {
+      "file": "07-chengnuoshu-hunan-ggzy-38qiye-2021.md",
+      "family": "承诺",
+      "era": "pre2023",
+      "register": 8,
+      "chars": 1211,
+      "tag": "main"
+    },
+    {
+      "file": "07-chengqing-jianghuaiqiche-2015.md",
+      "family": "澄清",
+      "era": "pre2023",
+      "register": 7,
+      "chars": 1313,
+      "tag": "main"
+    },
+    {
+      "file": "08-chengnuoshu-cac-tencent-hegui-2021.md",
+      "family": "承诺",
+      "era": "pre2023",
+      "register": 5,
+      "chars": 667,
+      "tag": "main"
+    },
+    {
+      "file": "08-commitment-qixing-tower.md",
+      "family": "承诺",
+      "era": "pre2023",
+      "register": 8,
+      "chars": 683,
+      "tag": "main"
+    },
+    {
+      "file": "08-gengzheng-fangdahuagong-2016.md",
+      "family": "更正",
+      "era": "pre2023",
+      "register": 8,
+      "chars": 672,
+      "tag": "main"
+    },
+    {
+      "file": "08-university-shanghai-statement.md",
+      "family": "通报",
+      "era": "post",
+      "register": 7,
+      "chars": 884,
+      "tag": "main"
+    },
+    {
+      "file": "08-yanzheng-shengming-amac.md",
+      "family": "声明",
+      "era": "pre2023",
+      "register": 10,
+      "chars": 306,
+      "tag": "main"
+    },
+    {
+      "file": "09-chengnuoshu-xinzheng-jiaoyuju-2021.md",
+      "family": "承诺",
+      "era": "pre2023",
+      "register": 8,
+      "chars": 435,
+      "tag": "main"
+    },
+    {
+      "file": "09-chengqing-baiyunshan-2017.md",
+      "family": "澄清",
+      "era": "pre2023",
+      "register": 7,
+      "chars": 1466,
+      "tag": "main"
+    },
+    {
+      "file": "09-university-wuhan-statement.md",
+      "family": "通报",
+      "era": "post",
+      "register": 11,
+      "chars": 2241,
+      "tag": "main"
+    },
+    {
+      "file": "09-yanzheng-shengming-caop.md",
+      "family": "声明",
+      "era": "pre2023",
+      "register": 10,
+      "chars": 592,
+      "tag": "main"
+    },
+    {
+      "file": "10-association-zibo-lawyers-statement.md",
+      "family": "声明",
+      "era": "post",
+      "register": 10,
+      "chars": 2095,
+      "tag": "main"
+    },
+    {
+      "file": "10-chengnuoshu-chaoyang-baojiaheng-huanbao-2020.md",
+      "family": "承诺",
+      "era": "pre2023",
+      "register": 0,
+      "chars": 240,
+      "tag": "main"
+    },
+    {
+      "file": "10-chengqing-shengming-thu.md",
+      "family": "澄清",
+      "era": "pre2023",
+      "register": 7,
+      "chars": 393,
+      "tag": "main"
+    },
+    {
+      "file": "10-gengzheng-lianchuanghulian-2018.md",
+      "family": "更正",
+      "era": "pre2023",
+      "register": 8,
+      "chars": 487,
+      "tag": "main"
+    },
+    {
+      "file": "11-chengqing-jiuguijiu-2019.md",
+      "family": "澄清",
+      "era": "pre2023",
+      "register": 13,
+      "chars": 2388,
+      "tag": "main"
+    },
+    {
+      "file": "11-qingkuang-tongbao-upc.md",
+      "family": "通报",
+      "era": "pre2023",
+      "register": 10,
+      "chars": 679,
+      "tag": "main"
+    },
+    {
+      "file": "11-zhaohui-gac-honda-fit-2022.md",
+      "family": "召回维护",
+      "era": "pre2023",
+      "register": 0,
+      "chars": 980,
+      "tag": "main"
+    },
+    {
+      "file": "12-chengqing-shengming-hnsfjy.md",
+      "family": "澄清",
+      "era": "pre2023",
+      "register": 10,
+      "chars": 463,
+      "tag": "main"
+    },
+    {
+      "file": "12-commitment-huihong-group.md",
+      "family": "承诺",
+      "era": "pre2023",
+      "register": 6,
+      "chars": 1433,
+      "tag": "main"
+    },
+    {
+      "file": "12-gengzheng-maidikeji-2020.md",
+      "family": "更正",
+      "era": "pre2023",
+      "register": 9,
+      "chars": 1764,
+      "tag": "main"
+    },
+    {
+      "file": "12-zhaohui-subaru-2022.md",
+      "family": "召回维护",
+      "era": "pre2023",
+      "register": 0,
+      "chars": 4001,
+      "tag": "main"
+    },
+    {
+      "file": "13-chengqing-longjigufen-2021.md",
+      "family": "澄清",
+      "era": "pre2023",
+      "register": 7,
+      "chars": 1818,
+      "tag": "main"
+    },
+    {
+      "file": "13-commitment-zhongshui-fishery.md",
+      "family": "承诺",
+      "era": "pre2023",
+      "register": 14,
+      "chars": 831,
+      "tag": "main"
+    },
+    {
+      "file": "13-shengming-hunan-finrb-yanzheng-2020.md",
+      "family": "声明",
+      "era": "pre2023",
+      "register": 11,
+      "chars": 201,
+      "tag": "main"
+    },
+    {
+      "file": "14-chengqing-shengming-fjnu.md",
+      "family": "澄清",
+      "era": "pre2023",
+      "register": 10,
+      "chars": 463,
+      "tag": "main"
+    },
+    {
+      "file": "14-commitment-maijie-tech.md",
+      "family": "承诺",
+      "era": "pre2023",
+      "register": 12,
+      "chars": 639,
+      "tag": "main"
+    },
+    {
+      "file": "14-gengzheng-tianaozidian-2022.md",
+      "family": "更正",
+      "era": "pre2023",
+      "register": 17,
+      "chars": 1589,
+      "tag": "main"
+    },
+    {
+      "file": "14-shengming-beijing-epb-2013.md",
+      "family": "声明",
+      "era": "pre2023",
+      "register": 7,
+      "chars": 405,
+      "tag": "main"
+    },
+    {
+      "file": "15-commitment-lianying-medical.md",
+      "family": "承诺",
+      "era": "pre2023",
+      "register": 9,
+      "chars": 542,
+      "tag": "main"
+    },
+    {
+      "file": "15-tongbao-guoban-website-2020.md",
+      "family": "通报",
+      "era": "pre2023",
+      "register": 9,
+      "chars": 4340,
+      "tag": "main"
+    },
+    {
+      "file": "16-apology-meihao-group.md",
+      "family": "致歉",
+      "era": "pre2023",
+      "register": 9,
+      "chars": 512,
+      "tag": "main"
+    },
+    {
+      "file": "17-commitment-lugang-culture.md",
+      "family": "承诺",
+      "era": "pre2023",
+      "register": 8,
+      "chars": 871,
+      "tag": "main"
+    },
+    {
+      "file": "18-commitment-huashu-media.md",
+      "family": "承诺",
+      "era": "pre2023",
+      "register": 15,
+      "chars": 2003,
+      "tag": "main"
+    },
+    {
+      "file": "05-tongbao-mee-yulin-lantan-2021.md",
+      "family": "通报",
+      "era": "pre2023",
+      "register": 2,
+      "chars": 1502,
+      "tag": "gov_a"
+    }
+  ]
+}
