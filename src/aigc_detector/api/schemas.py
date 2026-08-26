@@ -60,6 +60,41 @@ class DetectionResponse(BaseModel):
         default_factory=list,
         description="Optional segment-level detection results.",
     )
+    segment_highlights: dict | None = Field(
+        default=None,
+        description=(
+            "Optional auxiliary signal surfacing the strongest local AI traces: "
+            "{max_p_ai, top_k_segments: [{index, p_ai, text_snippet}], n_segments}. "
+            "An auxiliary review aid only — it may disagree with the document-level "
+            "verdict by design (see docs/capability-statement.md)."
+        ),
+    )
+    caveat: dict | None = Field(
+        default=None,
+        description=(
+            "Optional register caveat: present when the text hits the formal-document "
+            "register (声明/公告/承诺书…), where overall verdict reliability is "
+            "reduced. Carries {code, message, action_guidance}."
+        ),
+    )
+    calibration: dict | None = Field(
+        default=None,
+        description=(
+            "Present when register-conditioned confidence calibration was applied "
+            "(formal register only): {method, register, T, confidence_raw, note}. "
+            "The displayed confidence is the calibrated value; verdict and ranking "
+            "are unchanged by construction."
+        ),
+    )
+    decision_rule: dict | None = Field(
+        default=None,
+        description=(
+            "Present when the register-gated binoculars-floor OR-rule fired "
+            "(W15 candidate, enabled=false by default): the verdict was upgraded "
+            "to AI-generated because the binoculars stage exceeded its cutoff in "
+            "the formal register. Carries {rule, cutoff, binoculars_p_ai, note}."
+        ),
+    )
     linguistic_diagnostics: dict | None = Field(
         default=None,
         description="Optional linguistic-stylistic diagnostics (only present when include_diagnostics=True).",

@@ -25,6 +25,12 @@ from starlette.concurrency import run_in_threadpool
 from aigc_detector.api.middleware import limiter
 from aigc_detector.api.schemas import DetectionRequest, DetectionResponse, HealthResponse
 from aigc_detector.detection.linguistic import LinguisticDiagnostics, LinguisticFeatureExtractor
+from aigc_detector.detection.register import (
+    FORMAL_ZH_CAVEAT,
+    binoculars_floor,
+    detect_register_zh,
+    formal_temperature,
+)
 from aigc_detector.utils.text import split_sentences_bilingual
 
 logger = logging.getLogger(__name__)
@@ -100,6 +106,135 @@ def _build_segments(text: str, min_chars: int = MIN_SEGMENT_CHARS, max_segments:
     return segment_results
 
 
+def _register_caveat(text: str) -> dict | None:
+    """Formal-register caveat (W3a/W3b): cheap lexical check, CPU-only.
+
+    Returns the canonical caveat payload when the text hits the 公文体
+    register, else None. Detection itself is unchanged — the caveat is the
+    'entry-eligibility downgrade' (single-doc high-confidence verdict not
+    suitable in this register) plus concrete action guidance (D2).
+    """
+    try:
+        reg = detect_register_zh(text)
+    except Exception:  # noqa: BLE001 — caveat must never break detection
+        return None
+    if not reg.is_formal_zh:
+        return None
+    return {
+        **FORMAL_ZH_CAVEAT,
+        "register_score": reg.score,
+        "register_markers": reg.matched_markers[:6],
+    }
+
+
+def _calibrate_confidence(caveat: dict | None, confidence: float, p_ai: float) -> tuple[float, dict | None]:
+    """W11-2: register-conditioned confidence calibration.
+
+    When the formal-register caveat fired AND a fitted formal temperature is
+    deployed (models/calibration/global_temperature.json applied=true), the
+    displayed confidence is compressed: conf' = sigmoid(logit(conf)/T).
+    Provably label-flip-free and ranking-preserving (monotone in conf).
+    Non-formal texts: T=1, confidence unchanged (well-calibrated regions are
+    not squashed — the single-global-T mistake W11-1 measured empirically).
+    """
+    if caveat is None:
+        return confidence, None
+    t = formal_temperature()
+    if t is None or t <= 0:
+        return confidence, None
+    eps = 1e-6
+    c = min(max(confidence, eps), 1 - eps)
+    z = __import__("math").log(c / (1 - c))
+    calibrated = 1 / (1 + __import__("math").exp(-z / t))
+    return calibrated, {
+        "method": "register-conditioned temperature scaling",
+        "register": "formal_zh",
+        "T": t,
+        "confidence_raw": round(confidence, 4),
+        "note": "置信度已按正式文书语域校准压缩；判定与排序不变",
+    }
+
+
+def _apply_binoculars_floor(result, caveat: dict | None, text: str, pipeline) -> dict | None:
+    """W15 candidate: register-gated binoculars-floor OR-rule.
+
+    When the formal-register caveat fired AND the floor is deployed
+    (models/calibration/binoculars_floor.json enabled=true): if the
+    binoculars stage did not run (early exit), force-run it via the
+    pipeline; then if its p_ai >= cutoff, upgrade the verdict to
+    AI-generated. This implements exactly the rule measured in
+    reports/w3b_floor_analysis.json (flag if ensemble>=threshold OR
+    binoculars>=cutoff). Boundary: catches raw contract generation;
+    human-edited AI text (FN-1, bino 0.343) stays below every cutoff.
+
+    Returns a provenance dict when the rule fired, else None. Fail-safe:
+    any exception leaves the original verdict untouched.
+    """
+    if caveat is None:
+        return None
+    floor = binoculars_floor()
+    if floor is None:
+        return None
+    try:
+        breakdown = result.breakdown or {}
+        if "binoculars" not in breakdown and text.strip():
+            forced = pipeline._run_binoculars(text, getattr(result, "detected_language", "zh"))  # noqa: SLF001 — candidate bridge
+            if forced:
+                breakdown["binoculars"] = forced
+                result.breakdown = breakdown
+        bino = (result.breakdown or {}).get("binoculars") or {}
+        bino_p = bino.get("p_ai") if isinstance(bino, dict) else None
+        if not isinstance(bino_p, (int, float)):
+            return None
+        if bino_p >= floor["cutoff"] and result.predicted_label != "AI-generated":
+            result.predicted_label = "AI-generated"
+            result.p_ai = max(result.p_ai, float(bino_p))
+            # confidence of the NEW verdict = the evidence that flipped it,
+            # not max with the old human-verdict confidence (semantic fix,
+            # gate-review 2026-08-21: old max() let stale human-confidence
+            # endorse a thin-evidence AI flip)
+            result.confidence = float(bino_p)
+            return {
+                "rule": "register_binoculars_floor",
+                "cutoff": floor["cutoff"],
+                "binoculars_p_ai": round(float(bino_p), 4),
+                "note": "正式文书语域：Binoculars阶段检测到原始生成信号，判定按OR规则升级",
+            }
+    except Exception:  # noqa: BLE001 — floor must never break detection
+        return None
+    return None
+
+
+def _segment_highlights(segments: list[dict], top_k: int = 3) -> dict | None:
+    """Surface the strongest local AI traces as an auxiliary review signal.
+
+    Returns {max_p_ai, top_k_segments, n_segments} or None when no segments.
+    Deliberately decoupled from the document-level verdict: on mixed documents
+    a single high-scoring segment may disagree with the overall label; this is
+    presented to users as supporting evidence for manual review, not as a
+    second verdict (see DETECTOR_NOTES_2026-08.md FN-1 / WaterSeeker precedent).
+    """
+    if not segments:
+        return None
+    scored = [
+        {
+            "index": s.get("index"),
+            "p_ai": s.get("p_ai"),
+            "text_snippet": (s.get("text") or "")[:80],
+        }
+        for s in segments
+        if isinstance(s.get("p_ai"), (int, float))
+    ]
+    if not scored:
+        return None
+    scored.sort(key=lambda x: x["p_ai"], reverse=True)
+    return {
+        "max_p_ai": scored[0]["p_ai"],
+        "top_k_segments": scored[:top_k],
+        "n_segments": len(segments),
+    }
+
+
 def _detect_segments(pipeline, text: str) -> tuple[list[dict], float]:
     segments = _build_segments(text)
     if not segments:
@@ -169,15 +304,22 @@ async def detect_text(request: Request, data: DetectionRequest) -> DetectionResp
             logger.warning("Linguistic diagnostics failed", exc_info=True)
             linguistic_diagnostics = None
 
+    caveat = _register_caveat(data.text)
+    decision_rule = _apply_binoculars_floor(result, caveat, data.text, pipeline)
+    confidence, calibration = _calibrate_confidence(caveat, result.confidence, result.p_ai)
     return DetectionResponse(
         predicted_label=result.predicted_label,
-        confidence=result.confidence,
+        confidence=round(confidence, 4),
         p_ai=result.p_ai,
         detected_language=result.detected_language,
         stages_used=result.stages_used,
         breakdown=result.breakdown,
+        decision_rule=decision_rule,
         processing_time_ms=round(result.processing_time_ms + segment_time_ms, 1),
         segments=segments,
+        segment_highlights=_segment_highlights(segments),
+        caveat=caveat,
+        calibration=calibration,
         linguistic_diagnostics=linguistic_diagnostics,
     )
 
@@ -363,15 +505,22 @@ async def detect_file(
             logger.warning("Linguistic diagnostics failed", exc_info=True)
             linguistic_diagnostics = None
 
+    caveat = _register_caveat(text)
+    decision_rule = _apply_binoculars_floor(result, caveat, text, pipeline)
+    confidence, calibration = _calibrate_confidence(caveat, result.confidence, result.p_ai)
     return DetectionResponse(
         predicted_label=result.predicted_label,
-        confidence=result.confidence,
+        confidence=round(confidence, 4),
         p_ai=result.p_ai,
         detected_language=result.detected_language,
         stages_used=result.stages_used,
         breakdown=result.breakdown,
+        decision_rule=decision_rule,
         processing_time_ms=round(result.processing_time_ms + segment_time_ms, 1),
         segments=segments,
+        segment_highlights=_segment_highlights(segments),
+        caveat=caveat,
+        calibration=calibration,
         linguistic_diagnostics=linguistic_diagnostics,
     )
 
