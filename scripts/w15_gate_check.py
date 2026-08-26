@@ -39,11 +39,20 @@ def main() -> int:
     for src in ["reports/human_probe_trial_results.json", "reports/human_probe_results_matched_era.json"]:
         for r in json.loads((ROOT / src).read_text(encoding="utf-8")):
             ens[r["file"]] = r["p_ai"]
-    stage = [json.loads(l) for l in (ROOT / "reports/human_stage_scores.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
+    stage = [
+        json.loads(line)
+        for line in (ROOT / "reports/human_stage_scores.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
     bino = {r["file"]: r["stage_p_ai"]["binoculars"] for r in stage if "binoculars" in r["stage_p_ai"]}
-    THR_RAW = 0.8536432310785527
-    for r in [json.loads(l) for l in (ROOT / "reports/human_binoculars_forced.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]:
-        ratio = r["binoculars_p_ai"] / THR_RAW
+    thr_raw = 0.8536432310785527
+    forced = [
+        json.loads(line)
+        for line in (ROOT / "reports/human_binoculars_forced.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    for r in forced:
+        ratio = r["binoculars_p_ai"] / thr_raw
         bino[r["file"]] = max(0.0, min(1.0, 1.0 / (1.0 + math.exp(5.0 * (ratio - 1.0)))))
     assert len(bino) == 82
 

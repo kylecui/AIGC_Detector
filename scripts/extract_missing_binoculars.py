@@ -23,7 +23,11 @@ OUT = ROOT / "reports/human_binoculars_forced.jsonl"
 
 
 def main() -> int:
-    rows = [json.loads(l) for l in CKPT.read_text(encoding="utf-8").splitlines() if l.strip()]
+    rows = [
+        json.loads(line)
+        for line in CKPT.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
     have = {r["file"] for r in rows if "binoculars" in r["stage_p_ai"]}
     all_docs = {}
     for sub, tag in [("dataset/legal_declaration_zh/human", "zh_main"),

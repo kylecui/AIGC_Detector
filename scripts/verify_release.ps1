@@ -60,6 +60,34 @@ Add-Check "Log hygiene wired" ((Get-Content src/aigc_detector/api/main.py -Raw) 
 $dirty = git status --porcelain=v1 2>$null | Where-Object { $_ -notmatch "release-check" }
 Add-Check "Worktree clean" ($null -eq $dirty -or $dirty.Count -eq 0) "$(if($dirty){$dirty.Count}else{0}) dirty"
 
+# 10. Lint clean (CI parity)
+uv run ruff check . *> $null
+Add-Check "Ruff clean" ($LASTEXITCODE -eq 0) "exit=$LASTEXITCODE"
+
+# 11. CI workflow present
+Add-Check "CI workflow" (Test-Path .github/workflows/ci.yml) "actions file"
+
+# 12. Metrics + testing-mode boot (GPU-free e2e)
+$env:AIGC_TESTING = "1"
+$metricsOk = $false
+try {
+    $job = Start-Job -ScriptBlock {
+        Set-Location "D:\MyWorkSpaces\AIGC_Detector"
+        $env:AIGC_TESTING = "1"
+        & uv run python -m uvicorn aigc_detector.api.main:app --port 8905 2>$null
+    }
+    Start-Sleep -Seconds 25
+    try { $m = Invoke-WebRequest -Uri "http://127.0.0.1:8905/metrics" -UseBasicParsing -TimeoutSec 10; $metricsOk = ($m.StatusCode -eq 200 -and $m.Content -match "aigc_requests_total") } catch {}
+} finally {
+    Stop-Job $job -ErrorAction SilentlyContinue; Remove-Job $job -Force -ErrorAction SilentlyContinue
+    $env:AIGC_TESTING = "0"
+}
+Add-Check "Metrics endpoint (testing boot)" $metricsOk "prometheus format"
+
+# 13. Release tag
+$tag = git describe --tags --exact-match HEAD 2>$null
+Add-Check "Release tag" ($tag -match "^v") "tag=$tag"
+
 # Summary
 $failed = ($results | Where-Object { -not $_.Ok }).Count
 $verdict = if ($failed -eq 0) { "PASS" } else { "FAIL" }

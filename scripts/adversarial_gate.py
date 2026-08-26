@@ -67,7 +67,6 @@ def dual_layer_gate(cand_p_ai: dict[str, float], prod_p_ai: dict[str, float],
     # L2 paired test (one-sided: candidate p_ai INCREASE = harm)
     l2: dict = {"layer": "L2_paired_test", "n_pairs": len(diffs)}
     if len(diffs) >= 10 and any(d != 0 for d in diffs):
-        import numpy as np
 
         stat = wilcoxon(diffs, alternative="greater")
         l2["wilcoxon_p_one_sided"] = float(stat.pvalue)
@@ -117,6 +116,7 @@ def main() -> int:
         return 1
 
     from evaluate_paired_experiment import build_pipeline
+
     from aigc_detector.training.adversarial import formality_score
 
     pipeline = build_pipeline(adapter_zh=cand)

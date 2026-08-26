@@ -8,6 +8,7 @@ D4: n=62 < 100 → no FPR@1%; interval endpoints, not point estimates).
 from __future__ import annotations
 
 import json
+import statistics as st
 import sys
 from pathlib import Path
 
@@ -29,8 +30,18 @@ for f in (ROOT / "dataset/legal_declaration_zh/human").glob("*.md"):
     ) if len(parts) == 3 else {}
     hum_docs[f.name] = {k.strip(): v.strip() for k, v in meta.items()}
 
-ai_recs = [json.loads(l) for l in (ROOT / "dataset/paired_generation_v1/pilot_records.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
-ai_res = [json.loads(l) for l in (ROOT / "dataset/paired_generation_v1/eval_results.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
+ai_recs = [
+    json.loads(line)
+    for line in
+    (ROOT / "dataset/paired_generation_v1/pilot_records.jsonl").read_text(encoding="utf-8").splitlines()
+    if line.strip()
+]
+ai_res = [
+    json.loads(line)
+    for line in
+    (ROOT / "dataset/paired_generation_v1/eval_results.jsonl").read_text(encoding="utf-8").splitlines()
+    if line.strip()
+]
 ai_by_id = {r["id"]: r for r in ai_recs}
 
 # --- family mapping (same as intake) ---
@@ -42,11 +53,11 @@ def family_of(dt: str) -> str:
     return "其他"
 
 # --- 1) two-side matching: length + register distributions ---
-import statistics as st
 hum_lens = [r["chars"] for r in hum_rows]
 ai_lens = [len(r["text"]) for r in ai_recs]
 def q(xs, p):
-    xs = sorted(xs); i = min(len(xs) - 1, int(p * len(xs)))
+    xs = sorted(xs)
+    i = min(len(xs) - 1, int(p * len(xs)))
     return xs[i]
 
 # --- 2) human-side per-family flag rates ---
@@ -85,11 +96,11 @@ lines = [
     "",
     "## 1. 总体判定（人类侧误判 = FPR）",
     "",
-    f"| 指标 | 值 | Wilson 95% |",
-    f"|---|---|---|",
+    "| 指标 | 值 | Wilson 95% |",
+    "|---|---|---|",
     f"| 人类公文被误判为AI | {flagged}/{n_h} = **{flagged/n_h:.1%}** | [{lo:.1%}, {hi:.1%}] |",
     f"| 高置信误判 (conf>0.8) | {len(hc)}/{n_h} = {len(hc)/n_h:.1%} | — |",
-    f"| ECE(10桶, 人类侧) | 0.164 | — |",
+    "| ECE(10桶, 人类侧) | 0.164 | — |",
     "",
     "## 2. 分类型误判（人类侧）",
     "",
@@ -130,13 +141,15 @@ lines += [
     f"1. **公文体语域双向失效正式定量**：人类侧误判 {flagged/n_h:.0%} [{lo:.0%}, {hi:.0%}]，"
     "AI侧（above-floor模型合约臂）漏判79-88%。同一语域内，检测器的两类错误同时高企——"
     "这不是阈值问题，是分布重叠（W4/W4b + 本基线三角印证）。",
-    f"2. **高置信错误8例**（含建行公告0.987）确认D1（校准诚实）为头号指标的必要性：错误不仅发生，且以高置信发生。",
+    "2. **高置信错误8例**（含建行公告0.987）确认D1（校准诚实）为头号指标的必要性：错误不仅发生，且以高置信发生。",
     "3. **召回表格体5篇中2篇高置信误判**：表格语域是 lexical gate 与检测器双重盲区，已记录。",
-    "4. W3b权重切换的约束条件更新：在FPR区间上端19%基础上，任何向「更敏感」方向的调整须先通过本基线的区间对照（ADR-0001复审条件#1未满足——AUROC正式值待W9 v2计算，但两侧误判率已提示重叠严重）。",
+    "4. W3b权重切换的约束条件更新：在FPR区间上端19%基础上，任何向「更敏感」方向的调整须先通过本基线的区间对照"
+    "（ADR-0001复审条件#1未满足——AUROC正式值待W9 v2计算，但两侧误判率已提示重叠严重）。",
     "",
     "---",
     "局限：人类侧n=62（<100，区间较宽）；AI侧为实验语料（2:1向难臂倾斜），其漏判率不可与真实流量混读；",
-    "复现：`scripts/eval_human_probe.py` → `scripts/defensibility_report.py` → 本脚本 `scripts/probe_baseline_report.py`",
+    "复现：`scripts/eval_human_probe.py` → `scripts/defensibility_report.py` → 本脚本 "
+    "`scripts/probe_baseline_report.py`",
 ]
 
 out = ROOT / "reports/probe_baseline_2026-08.md"

@@ -18,8 +18,6 @@ import json
 import math
 from pathlib import Path
 
-import numpy as np
-
 ROOT = Path(__file__).parent.parent
 
 
@@ -40,16 +38,30 @@ def main() -> int:
                 "reports/human_probe_results_matched_era.json"]:
         for r in json.loads((ROOT / src).read_text(encoding="utf-8")):
             hum_ens[r["file"]] = r["p_ai"]
-    stage = [json.loads(l) for l in (ROOT / "reports/human_stage_scores.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
+    stage = [
+        json.loads(line)
+        for line in (ROOT / "reports/human_stage_scores.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
     h_bino = {r["file"]: r["stage_p_ai"]["binoculars"] for r in stage if "binoculars" in r["stage_p_ai"]}
-    THR = 0.8536432310785527
-    for r in [json.loads(l) for l in (ROOT / "reports/human_binoculars_forced.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]:
-        ratio = r["binoculars_p_ai"] / THR
+    thr = 0.8536432310785527
+    forced = [
+        json.loads(line)
+        for line in (ROOT / "reports/human_binoculars_forced.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    for r in forced:
+        ratio = r["binoculars_p_ai"] / thr
         h_bino[r["file"]] = max(0.0, min(1.0, 1.0 / (1.0 + math.exp(5.0 * (ratio - 1.0)))))
     assert len(h_bino) == 82, f"coverage {len(h_bino)}"
 
     # AI formal cells with both ensemble + binoculars
-    res = [json.loads(l) for l in (ROOT / "dataset/paired_generation_v1/w4c_eval_results.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
+    res = [
+        json.loads(line)
+        for line in
+        (ROOT / "dataset/paired_generation_v1/w4c_eval_results.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
     cells = {}
     for r in res:
         if r["register"] != "formal":
@@ -60,7 +72,7 @@ def main() -> int:
         key = f"{r['model'].split('/')[-1]}-{r['arm']}"
         cells.setdefault(key, []).append((r["p_ai"], b))
 
-    FN1_ENS, FN1_BINO = 0.1091, 0.3431
+    fn1_bino = 0.3431
 
     cutoffs = [0.40, 0.42, 0.44, 0.46, 0.48, 0.50, 0.52, 0.55, 0.58, 0.60]
     print(f"{'cutoff':>7}{'humanFPR':>10}{'[CI95]':>16}", end="")
@@ -82,7 +94,7 @@ def main() -> int:
             miss = sum(1 for e, b in pairs if e < 0.47 and b < cut)
             miss_cells[k] = miss / len(pairs)
             line += f"{miss / len(pairs):>13.0%}"
-        fn1 = "CAUGHT" if FN1_BINO >= cut else "miss"
+        fn1 = "CAUGHT" if fn1_bino >= cut else "miss"
         line += f"{fn1:>8}"
         rows_out.append({"cutoff": cut, "human_fp": fp, "human_fpr": fp / 82,
                          "ci95": [lo, hi], "cell_miss": miss_cells, "fn1": fn1})

@@ -57,8 +57,8 @@ def main() -> int:
         (ROOT / "reports/human_probe_results_matched_era.json").read_text(encoding="utf-8"))]
     h = np.array(human)
 
-    res = [json.loads(l) for l in (ROOT / "dataset/paired_generation_v1/w4c_eval_results.jsonl")
-           .read_text(encoding="utf-8").splitlines() if l.strip()]
+    res = [json.loads(line) for line in (ROOT / "dataset/paired_generation_v1/w4c_eval_results.jsonl")
+           .read_text(encoding="utf-8").splitlines() if line.strip()]
     cells: dict[tuple[str, str], dict[str, list[float]]] = {}  # (model,arm)->topic->[p_ai]
     for r in res:
         cells.setdefault((r["model"], r["arm"]), {}).setdefault(r["topic_id"], []).append(r["p_ai"])

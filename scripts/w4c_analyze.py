@@ -80,7 +80,7 @@ def paired_topic_diff(cell_x: dict[str, list[float]],
 
 
 def main() -> int:
-    res = [json.loads(l) for l in RESULTS.read_text(encoding="utf-8").splitlines() if l.strip()]
+    res = [json.loads(line) for line in RESULTS.read_text(encoding="utf-8").splitlines() if line.strip()]
     # cell_p_ai[(register, arm)][model][topic] = [p_ai per seed]
     cell: dict[tuple[str, str], dict[str, dict[str, list[float]]]] = {}
     for r in res:

@@ -65,7 +65,7 @@ def main() -> int:
     print("=== 1. human EN formal probe (n=35): gate hit = abstain = catastrophe cut ===")
     files = sorted((ROOT / "dataset/legal_declaration_en/human").glob("*.md"))
     gated = 0
-    flagged_gated = flagged_total = hc_total = 0
+    flagged_total = hc_total = 0
     rows = json.loads((ROOT / "reports/human_probe_results_en_human.json").read_text(encoding="utf-8"))
     flag_map = {r["file"]: r for r in rows}
     miss = []
@@ -85,7 +85,12 @@ def main() -> int:
     print(f"leak-through (flagged humans NOT gated): {miss or 'NONE'}")
 
     print("\n=== 2. W4-EN AI cells: abstain rate per arm (honest abstain where AUROC is 0.36-0.72) ===")
-    recs = [json.loads(l) for l in (ROOT / "dataset/paired_generation_v1/w4en_records.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
+    w4en_records_path = ROOT / "dataset/paired_generation_v1/w4en_records.jsonl"
+    recs = [
+        json.loads(line)
+        for line in w4en_records_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
     seen: set[str] = set()
     stats: dict[str, list[int]] = {}
     for r in recs:
@@ -117,7 +122,8 @@ def main() -> int:
     casual_total = sum(n for k, (g, n) in stats.items() if k.endswith("|C") or k.endswith("|D"))
     casual_gated = sum(g for k, (g, n) in stats.items() if k.endswith("|C") or k.endswith("|D"))
     print(f"casual AI coverage kept: {casual_total - casual_gated}/{casual_total}")
-    print(f"human-formal high-conf errors after gate: {hc_total - (flagged_total - len(miss)) if miss else 0} (of {hc_total})")
+    gated_hc = hc_total - (flagged_total - len(miss)) if miss else 0
+    print(f"human-formal high-conf errors after gate: {gated_hc} (of {hc_total})")
     return 0
 
 

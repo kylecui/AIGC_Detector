@@ -73,7 +73,6 @@ def main() -> int:
                     print(f"  SKIP {f.name}: body only {len(body)} chars (header parse?)")
                     continue
                 res = pipeline.detect(body)
-                is_flagged = res.predicted_label == "AI-generated"
                 row = {
                     "file": f.name,
                     "chars": len(body),
@@ -93,7 +92,11 @@ def main() -> int:
         print("all docs evaluated")
 
     # aggregate over checkpoint (complete picture)
-    all_rows = [json.loads(l) for l in ckpt.read_text(encoding="utf-8").splitlines() if l.strip()]
+    all_rows = [
+        json.loads(line)
+        for line in ckpt.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
     flagged = sum(1 for r in all_rows if r["label"] == "AI-generated")
     n = len(all_rows)
     if n:

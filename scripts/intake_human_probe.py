@@ -224,7 +224,8 @@ def main() -> int:
         "human_accepted_overrides": accepted,
         "dupes": dupes, "problems": problems,
         "per_doc": [{"file": d["path"].name, "family": d["family"],
-                     "era": d["meta"].get("era") or ("pre" if d["meta"].get("published_date", "9") < "2023" else "post"),
+                     "era": d["meta"].get("era")
+                     or ("pre" if d["meta"].get("published_date", "9") < "2023" else "post"),
                      "register": d["register_score"], "chars": len(d["body"]),
                      "tag": d["tag"]} for d in final],
     }

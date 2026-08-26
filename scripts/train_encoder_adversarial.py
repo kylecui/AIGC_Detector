@@ -31,7 +31,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from src.aigc_detector.training.adversarial import (  # noqa: E402
     FormalityAdversary,
     formality_score,
-    grad_reverse,
 )
 from src.aigc_detector.training.trainer import (  # noqa: E402
     TextClassificationDataset,
@@ -99,8 +98,8 @@ def train_full(labeled_path: Path, smoke: bool = False) -> int:
     model, tokenizer = base._model, base._tokenizer  # noqa: SLF001
 
     formalities: list[float] = [
-        json.loads(l).get("formality", 0.5)
-        for l in labeled_path.read_text(encoding="utf-8").splitlines() if l.strip()
+        json.loads(line).get("formality", 0.5)
+        for line in labeled_path.read_text(encoding="utf-8").splitlines() if line.strip()
     ]
 
     class FormalityDataset(Dataset):
@@ -243,7 +242,10 @@ def main() -> int:
     print(f"formality labels: {n} samples -> {labeled_path}")
 
     # 2) GRL wiring smoke test (CPU-level, decisive for automation)
-    scores = [json.loads(l)["formality"] for l in labeled_path.read_text(encoding="utf-8").splitlines() if l.strip()]
+    scores = [
+        json.loads(line)["formality"]
+        for line in labeled_path.read_text(encoding="utf-8").splitlines() if line.strip()
+    ]
     formal_docs = [0.85, 0.9, 0.8]
     print(f"label distribution sanity: min={min(scores):.2f} max={max(scores):.2f} "
           f"mean={sum(scores)/len(scores):.2f}")

@@ -15,19 +15,33 @@ import json
 from pathlib import Path
 
 import numpy as np
-from scipy.stats import rankdata
+from scipy.stats import rankdata, wilcoxon
 
 ROOT = Path(__file__).parent.parent
-res = [json.loads(l) for l in (ROOT / "dataset/paired_generation_v1/w4en_eval_results.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
-recs = {json.loads(l)["id"]: json.loads(l) for l in (ROOT / "dataset/paired_generation_v1/w4en_records.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()}
+res = [
+    json.loads(line)
+    for line in
+    (ROOT / "dataset/paired_generation_v1/w4en_eval_results.jsonl").read_text(encoding="utf-8").splitlines()
+    if line.strip()
+]
+recs = {
+    json.loads(line)["id"]: json.loads(line)
+    for line in
+    (ROOT / "dataset/paired_generation_v1/w4en_records.jsonl").read_text(encoding="utf-8").splitlines()
+    if line.strip()
+}
 
 
 def auroc(pos, neg):
-    allv = np.concatenate([pos, neg]); r = rankdata(allv)
+    allv = np.concatenate([pos, neg])
+    r = rankdata(allv)
     return float((r[: len(pos)].sum() - len(pos) * (len(pos) + 1) / 2) / (len(pos) * len(neg)))
 
 
-hum_en = [r["p_ai"] for r in json.loads((ROOT / "reports/human_probe_results_en_human.json").read_text(encoding="utf-8"))]
+hum_en = [
+    r["p_ai"]
+    for r in json.loads((ROOT / "reports/human_probe_results_en_human.json").read_text(encoding="utf-8"))
+]
 hv = np.array(hum_en)
 
 cell = {}
@@ -37,7 +51,8 @@ for r in res:
         continue
     cell.setdefault((r["model"], r["arm"]), []).append(r)
 
-print(f"evaluations: {len(res)} | EN human baseline: flag@0.47 = {(hv >= 0.47).mean():.0%} ({(hv >= 0.47).sum()}/{len(hv)})")
+print(f"evaluations: {len(res)} | EN human baseline: flag@0.47 = {(hv >= 0.47).mean():.0%} "
+      f"({(hv >= 0.47).sum()}/{len(hv)})")
 print(f"\n{'cell':<26}{'n':>4}{'mean p_ai':>11}{'miss@0.47':>11}{'vs-human AUROC':>15}")
 report = {"human_baseline": {"n": len(hv), "flag_rate": float((hv >= 0.47).mean())}, "cells": {}}
 for (m, a) in sorted(cell):
@@ -45,12 +60,14 @@ for (m, a) in sorted(cell):
     miss = float((xs < 0.47).mean())
     au = auroc(xs, hv)
     name = f"{m.split('/')[-1]}-{a}"
-    report["cells"][name] = {"n": len(xs), "mean": round(float(xs.mean()), 3), "miss": round(miss, 3), "auroc_vs_human": round(au, 3)}
+    report["cells"][name] = {
+        "n": len(xs), "mean": round(float(xs.mean()), 3),
+        "miss": round(miss, 3), "auroc_vs_human": round(au, 3),
+    }
     print(f"{name:<26}{len(xs):>4}{xs.mean():>11.3f}{miss:>11.0%}{au:>15.3f}")
 
 # Q1: paired topic-level A-B contrast per model (topic-stratified)
 print("\n=== Q1: formal contract contrast (A-B, topic-level paired Wilcoxon) ===")
-from scipy.stats import wilcoxon
 
 report["contrasts"] = {}
 for m in sorted({k[0] for k in cell}):
@@ -67,7 +84,9 @@ for m in sorted({k[0] for k in cell}):
     diffs = [np.mean(by_topic[(t, "A")]) - np.mean(by_topic[(t, "B")]) for t in common]
     w = wilcoxon(diffs).pvalue if any(d != 0 for d in diffs) else 1.0
     name = f"{m.split('/')[-1]}-A-B"
-    report["contrasts"][name] = {"n_topics": len(common), "mean_diff": round(float(np.mean(diffs)), 3), "wilcoxon_p": float(w)}
+    report["contrasts"][name] = {
+        "n_topics": len(common), "mean_diff": round(float(np.mean(diffs)), 3), "wilcoxon_p": float(w),
+    }
     print(f"{m.split('/')[-1]:<18} n_topics={len(common)} diff={np.mean(diffs):+.3f} p={w:.2e}")
     # casual too
     by_topic_c = {}
@@ -82,8 +101,11 @@ for m in sorted({k[0] for k in cell}):
         diffs_c = [np.mean(by_topic_c[(t, "C")]) - np.mean(by_topic_c[(t, "D")]) for t in cc]
         wc = wilcoxon(diffs_c).pvalue if any(d != 0 for d in diffs_c) else 1.0
         name = f"{m.split('/')[-1]}-C-D"
-        report["contrasts"][name] = {"n_topics": len(cc), "mean_diff": round(float(np.mean(diffs_c)), 3), "wilcoxon_p": float(wc)}
+        report["contrasts"][name] = {
+            "n_topics": len(cc), "mean_diff": round(float(np.mean(diffs_c)), 3), "wilcoxon_p": float(wc),
+        }
         print(f"{'  casual C-D:':<18} n_topics={len(cc)} diff={np.mean(diffs_c):+.3f} p={wc:.2e}")
 
-(ROOT / "dataset/paired_generation_v1/w4en_analysis.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+out_path = ROOT / "dataset/paired_generation_v1/w4en_analysis.json"
+out_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
 print("\nwritten: dataset/paired_generation_v1/w4en_analysis.json")

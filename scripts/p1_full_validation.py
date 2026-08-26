@@ -20,7 +20,7 @@ import argparse
 import json
 import logging
 import sys
-from collections import Counter, defaultdict
+from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
@@ -53,7 +53,10 @@ REFERENCE_MODELS = {
 
 
 def _load_records(path_template: Path, lang: str, suffix: str = ".jsonl") -> list[dict]:
-    path = Path(str(path_template).format(lang=lang)) if suffix == "" else Path(str(path_template).format(lang=lang).replace(".jsonl", suffix))
+    if suffix == "":
+        path = Path(str(path_template).format(lang=lang))
+    else:
+        path = Path(str(path_template).format(lang=lang).replace(".jsonl", suffix))
     if not path.exists():
         raise FileNotFoundError(f"Missing: {path}")
     recs = []
@@ -177,19 +180,19 @@ def run_p1(lang: str, cross_model: bool = False) -> dict:
     # then iterate stat_test in order to get aligned linguistic features.
     ling_by_id: dict[str, dict] = {r["id"]: r for r in ling_test_recs}
 
-    X_ling_aligned_rows: list[list[float]] = []
+    x_ling_aligned_rows: list[list[float]] = []
     matched_count = 0
     for rec in stat_test:
         rid = rec.get("id", "")
         ling_rec = ling_by_id.get(rid)
         if ling_rec and "linguistic_features" in ling_rec:
-            X_ling_aligned_rows.append(list(ling_rec["linguistic_features"].values()))
+            x_ling_aligned_rows.append(list(ling_rec["linguistic_features"].values()))
             matched_count += 1
         else:
             # If missing, use NaN row (will be imputed)
-            X_ling_aligned_rows.append([float("nan")] * 14)
+            x_ling_aligned_rows.append([float("nan")] * 14)
 
-    X_ling_test = np.array(X_ling_aligned_rows, dtype=np.float64)  # noqa: N806
+    X_ling_test = np.array(x_ling_aligned_rows, dtype=np.float64)  # noqa: N806
     if matched_count != len(stat_test):
         logger.warning("[%s] id alignment: stat=%d ling_matched=%d", lang, len(stat_test), matched_count)
 

@@ -92,7 +92,7 @@ def main() -> int:
         }
 
     # ---- D2 sustained throughput: 90s mixed (2 casual : 1 formal) ----
-    n_ok = n_429 = 0
+    n_ok = 0
     lat = []
     t_end = time.time() + 90
     while time.time() < t_end:

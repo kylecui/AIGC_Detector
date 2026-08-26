@@ -9,7 +9,6 @@ Chinese software copyright registration requires:
 
 Output: docs/software-copyright-source-code.txt
 """
-import sys
 from pathlib import Path
 
 SOFTWARE_NAME = "中英文AI生成文本检测系统"

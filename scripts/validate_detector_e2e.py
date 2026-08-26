@@ -23,11 +23,11 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from aigc_detector.config import settings
+from aigc_detector.detection.encoder import EncoderClassifier
 from aigc_detector.detection.language import LanguageRouter
 from aigc_detector.detection.linguistic import LinguisticClassifier, LinguisticFeatureExtractor
 from aigc_detector.detection.pipeline import DetectionPipeline
 from aigc_detector.detection.statistical import StatisticalClassifier, StatisticalFeatureExtractor
-from aigc_detector.detection.encoder import EncoderClassifier
 from aigc_detector.models.manager import ModelManager
 from aigc_detector.training.evaluator import Evaluator
 
@@ -179,8 +179,8 @@ def run_validation(lang: str, n: int) -> dict:
     logger.info("Done: %d records in %.1fs (%.0fms/record)", len(y_true), elapsed, elapsed * 1000 / max(len(y_true), 1))
 
     # Normalize pipeline display labels to canonical form
-    LABEL_MAP = {"AI-generated": "ai", "Human-written": "human", "ai": "ai", "human": "human"}
-    y_pred_norm = [LABEL_MAP.get(p, p) for p in y_pred]
+    label_map = {"AI-generated": "ai", "Human-written": "human", "ai": "ai", "human": "human"}
+    y_pred_norm = [label_map.get(p, p) for p in y_pred]
 
     # Filter to binary labels only (pipeline may occasionally return "mixed" or "unknown")
     valid_mask = [(t in ("human", "ai") and p in ("human", "ai")) for t, p in zip(y_true, y_pred_norm)]
@@ -259,7 +259,7 @@ def main() -> None:
     print("=" * 64)
 
     if result["per_source_model"]:
-        print(f"\n  Per-Source-Model (AI records):")
+        print("\n  Per-Source-Model (AI records):")
         print(f"  {'Model':<22} {'n':>6} {'avg_p_ai':>10} {'detect%':>10}")
         print(f"  {'-'*52}")
         for model, info in result["per_source_model"].items():

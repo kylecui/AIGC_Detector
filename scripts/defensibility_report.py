@@ -79,8 +79,16 @@ def main() -> int:
     report: dict = {"status": "PRELIMINARY (small n)", "generated": str(date.today())}
 
     # ---- AI side (n=240; ground truth label='ai'; error = predicted Human) ----
-    records = {json.loads(l)["id"]: json.loads(l) for l in AI_RECORDS.read_text(encoding="utf-8").splitlines() if l.strip()}
-    results = [json.loads(l) for l in AI_RESULTS.read_text(encoding="utf-8").splitlines() if l.strip()]
+    records = {
+        json.loads(line)["id"]: json.loads(line)
+        for line in AI_RECORDS.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    }
+    results = [
+        json.loads(line)
+        for line in AI_RESULTS.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
     ai_pairs: list[tuple[float, int]] = []
     ai_err = ai_high_conf_err = 0
     per_model: dict[str, dict] = {}

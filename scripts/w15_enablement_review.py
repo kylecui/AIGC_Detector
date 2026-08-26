@@ -23,12 +23,13 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
+from evaluate_paired_experiment import build_pipeline  # noqa: E402
+
 from aigc_detector.api.routes import (  # noqa: E402
     _apply_binoculars_floor,
     _calibrate_confidence,
     _register_caveat,
 )
-from evaluate_paired_experiment import build_pipeline  # noqa: E402
 
 
 def run_case(pipeline, name: str, text: str, expect: dict) -> bool:
@@ -76,18 +77,33 @@ def main() -> int:
 
     # 2. GLM-B contract doc the ENSEMBLE MISSES (p_ai < 0.47) — the floor's
     # actual job: catch raw contract generation the ensemble dilutes away
-    recs = [json.loads(l) for l in (ROOT / "dataset/paired_generation_v1/w4c_records.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
-    evals = {json.loads(l)["id"]: json.loads(l) for l in (ROOT / "dataset/paired_generation_v1/w4c_eval_results.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()}
+    w4c_records_path = ROOT / "dataset/paired_generation_v1/w4c_records.jsonl"
+    recs = [
+        json.loads(line)
+        for line in w4c_records_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    w4c_evals_path = ROOT / "dataset/paired_generation_v1/w4c_eval_results.jsonl"
+    evals = {
+        json.loads(line)["id"]: json.loads(line)
+        for line in w4c_evals_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    }
     glm_b_miss = next(
         r for r in recs
         if r["model"] == "THUDM/GLM-4-9B-0414" and r["arm"] == "B" and r["register"] == "formal"
         and evals.get(r["id"], {}).get("predicted_label") != "AI-generated"
     )
-    ok2 = run_case(pipeline, f"GLM-B contract doc MISSED by ensemble ({glm_b_miss['topic_id']}) — floor MUST fire", glm_b_miss["text"],
-                   {"verdict": "AI-generated", "caveat": True, "fired": True})
+    ok2 = run_case(
+        pipeline,
+        f"GLM-B contract doc MISSED by ensemble ({glm_b_miss['topic_id']}) — floor MUST fire",
+        glm_b_miss["text"],
+        {"verdict": "AI-generated", "caveat": True, "fired": True},
+    )
 
     # 3. Human formal doc that FIRES the register gate (zibo lawyers' 严正声明)
-    zibo = (ROOT / "dataset/legal_declaration_zh/human/10-association-zibo-lawyers-statement.md").read_text(encoding="utf-8")
+    zibo_path = ROOT / "dataset/legal_declaration_zh/human/10-association-zibo-lawyers-statement.md"
+    zibo = zibo_path.read_text(encoding="utf-8")
     body3 = zibo.split("---", 2)[2].strip()
     ok3 = run_case(pipeline, "Human formal (zibo 严正声明 — gate hits, floor must not fire)", body3,
                    {"verdict": "Human-written", "caveat": True, "fired": False})

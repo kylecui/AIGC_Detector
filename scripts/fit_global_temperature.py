@@ -24,9 +24,8 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
-from scipy.optimize import minimize_scalar  # noqa: E402
-
 from defensibility_report import ece  # noqa: E402
+from scipy.optimize import minimize_scalar  # noqa: E402
 
 ROOT = Path(__file__).parent.parent
 
@@ -42,12 +41,18 @@ def sigmoid(x: np.ndarray) -> np.ndarray:
 
 def main() -> int:
     # --- load scores ---
-    ai = [json.loads(l) for l in
-          (ROOT / "dataset/paired_generation_v1/eval_results.jsonl").read_text(encoding="utf-8").splitlines()
-          if l.strip()]
-    recs = {json.loads(l)["id"]: json.loads(l) for l in
-            (ROOT / "dataset/paired_generation_v1/pilot_records.jsonl").read_text(encoding="utf-8").splitlines()
-            if l.strip()}
+    ai = [
+        json.loads(line)
+        for line in
+        (ROOT / "dataset/paired_generation_v1/eval_results.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    recs = {
+        json.loads(line)["id"]: json.loads(line)
+        for line in
+        (ROOT / "dataset/paired_generation_v1/pilot_records.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    }
     hum = json.loads((ROOT / "reports/human_probe_trial_results.json").read_text(encoding="utf-8"))
 
     # human slice
@@ -75,13 +80,13 @@ def main() -> int:
     # --- fit temperature (NLL on class-balanced weights) ---
     z = logit(p_all)
 
-    def nll(T: float) -> float:
-        q = sigmoid(z / max(T, 1e-3))
+    def nll(temp: float) -> float:
+        q = sigmoid(z / max(temp, 1e-3))
         q = np.clip(q, 1e-6, 1 - 1e-6)
         return float(-np.sum(w_all * (y_all * np.log(q) + (1 - y_all) * np.log(1 - q))))
 
     res = minimize_scalar(nll, bounds=(0.1, 20.0), method="bounded")
-    T = float(res.x)
+    temp = float(res.x)
 
     # --- report: ECE before/after per slice ---
     def conf_of(p: np.ndarray, label_is_ai: bool) -> np.ndarray:
@@ -89,11 +94,10 @@ def main() -> int:
         return np.where(label_is_ai, p, 1 - p)
 
     def conf_after(p: np.ndarray, label_is_ai: bool) -> np.ndarray:
-        q = sigmoid(logit(p) / T)
+        q = sigmoid(logit(p) / temp)
         return np.where(label_is_ai, q, 1 - q)
 
-    ok_h = (h_p < 0.5).astype(int)          # human docs: correct iff p<0.5
-    lines = ["=== W11-1 global temperature scaling ===", f"fitted T = {T:.3f} (class-balanced NLL, n=382)", ""]
+    lines = ["=== W11-1 global temperature scaling ===", f"fitted T = {temp:.3f} (class-balanced NLL, n=382)", ""]
 
     def row(name: str, p: np.ndarray, is_ai: np.ndarray) -> str:
         # predicted-AI side per element: confidence = p if predicting AI else 1-p
@@ -119,7 +123,7 @@ def main() -> int:
     # --- FN-1 replay confidence compression ---
     fn1_p = 0.1091  # frozen anchor (tests/fixtures + reports/fn1_replay_w2.json)
     fn1_conf_b = 1 - fn1_p
-    fn1_conf_a = 1 - float(sigmoid(logit(np.array([fn1_p])) / T)[0])
+    fn1_conf_a = 1 - float(sigmoid(logit(np.array([fn1_p])) / temp)[0])
     lines += [
         "",
         f"FN-1 replay: p_ai={fn1_p:.4f}  confidence {fn1_conf_b:.4f} -> {fn1_conf_a:.4f} "
@@ -127,14 +131,14 @@ def main() -> int:
     ]
 
     # --- safety proof check: zero decision flips on all 382 ---
-    flips = int(np.sum((p_all >= 0.5) != (sigmoid(z / T) >= 0.5)))
+    flips = int(np.sum((p_all >= 0.5) != (sigmoid(z / temp) >= 0.5)))
     lines.append(f"decision flips at 0.5 threshold: {flips} (provably 0 for T>0)")
 
     # --- persist artifact (production untouched; applied only in W11-2 review) ---
     out = ROOT / "models/calibration/global_temperature.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({
-        "T": T,
+        "T": temp,
         "method": "global temperature scaling on cached ensemble p_ai (logit domain)",
         "fit": {"n": 382, "human": 62, "ai": 320, "weighting": "class-balanced 50:50"},
         "safety": {"label_flips": flips, "ranking_invariance": "monotone map (T>0)"},

@@ -20,7 +20,7 @@ import hashlib
 import json
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -41,7 +41,10 @@ API_MODELS = ["Qwen/Qwen3-8B", "THUDM/GLM-4-9B-0414", "Qwen/Qwen3-14B",
               "deepseek-ai/DeepSeek-V3.2"]
 SEEDS = [11, 22, 33, 44, 55]
 
-EN_SYSTEM_PROMPT = "You are a professional writing assistant familiar with Anglo-American business and institutional document conventions."
+EN_SYSTEM_PROMPT = (
+    "You are a professional writing assistant familiar with Anglo-American "
+    "business and institutional document conventions."
+)
 
 # W4-EN mechanical wiring: gen_api/gen_local read the module-level zh system
 # prompt at call time; rebind it to the authored EN prompt so every EN record
@@ -49,26 +52,47 @@ EN_SYSTEM_PROMPT = "You are a professional writing assistant familiar with Anglo
 _pge.SYSTEM_PROMPT = EN_SYSTEM_PROMPT
 
 FORMAL_TOPICS = [
-    {"id": "f01", "doc_type": "customer apology statement", "subject": "a nationwide shipping delay affecting holiday orders", "org": "a consumer electronics retailer"},
-    {"id": "f02", "doc_type": "product recall notice", "subject": "a safety defect in a children's building-block toy line", "org": "a toy manufacturer"},
-    {"id": "f03", "doc_type": "correction announcement", "subject": "errors in previously released quarterly revenue figures", "org": "a logistics company"},
-    {"id": "f04", "doc_type": "clarification statement", "subject": "media reports alleging a customer data breach", "org": "a regional bank"},
-    {"id": "f05", "doc_type": "privacy commitment letter", "subject": "new data-handling safeguards for a mobile application", "org": "a software company"},
-    {"id": "f06", "doc_type": "service incident report", "subject": "a six-hour payment-platform outage and its remediation", "org": "a fintech provider"},
-    {"id": "f07", "doc_type": "supplier compliance commitment", "subject": "labor and safety standards across a garment supply chain", "org": "an apparel brand"},
-    {"id": "f08", "doc_type": "laboratory safety incident report", "subject": "a minor chemical spill and revised protocols", "org": "a university chemistry department"},
-    {"id": "f09", "doc_type": "environmental compliance pledge", "subject": "emission-reduction targets for a processing plant", "org": "an industrial manufacturer"},
-    {"id": "f10", "doc_type": "academic integrity commitment", "subject": "examination conduct for a professional certification program", "org": "a certification body"},
-    {"id": "f11", "doc_type": "public event disclaimer", "subject": "participation risks for a city marathon", "org": "an event management company"},
-    {"id": "f12", "doc_type": "trademark authorization statement", "subject": "licensed use of a registered brand mark by an affiliate", "org": "a hospitality group"},
-    {"id": "f13", "doc_type": "office relocation notice", "subject": "headquarters move and business-continuity arrangements", "org": "an insurance company"},
-    {"id": "f14", "doc_type": "refund policy announcement", "subject": "compensation for a cancelled subscription service", "org": "a streaming platform"},
-    {"id": "f15", "doc_type": "security disclosure statement", "subject": "a responsibly disclosed vulnerability and its patch timeline", "org": "an open-source software foundation"},
-    {"id": "f16", "doc_type": "partnership termination statement", "subject": "ending a co-branding collaboration with an external agency", "org": "a beverage company"},
-    {"id": "f17", "doc_type": "quality assurance commitment", "subject": "warranty terms for an infrastructure project", "org": "a construction firm"},
-    {"id": "f18", "doc_type": "volunteer code-of-conduct pledge", "subject": "conduct and confidentiality at an international expo", "org": "a volunteer association"},
-    {"id": "f19", "doc_type": "service disruption explanation", "subject": "repeated clinic appointment system failures and remedies", "org": "a healthcare network"},
-    {"id": "f20", "doc_type": "investor relations clarification", "subject": "misreadings of forward guidance in press coverage", "org": "a renewable energy company"},
+    {"id": "f01", "doc_type": "customer apology statement",
+     "subject": "a nationwide shipping delay affecting holiday orders", "org": "a consumer electronics retailer"},
+    {"id": "f02", "doc_type": "product recall notice",
+     "subject": "a safety defect in a children's building-block toy line", "org": "a toy manufacturer"},
+    {"id": "f03", "doc_type": "correction announcement",
+     "subject": "errors in previously released quarterly revenue figures", "org": "a logistics company"},
+    {"id": "f04", "doc_type": "clarification statement",
+     "subject": "media reports alleging a customer data breach", "org": "a regional bank"},
+    {"id": "f05", "doc_type": "privacy commitment letter",
+     "subject": "new data-handling safeguards for a mobile application", "org": "a software company"},
+    {"id": "f06", "doc_type": "service incident report",
+     "subject": "a six-hour payment-platform outage and its remediation", "org": "a fintech provider"},
+    {"id": "f07", "doc_type": "supplier compliance commitment",
+     "subject": "labor and safety standards across a garment supply chain", "org": "an apparel brand"},
+    {"id": "f08", "doc_type": "laboratory safety incident report",
+     "subject": "a minor chemical spill and revised protocols", "org": "a university chemistry department"},
+    {"id": "f09", "doc_type": "environmental compliance pledge",
+     "subject": "emission-reduction targets for a processing plant", "org": "an industrial manufacturer"},
+    {"id": "f10", "doc_type": "academic integrity commitment",
+     "subject": "examination conduct for a professional certification program", "org": "a certification body"},
+    {"id": "f11", "doc_type": "public event disclaimer",
+     "subject": "participation risks for a city marathon", "org": "an event management company"},
+    {"id": "f12", "doc_type": "trademark authorization statement",
+     "subject": "licensed use of a registered brand mark by an affiliate", "org": "a hospitality group"},
+    {"id": "f13", "doc_type": "office relocation notice",
+     "subject": "headquarters move and business-continuity arrangements", "org": "an insurance company"},
+    {"id": "f14", "doc_type": "refund policy announcement",
+     "subject": "compensation for a cancelled subscription service", "org": "a streaming platform"},
+    {"id": "f15", "doc_type": "security disclosure statement",
+     "subject": "a responsibly disclosed vulnerability and its patch timeline",
+     "org": "an open-source software foundation"},
+    {"id": "f16", "doc_type": "partnership termination statement",
+     "subject": "ending a co-branding collaboration with an external agency", "org": "a beverage company"},
+    {"id": "f17", "doc_type": "quality assurance commitment",
+     "subject": "warranty terms for an infrastructure project", "org": "a construction firm"},
+    {"id": "f18", "doc_type": "volunteer code-of-conduct pledge",
+     "subject": "conduct and confidentiality at an international expo", "org": "a volunteer association"},
+    {"id": "f19", "doc_type": "service disruption explanation",
+     "subject": "repeated clinic appointment system failures and remedies", "org": "a healthcare network"},
+    {"id": "f20", "doc_type": "investor relations clarification",
+     "subject": "misreadings of forward guidance in press coverage", "org": "a renewable energy company"},
 ]
 
 CASUAL_TOPICS = [
@@ -103,24 +127,31 @@ def formal_free_prompt(t: dict) -> str:
 
 
 def formal_contract_prompt(t: dict) -> str:
-    return f"""Write a {t['doc_type']} for {t['org']} regarding {t['subject']}, following this specification EXACTLY.
-
-[STRUCTURE — in this order, every element required]
-1. Title line: "REGARDING: <short subject phrase>" (all caps prefix)
-2. Addressee line beginning "To:"
-3. Opening paragraph beginning "We are writing to"
-4. An information block of at least 4 lines, each formatted "Field: value" (e.g. Issuer / Scope / Effective date / Contact)
-5. Body clauses numbered with Roman numerals (I., II., III., IV.), each beginning with a topic keyword (e.g. "I. Commitments:")
-6. A closing paragraph that is exactly "We hereby affirm the foregoing." followed by one more sentence
-7. Signature block: organization name, then "Date: ____"
-
-[LANGUAGE CONSTRAINTS]
-- Formal institutional register; include at least 3 of: "pursuant to", "hereby", "in accordance with", "shall", "undertake"
-- No contractions, no exclamations, no colloquialisms, no meta-commentary
-
-[LENGTH] 500-650 words total including the signature block.
-
-[FORMAT] No Markdown symbols (#, *, -); plain text only; output the document directly."""
+    return (
+        f"Write a {t['doc_type']} for {t['org']} regarding {t['subject']}, "
+        "following this specification EXACTLY.\n"
+        "\n"
+        "[STRUCTURE — in this order, every element required]\n"
+        '1. Title line: "REGARDING: <short subject phrase>" (all caps prefix)\n'
+        '2. Addressee line beginning "To:"\n'
+        '3. Opening paragraph beginning "We are writing to"\n'
+        "4. An information block of at least 4 lines, each formatted "
+        '"Field: value" (e.g. Issuer / Scope / Effective date / Contact)\n'
+        "5. Body clauses numbered with Roman numerals (I., II., III., IV.), "
+        'each beginning with a topic keyword (e.g. "I. Commitments:")\n'
+        '6. A closing paragraph that is exactly "We hereby affirm the foregoing." '
+        "followed by one more sentence\n"
+        '7. Signature block: organization name, then "Date: ____"\n'
+        "\n"
+        "[LANGUAGE CONSTRAINTS]\n"
+        "- Formal institutional register; include at least 3 of: "
+        '"pursuant to", "hereby", "in accordance with", "shall", "undertake"\n'
+        "- No contractions, no exclamations, no colloquialisms, no meta-commentary\n"
+        "\n"
+        "[LENGTH] 500-650 words total including the signature block.\n"
+        "\n"
+        "[FORMAT] No Markdown symbols (#, *, -); plain text only; output the document directly."
+    )
 
 
 def casual_free_prompt(t: dict) -> str:
@@ -158,7 +189,9 @@ def done_keys() -> set[str]:
     return keys
 
 
-def build_jobs(part: str, models: list[str] | None = None, seeds: list[int] | None = None) -> list[tuple[str, dict, str, int]]:
+def build_jobs(
+    part: str, models: list[str] | None = None, seeds: list[int] | None = None
+) -> list[tuple[str, dict, str, int]]:
     dk = done_keys()
     use_models = models or (API_MODELS + [LOCAL_MODEL])
     use_seeds = seeds or SEEDS
@@ -260,7 +293,7 @@ def main() -> int:
                 "char_len": len(text),
                 "gen_seconds": round(elapsed, 1),
                 "spec_version": "w4en-2x2-v1",
-                "created_at": datetime.now(timezone.utc).isoformat(),
+                "created_at": datetime.now(UTC).isoformat(),
             }
             fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
             fh.flush()

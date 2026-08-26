@@ -43,7 +43,12 @@ def agg(rows: list[dict]) -> dict:
 
 
 # --- AI side: raw outputs, clean ---
-recs = [json.loads(l) for l in (ROOT / "dataset/paired_generation_v1/pilot_records.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
+recs = [
+    json.loads(line)
+    for line in
+    (ROOT / "dataset/paired_generation_v1/pilot_records.jsonl").read_text(encoding="utf-8").splitlines()
+    if line.strip()
+]
 groups: dict[str, list[dict]] = {}
 for r in recs:
     key = f"{r['model'].split('/')[-1]}|arm{r['arm']}"
@@ -72,5 +77,6 @@ for f in sorted((ROOT / "dataset/legal_declaration_zh/human").glob("*.md")):
     if len(body) > 200:
         hum.append(densities(body))
 ha = agg(hum)
-print("\n=== human side (n=%d — CONTAMINATED: web-reader bold-wrapping artifacts, NOT authorship signal) ===" % len(hum))
-print(f"  bold/kB median={ha['bold_per_kb'][0]:.1f}  docs-with-bold={ha['bold_per_kb'][1]:.0%}  heading/kB={ha['heading_per_kb'][0]:.1f}")
+print(f"\n=== human side (n={len(hum)} — CONTAMINATED: web-reader bold-wrapping artifacts, NOT authorship signal) ===")
+bold_med, bold_share = ha['bold_per_kb']
+print(f"  bold/kB median={bold_med:.1f}  docs-with-bold={bold_share:.0%}  heading/kB={ha['heading_per_kb'][0]:.1f}")

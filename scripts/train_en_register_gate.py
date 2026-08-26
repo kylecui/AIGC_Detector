@@ -23,6 +23,7 @@ Usage: uv run python scripts/train_en_register_gate.py
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import sys
 from pathlib import Path
@@ -44,8 +45,6 @@ DATA = ROOT / "dataset/paired_generation_v1/w4en_records.jsonl"
 HUMAN = ROOT / "dataset/legal_declaration_en/human"
 OUT_DIR = ROOT / "models/calibration"
 
-import dataclasses
-
 _EXT = LinguisticFeatureExtractor()
 _FEATS = [f.name for f in dataclasses.fields(_EXT.extract("sample text for fields"))]
 
@@ -62,16 +61,22 @@ def main() -> int:
             r = json.loads(line)
             recs[r["id"]] = r
 
-    X, y, groups = [], [], []
+    x_mat, y, groups = [], [], []
     n_cas = n_for = 0
     for r in recs.values():
         if r["char_len"] < 120:
             continue
         v = feats(r["text"])
         if r["register"] == "formal":
-            X.append(v); y.append(1); groups.append("ai-formal"); n_for += 1
+            x_mat.append(v)
+            y.append(1)
+            groups.append("ai-formal")
+            n_for += 1
         else:
-            X.append(v); y.append(0); groups.append("ai-casual"); n_cas += 1
+            x_mat.append(v)
+            y.append(0)
+            groups.append("ai-casual")
+            n_cas += 1
 
     human_files = sorted(HUMAN.glob("*.md"))
     human_rows = []
@@ -82,9 +87,12 @@ def main() -> int:
         v = feats(body)
         lex_hit, _ = detect_register_en_formal(body)
         human_rows.append((f.name, v, lex_hit))
-        X.append(v); y.append(1); groups.append("human-formal")
+        x_mat.append(v)
+        y.append(1)
+        groups.append("human-formal")
 
-    X = np.array(X); y = np.array(y)
+    x_mat = np.array(x_mat)
+    y = np.array(y)
     print(f"train: formal={n_for}+{len(human_rows)} casual={n_cas}")
 
     from sklearn.impute import SimpleImputer
@@ -94,16 +102,15 @@ def main() -> int:
         ("sc", StandardScaler()),
         ("lr", LogisticRegression(max_iter=2000, C=1.0)),
     ])
-    clf.fit(X, y)
+    clf.fit(x_mat, y)
 
-    probs = clf.predict_proba(X)[:, 1]
+    probs = clf.predict_proba(x_mat)[:, 1]
 
     # threshold: casual false-gate <= 1% while keeping human recall high
     cas = np.array([g == "ai-casual" for g in groups])
     best = None
     for t in np.arange(0.30, 0.91, 0.02):
         fg = float((probs[cas] >= t).mean())
-        hr = float((probs[[g == "human-formal" for g in groups]] >= t).mean())
         if fg <= 0.01:
             best = t if best is None else best
     thr = float(best) if best is not None else 0.90  # conservative fallback

@@ -31,7 +31,7 @@ import hashlib
 import json
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -39,7 +39,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 sys.path.insert(0, str(Path(__file__).parent))
 
 from paired_generation_experiment import (  # noqa: E402
-    SYSTEM_PROMPT,
     gen_api,
     gen_local,
     load_local_model,
@@ -219,7 +218,7 @@ def main() -> int:
                 "char_len": len(text),
                 "gen_seconds": round(elapsed, 1),
                 "spec_version": "w4c-2x2-v1",
-                "created_at": datetime.now(timezone.utc).isoformat(),
+                "created_at": datetime.now(UTC).isoformat(),
             }
             fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
             fh.flush()

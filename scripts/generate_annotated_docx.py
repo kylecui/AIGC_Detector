@@ -1,7 +1,7 @@
 """Generate annotated Word doc: pandoc for clean format, then python-docx for highlights."""
-import re
 import subprocess
 from pathlib import Path
+
 from docx import Document
 from docx.enum.text import WD_COLOR_INDEX
 
@@ -26,7 +26,7 @@ result = subprocess.run(
 if result.returncode != 0:
     print(f"pandoc error: {result.stderr}")
     exit(1)
-print(f"pandoc OK")
+print("pandoc OK")
 
 # Step 2: python-docx post-processing - add yellow highlights
 HIGHLIGHT_KEYWORDS = [

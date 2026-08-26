@@ -23,8 +23,8 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
 import numpy as np
+from matplotlib.patches import Rectangle
 
 ROOT = Path(__file__).parent.parent
 DATA = ROOT / "dataset/paired_generation_v1"
@@ -57,10 +57,26 @@ ARM_LBL = ["formal\nfree", "formal\ncontract", "casual\nfree", "casual\ncontract
 THR = 0.47
 
 # ---- load ----
-w4c_res = [json.loads(l) for l in (DATA / "w4c_eval_results.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
-w4c_rec = {json.loads(l)["id"]: json.loads(l) for l in (DATA / "w4c_records.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()}
-w4_res = [json.loads(l) for l in (DATA / "eval_results.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
-w4_rec = {json.loads(l)["id"]: json.loads(l) for l in (DATA / "pilot_records.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()}
+w4c_res = [
+    json.loads(line)
+    for line in (DATA / "w4c_eval_results.jsonl").read_text(encoding="utf-8").splitlines()
+    if line.strip()
+]
+w4c_rec = {
+    json.loads(line)["id"]: json.loads(line)
+    for line in (DATA / "w4c_records.jsonl").read_text(encoding="utf-8").splitlines()
+    if line.strip()
+}
+w4_res = [
+    json.loads(line)
+    for line in (DATA / "eval_results.jsonl").read_text(encoding="utf-8").splitlines()
+    if line.strip()
+]
+w4_rec = {
+    json.loads(line)["id"]: json.loads(line)
+    for line in (DATA / "pilot_records.jsonl").read_text(encoding="utf-8").splitlines()
+    if line.strip()
+}
 analysis = json.loads((DATA / "w4c_analysis.json").read_text(encoding="utf-8"))
 pool = json.loads((ROOT / "reports/w14_corpus_level.json").read_text(encoding="utf-8"))
 
@@ -156,7 +172,13 @@ for r in w4_res:
     rec = w4_rec.get(r["id"])
     if not rec or rec["arm"] != "B":
         continue
-    if not rec["topic_id"].startswith("t0") and not rec["topic_id"].startswith("t1") and not rec["topic_id"].startswith("t2") and not rec["topic_id"].startswith("t3") and not rec["topic_id"].startswith("t40"):
+    if (
+        not rec["topic_id"].startswith("t0")
+        and not rec["topic_id"].startswith("t1")
+        and not rec["topic_id"].startswith("t2")
+        and not rec["topic_id"].startswith("t3")
+        and not rec["topic_id"].startswith("t40")
+    ):
         continue
     w4_b.setdefault(rec["model"], []).append(r["p_ai"])
 w4_pts = {}

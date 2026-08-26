@@ -24,16 +24,15 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from sklearn.metrics import f1_score, roc_auc_score
+
 from aigc_detector.config import settings
+from aigc_detector.detection.encoder import EncoderClassifier
 from aigc_detector.detection.language import LanguageRouter
 from aigc_detector.detection.linguistic import LinguisticClassifier, LinguisticFeatureExtractor
 from aigc_detector.detection.pipeline import DetectionPipeline
 from aigc_detector.detection.statistical import StatisticalClassifier, StatisticalFeatureExtractor
-from aigc_detector.detection.encoder import EncoderClassifier
-from aigc_detector.detection.ensemble import EnsembleAggregator
 from aigc_detector.models.manager import ModelManager
-from aigc_detector.training.evaluator import Evaluator
-from sklearn.metrics import roc_auc_score, f1_score
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 logger = logging.getLogger("tune")
@@ -141,7 +140,7 @@ def collect_stage_scores(n: int) -> list[dict]:
 def sweep_weights(results: list[dict]) -> list[dict]:
     """Try different ensemble weight combinations offline."""
     y_true_str = [r["true_label"] for r in results]
-    y_true_int = np.array([1 if l == "ai" else 0 for l in y_true_str])
+    y_true_int = np.array([1 if label == "ai" else 0 for label in y_true_str])
 
     p_stat = np.array([r["p_stat"] or 0.5 for r in results])
     p_ling = np.array([r["p_ling"] or 0.5 for r in results])
@@ -223,7 +222,8 @@ def main():
     print(f"  {'-'*60}")
     for c in configs[:10]:
         w = c["weights_norm"]
-        print(f"  {w['stat']:>5.2f} {w['ling']:>5.2f} {w['enc']:>5.2f} | {c['roc_auc']:>8.4f} {c['f1']:>8.4f} {c['recall']:>8.4f} {c['accuracy']:>8.4f}")
+        print(f"  {w['stat']:>5.2f} {w['ling']:>5.2f} {w['enc']:>5.2f} | "
+              f"{c['roc_auc']:>8.4f} {c['f1']:>8.4f} {c['recall']:>8.4f} {c['accuracy']:>8.4f}")
     print(f"{'='*72}")
 
     # Per-model breakdown for best config
@@ -233,7 +233,7 @@ def main():
         p = wb["stat"] * (r["p_stat"] or 0.5) + wb["ling"] * (r["p_ling"] or 0.5) + wb["enc"] * (r["p_enc"] or 0.5)
         r["p_ai_best"] = p
 
-    print(f"\n  Best config per-model breakdown:")
+    print("\n  Best config per-model breakdown:")
     print(f"  {'Model':<22} {'n':>5} {'avg_p_ai':>10} {'detect%':>10}")
     print(f"  {'-'*50}")
     by_model = defaultdict(list)

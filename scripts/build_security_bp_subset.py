@@ -19,8 +19,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from rich.console import Console
 from rich.table import Table
 
-from src.aigc_detector.config import settings
-
 console = Console()
 
 DEFAULT_INPUTS = (

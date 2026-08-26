@@ -31,7 +31,11 @@ def main() -> int:
     ap.add_argument("--results", default="dataset/paired_generation_v1/w4c_eval_results.jsonl")
     args = ap.parse_args()
 
-    records = [json.loads(l) for l in Path(args.records).read_text(encoding="utf-8").splitlines() if l.strip()]
+    records = [
+        json.loads(line)
+        for line in Path(args.records).read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
     done: set[str] = set()
     results_path = Path(args.results)
     if results_path.exists():
