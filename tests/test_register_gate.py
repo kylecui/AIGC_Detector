@@ -50,7 +50,8 @@ NORMAL_TEXTS = [
     # news-ish prose (no 公文 formulae)
     "记者了解到，该市轨道交通三号线已于上月底全线贯通，预计年内通车试运营。沿线居民出行时间将平均缩短四十分钟。",
     # English prose
-    "Artificial intelligence has transformed many industries. Researchers continue to study how these systems behave in production environments.",
+    "Artificial intelligence has transformed many industries. "
+    "Researchers continue to study how these systems behave in production environments.",
     # technical blog zh
     "这个库的API设计得很干净，初始化只需要一个配置对象，然后链式调用就行了。唯一的坑是Windows下路径要用原始字符串。",
 ]

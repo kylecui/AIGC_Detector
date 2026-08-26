@@ -29,9 +29,9 @@ from aigc_detector.detection.register import (  # noqa: E402
 CAVEAT = {**FORMAL_ZH_CAVEAT, "register_score": 14, "register_markers": ["特此声明"]}
 
 
-def _expected(c: float, T: float) -> float:
+def _expected(c: float, temp: float) -> float:
     z = math.log(c / (1 - c))
-    return 1 / (1 + math.exp(-z / T))
+    return 1 / (1 + math.exp(-z / temp))
 
 
 class TestCalibrateConfidence:
