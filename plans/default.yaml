@@ -54,3 +54,21 @@ policy:
     artifact: models/calibration/en_register_gate.json   # {downgrade_confidence_cap: 0.49}
     provenance_field: caveat
 pins: models/calibration/model_pins.json   # verify gate enforces runtime models ⊆ pins
+
+# Probes (v0.2c): declared acceptance assertions, run via scripts/run_probes.py.
+# Each probe is a deployment-behavior contract; a FAIL here blocks release.
+probes:
+  - id: fn1-known-bad
+    requires: gpu
+    fixture: tests/fixtures/fn1_declaration.txt
+    asserts:
+      verdict: Human-written            # the honest boundary: edited AI text
+      max_segment_p_ai_gte: 0.8         # segment evidence must surface
+  - id: zh-formal-gate-coverage
+    requires: cpu
+    dataset: dataset/legal_declaration_zh/human
+    expects: {files_gte: 20, formal_hit_subset_gte: 7}   # EXPECTED_FORMAL 7-doc anchor
+  - id: en-formal-gate-coverage
+    requires: cpu
+    dataset: dataset/legal_declaration_en/human
+    expects: {files_gte: 20, lexical_hit_gte: 8, lexical_hit_lte: 14}

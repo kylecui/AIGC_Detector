@@ -1,0 +1,21 @@
+{
+  "plan": "default@0.2a",
+  "verdict": "PASS",
+  "probes": {
+    "fn1-known-bad": {
+      "status": "SKIP",
+      "reason": "gpu unavailable or --cpu-only",
+      "seconds": 0
+    },
+    "zh-formal-gate-coverage": {
+      "status": "PASS",
+      "detail": "52/62 in [7, inf]",
+      "seconds": 10.1
+    },
+    "en-formal-gate-coverage": {
+      "status": "PASS",
+      "detail": "9/35 in [8, 14]",
+      "seconds": 0.1
+    }
+  }
+}
