@@ -32,9 +32,10 @@ if ($whl) {
 }
 Add-Check "Wheel self-contained" $ok3 $det3
 
-# 4. Console entry point works (doctor)
+# 4. Console entry point works (doctor; wheel layout shows [OK] static,
+#    dev checkout falls back to repo layout and reports the fallback)
 $docOut = uv run aigc-detector doctor 2>&1 | Out-String
-Add-Check "CLI doctor" ($LASTEXITCODE -eq 0 -and $docOut -match "\[OK\] static") "exit=$LASTEXITCODE"
+Add-Check "CLI doctor" ($LASTEXITCODE -eq 0 -and $docOut -match "(\[OK\] static|repo-layout fallback)") "exit=$LASTEXITCODE"
 
 # 5. Calibration artifacts present + applied/enabled flags
 $t = Get-Content models/calibration/global_temperature.json -Raw -ErrorAction SilentlyContinue | ConvertFrom-Json
@@ -55,8 +56,8 @@ $routes = Get-Content src/aigc_detector/api/routes.py -Raw
 Add-Check "EN formal guard wired" ($routes -match "_en_formal_downgrade\(result") "both endpoints"
 Add-Check "Log hygiene wired" ((Get-Content src/aigc_detector/api/main.py -Raw) -match "setup_service_logging") "lifespan"
 
-# 9. Git state: nothing uncommitted
-$dirty = git status --porcelain=v1 2>$null
+# 9. Git state: nothing uncommitted (this run's own report is expected noise)
+$dirty = git status --porcelain=v1 2>$null | Where-Object { $_ -notmatch "release-check" }
 Add-Check "Worktree clean" ($null -eq $dirty -or $dirty.Count -eq 0) "$(if($dirty){$dirty.Count}else{0}) dirty"
 
 # Summary

@@ -1,0 +1,52 @@
+[
+  {
+    "Check": "LICENSE present",
+    "Ok": true,
+    "Detail": "11560 bytes"
+  },
+  {
+    "Check": "README real entry",
+    "Ok": true,
+    "Detail": "uvicorn cmd documented"
+  },
+  {
+    "Check": "Wheel self-contained",
+    "Ok": true,
+    "Detail": "static=True configs=True"
+  },
+  {
+    "Check": "CLI doctor",
+    "Ok": true,
+    "Detail": "exit=0"
+  },
+  {
+    "Check": "Calibration deployed",
+    "Ok": true,
+    "Detail": "T=5.64533615405136 floor=0.46"
+  },
+  {
+    "Check": "Model pins",
+    "Ok": true,
+    "Detail": "11/14 revisions pinned"
+  },
+  {
+    "Check": "Test suite",
+    "Ok": true,
+    "Detail": "exit=0"
+  },
+  {
+    "Check": "EN formal guard wired",
+    "Ok": true,
+    "Detail": "both endpoints"
+  },
+  {
+    "Check": "Log hygiene wired",
+    "Ok": true,
+    "Detail": "lifespan"
+  },
+  {
+    "Check": "Worktree clean",
+    "Ok": false,
+    "Detail": "1 dirty"
+  }
+]
