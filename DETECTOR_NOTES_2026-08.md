@@ -957,3 +957,19 @@ reports/w15_gate_review.md. Summary:
 Program scorecard after deploy: discrimination +1 cell (formal-zh raw
 contract), calibration +, evidence/transparency +, edited-text remains
 outside statistical reach (provenance route).
+
+---
+
+## Correction: the "[Binoculars BG] Skipping en: incomplete download" was NOT a false positive (2026-08-26)
+
+Earlier note (runtime observations, W15 era) called this log line a
+detector misreport ("权重完整却报跳过"). VERIFIED TODAY: wrong attribution.
+hf_cache probe shows tiiuae/falcon-7b-instruct has 2 .incomplete blobs
+(snapshot weights present but incomplete); the other three binoculars
+repos are complete. The check worked exactly as designed — the EN
+binoculars pair has NEVER been fully cached, which is also why every EN
+evaluation in this project ran without binoculars (consistent with all
+recorded stage lists). Fix in flight: complete the falcon-7b-instruct
+download, then verify is_model_cached->True and EN binoculars activation.
+Lesson recorded: "misreport" claims need the same evidence bar as any
+other claim.

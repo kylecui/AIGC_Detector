@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-08-26T11:40:33.930633+00:00",
+  "pipeline_construct_s": 12.38,
+  "cold_start_zh_casual_s": 70.32,
+  "cold_start_en_casual_s": 13.25,
+  "cold_start_zh_formal_s": 3.13,
+  "latency_zh_casual_ms": {
+    "p50": 6615,
+    "p95": 6729,
+    "mean": 5206
+  },
+  "latency_en_casual_ms": {
+    "p50": 656,
+    "p95": 987,
+    "mean": 682
+  },
+  "latency_zh_formal_floor_ms": {
+    "p50": 5177,
+    "p95": 5252,
+    "mean": 5192
+  },
+  "throughput_90s": {
+    "requests": 22,
+    "rpm": 14.7,
+    "mix": "zh-casual/en-casual/zh-formal 1:1:1 (no rate limiter — GPU bound)",
+    "achieved_rpm_note": "service adds 10/min/IP limiter; this measures GPU ceiling"
+  }
+}

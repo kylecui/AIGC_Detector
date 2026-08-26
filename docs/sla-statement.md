@@ -27,11 +27,11 @@ AIGC_Detector v0.1 是**单租户、自托管的中英文AI生成文本检测仪
 
 | 指标 | 声明值 | 证据来源 |
 |---|---|---|
-| 稳态吞吐 | **约3 req/min**（混合负载实测上限，非承诺值） | release-readiness实测盘点（2026-08-21，记录于 `.sisyphus/plans/release-plan-v2.md`）；机制：单IP限流10/min + GPU信号量=2 + formal-zh请求单次占用17-23s |
+| 稳态吞吐 | **GPU天花板约14.7 req/min**（1:1:1混合负载实测，90s窗口22请求）；**服务层单IP上限10 req/min**（限流）。有效吞吐=min(两者)，非承诺值 | `reports/perf_baseline.json`（2026-08-26实测，`scripts/perf_baseline.py`可复现）；限流见 `src/aigc_detector/api/routes.py` |
 | 单请求延迟·中文非正式（热机） | 约0.3-1.3s | 同上盘点；casual链路跳过floor的单例254ms见 `reports/w15_gate_review.md` §2 |
 | 单请求延迟·英文（热机） | 约1s | 同上盘点 |
 | 单请求延迟·中文正式文书（命中W15下限） | **额外+17-23s**（实测17.6-23.1s；Qwen2-7B对，4-bit，12GB共享GPU） | `reports/w15_gate_review.md` §2 延迟实测 |
-| 冷启动 | 每语言路径首次请求触发模型懒加载，**分钟级**【待测：精确分位数】 | release-plan-v2事实纠错段；`DEPLOYMENT.md` §9.1；`DETECTOR_NOTES_2026-08.md`（首请求加载期503记录） |
+| 冷启动（进程内首次检测） | zh路径约70s（全模型链加载）；en路径约13s；后续binoculars补跑约3s | `reports/perf_baseline.json`（单次进程实测；冷启动方差大，视为量级非精确值） |
 | 显存 | 12GB设计包络；全程实测峰值11.4GB | `src/aigc_detector/models/manager.py`（4-bit量化+LRU逐出的设计目标）；release-plan-v2仲裁记录 |
 
 **读数须知**：
@@ -39,7 +39,7 @@ AIGC_Detector v0.1 是**单租户、自托管的中英文AI生成文本检测仪
 - 延迟数字为热机单请求口径；冷启动后的首个请求、语言切换后的首个请求显著更慢（见冷启动行）。
 - 正式文书的+17-23s是**用检测力换的**（W15下限规则强制补跑binoculars），不是性能缺陷；规则取舍见 `reports/w15_gate_review.md`。
 - 吞吐瓶颈在GPU侧（信号量=2与binoculars耗时），API限流（10/min/IP，`src/aigc_detector/api/routes.py` `@limiter.limit("10/minute")`）高于实测吞吐——放宽限流不提高吞吐。
-- 上表吞吐与热机延迟目前无回归脚本保护【待测：脚本化性能基线（吞吐+延迟分位数），对应 DEVPLAN 4.13】。
+- 性能数字已有回归脚本（`scripts/perf_baseline.py` → `reports/perf_baseline.json`），重跑即刷新本表。原"约3 req/min"为会话估算，实测GPU天花板更高（14.7 rpm混合），已按实测修正。
 
 ## 三、运行环境规格
 
@@ -60,8 +60,8 @@ AIGC_Detector v0.1 是**单租户、自托管的中英文AI生成文本检测仪
 |---|---|---|
 | 第一个真实外部用户 | "单租户、单操作者"假设失效；吞吐与支持模型需重估 | release-plan-v2 P1 #10-#12（auth / metrics / Docker GPU验证） |
 | 任何公网暴露部署 | "无认证、局域网信任"假设失效；auth、CORS、上传加固、日志留存全部前置 | release-plan-v2 P1 #10（公网暴露前置批次，v0.2邀请测试前） |
-| 批量API需求出现 | 交互式单文档定位失效；约3 req/min与批量吞吐的差距必须显式决策 | release-plan-v2 P2 #14（产品决策项：进路线图或明确不做） |
-| 性能数字重测 | 第二节全部声明值以新基线为准 | DEVPLAN 4.13 性能测试任务（含本文档【待测】项） |
+| 批量API需求出现 | 交互式单文档定位失效；GPU天花板14.7 req/min与批量吞吐的差距必须显式决策 | release-plan-v2 P2 #14（产品决策项：进路线图或明确不做） |
+| 性能数字重测 | 第二节全部声明值以新基线为准 | DEVPLAN 4.13 性能测试任务 |
 
 ## 五、明确的不承诺
 
