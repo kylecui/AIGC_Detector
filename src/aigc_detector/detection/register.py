@@ -1,82 +1,45 @@
-"""Lexical formal-register (公文体) detector — W3a/W3b v1.
+"""Lexical formal-register (公文体) detector — W3a/W3b v1, config-driven since v0.2b.
 
-Rule-based, explainable, auditable by design (v2.1 plan: no ML register
-classifier). Detects Chinese formal-document register (声明/公告/承诺书/
-情况说明/通报 etc.) via weighted lexical markers + structural patterns.
-
-Scope note (v1, 2026-08-17): tuned on the FN-1 fixture + W5 trial batch
-(10 human formal docs). Simple service notices (e.g. short bank maintenance
-notices without 公文 markers) may NOT hit — a known gap recorded in
-DETECTOR_NOTES_2026-08.md (W5 trial section); the W9 high-confidence-error
-metric catches those cases independently of this gate.
-
-Threshold calibration is frozen pending the full W5 probe set (60-80 docs);
-changing FORMULA threshold requires re-running tests/test_register_gate.py.
+Marker tables and thresholds live in configs/gates/{formal_zh,formal_en}.yaml
+(single source of truth; force-included in the wheel). This module is the
+loader + scoring logic only — editing gate behavior means editing the YAML.
+The coverage anchors in tests/{test_register_gate,test_en_formal_gate}.py pin
+the calibrated behavior (zh 7/7 formal + 0 casual false-fire; EN lexical
+9/35 template-style): run them after any YAML edit.
 """
 
 from __future__ import annotations
 
+import functools
 import re
 from dataclasses import dataclass
 from pathlib import Path
 
-# Weighted lexical markers (phrase → weight). Hit = substring occurrence.
-_MARKERS_ZH: dict[str, int] = {
-    # closing formulae — strongest signals
-    "特此声明": 3,
-    "特此承诺": 3,
-    "特此公告": 3,
-    "特此函告": 3,
-    "特此通知": 3,
-    "严正声明": 3,
-    "郑重承诺": 3,
-    # openings / pivot formulae
-    "兹因": 2,
-    "兹就": 2,
-    "兹有": 2,
-    "现声明如下": 3,
-    "现承诺如下": 3,
-    "现公告如下": 3,
-    "现就有关事项公告如下": 3,
-    "声明如下": 2,
-    "承诺如下": 2,
-    "公告如下": 2,
-    # regulatory citation style
-    "依据《": 2,
-    "根据《中华人民共和国": 2,
-    # obligation/penalty formulae
-    "如有违反": 2,
-    "承担相应责任": 2,
-    "承担法律责任": 2,
-    "严格遵守": 1,
-    # address forms
-    "致：": 2,
-    # listed-company information-disclosure formulae (信披公告定义性套语)
-    "保证信息披露": 3,
-    "真实、准确、完整": 2,
-    "公司及董事会": 2,
-    # situational-report formulae (情况通报体)
-    "通报如下": 3,
-    "现将有关情况": 2,
-    "说明如下": 2,
-}
+import yaml
 
-# Structural patterns: (compiled regex, weight, required hit count)
-_STRUCTURE_ZH: list[tuple[re.Pattern[str], int, int]] = [
-    # 《关于……的声明/公告/承诺书/情况说明/函》title
-    (re.compile(r"《关于.{2,24}的(声明|公告|承诺书|情况说明|函|通知书?|澄清公告)》,?"), 3, 1),
-    # signature-date blank line ＿＿＿＿年＿＿月＿＿日
-    (re.compile(r"＿{2,}\s*年\s*＿{2,}\s*月\s*＿{2,}\s*日"), 3, 1),
-    # numbered clauses 一、二、… (needs ≥2 distinct hits)
-    (re.compile(r"(?m)^\s*[一二三四五六七八九十]{1,3}、"), 2, 2),
-    # full-width blank signature line ＿＿＿＿＿＿＿＿ (standalone)
-    (re.compile(r"(?m)^＿{4,}\s*$"), 2, 1),
-    # standalone signature date line (公文落款): 2026年8月17日 on its own line
-    (re.compile(r"(?m)^\d{4}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日\s*$"), 2, 1),
-]
 
-# Decision threshold: fixture + clear trial docs score ≥6; casual text ≤2.
-FORMAL_ZH_THRESHOLD = 6
+def _gates_dir() -> Path:
+    """configs/gates for wheel and repo layouts.
+
+    Wheel: aigc_detector/configs/gates (force-included). Repo/editable:
+    repo-root/configs/gates (parents[3] from this file).
+    """
+    pkg = Path(__file__).resolve().parents[1] / "configs" / "gates"
+    if pkg.is_dir():
+        return pkg
+    return Path(__file__).resolve().parents[3] / "configs" / "gates"
+
+
+@functools.lru_cache(maxsize=4)
+def _load_gate(name: str) -> dict:
+    path = _gates_dir() / f"{name}.yaml"
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    data["_structure_compiled"] = [
+        (re.compile(s["pattern"]), int(s["weight"]), int(s["min_hits"]))
+        for s in data.get("structure", [])
+    ]
+    return data
+
 
 
 @dataclass
@@ -95,15 +58,16 @@ def detect_register_zh(text: str) -> RegisterResult:
     Pure lexical/structural; O(len(text) × markers). Language-agnostic safe:
     English text simply scores ~0.
     """
+    gate = _load_gate("formal_zh")
     matched_markers: list[str] = []
     score = 0
-    for marker, weight in _MARKERS_ZH.items():
+    for marker, weight in gate["markers"].items():
         if marker in text:
             score += weight
             matched_markers.append(marker)
 
     matched_patterns: list[str] = []
-    for pattern, weight, min_hits in _STRUCTURE_ZH:
+    for pattern, weight, min_hits in gate["_structure_compiled"]:
         hits = len(pattern.findall(text))
         if hits >= min_hits:
             score += weight
@@ -111,7 +75,7 @@ def detect_register_zh(text: str) -> RegisterResult:
 
     return RegisterResult(
         score=score,
-        is_formal_zh=score >= FORMAL_ZH_THRESHOLD,
+        is_formal_zh=score >= int(gate["threshold"]),
         matched_markers=matched_markers,
         matched_patterns=matched_patterns,
     )
@@ -124,21 +88,6 @@ def detect_register_zh(text: str) -> RegisterResult:
 # on register hit the response is DOWNGRADED (strong warning), matching
 # capability-statement.md — we refuse to issue a normal-confidence verdict
 # where our own measurement says the verdict is worse than a coin flip.
-_MARKERS_EN_FORMAL: dict[str, int] = {
-    "pursuant to": 3, "hereby": 2, "in accordance with": 2,
-    "We are writing to": 2, "shall": 1, "undertake": 2,
-    "Effective Date": 2, "Issued by": 2, "REGARDING:": 3,
-    "We hereby affirm": 3, "notice is issued": 2, "consumers should stop": 2,
-    "report to the Commission": 2, "immediately discontinue": 2,
-}
-_STRUCTURE_EN_FORMAL: list[tuple[re.Pattern[str], int, int]] = [
-    (re.compile(r"(?im)^(FOR IMMEDIATE RELEASE|REGARDING:)"), 3, 1),
-    (re.compile(r"(?im)^To:\s*(Consumers|Customers|Shareholders|Whom)", ), 2, 1),
-    (re.compile(r"(?m)^Field:\s*\S"), 2, 1),
-    (re.compile(r"(?m)^\s*(I|II|III|IV)\.\s+[A-Z]"), 2, 2),
-    (re.compile(r"(?i)(recall|termination of|correction of|clarification)"), 2, 1),
-]
-THRESHOLD_EN_FORMAL = 5
 
 
 def _en_ml_gate():
@@ -177,14 +126,15 @@ def detect_register_en_formal(text: str) -> tuple[bool, int]:
     gate on the 14 linguistic stylometric features. Reported score: the
     layer that fired (lexical score, or ML probability x100 as int).
     """
+    gate = _load_gate("formal_en")
     score = 0
-    for m, w in _MARKERS_EN_FORMAL.items():
+    for m, w in gate["markers"].items():
         if m.lower() in text.lower():
             score += w
-    for pat, w, need in _STRUCTURE_EN_FORMAL:
+    for pat, w, need in gate["_structure_compiled"]:
         if len(pat.findall(text)) >= need:
             score += w
-    if score >= THRESHOLD_EN_FORMAL:
+    if score >= int(gate["threshold"]):
         return True, score
     gate = _en_ml_gate()
     if gate is not None and len(text) >= 120:

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import dataclasses
+import json
 import logging
 import re
 import time
@@ -122,10 +123,12 @@ def _en_formal_downgrade(result, text: str) -> dict | None:
 
     Measured basis: 71% [55%,84%] of human EN formal docs flagged as AI
     (n=35 probe). On register hit we DOWNGRADE instead of issuing a
-    normal-confidence verdict: confidence is capped at 0.49 (below the
-    decision threshold) and a strong warning payload is attached. Verdict
-    and p_ai are NOT rewritten — the score stays visible for ranking; we
-    refuse to present it as a confident call. Fail-safe on any error.
+    normal-confidence verdict: confidence is capped below the decision
+    threshold (cap from models/calibration/en_register_gate.json,
+    downgrade_confidence_cap, default 0.49) and a strong warning payload is
+    attached. Verdict and p_ai are NOT rewritten — the score stays visible
+    for ranking; we refuse to present it as a confident call. Fail-safe on
+    any error.
     """
     try:
         hit, score = detect_register_en_formal(text)
@@ -133,8 +136,17 @@ def _en_formal_downgrade(result, text: str) -> dict | None:
         return None
     if not hit:
         return None
-    if result.confidence > 0.49:
-        result.confidence = 0.49
+    cap = 0.49
+    try:
+        from aigc_detector.detection.register import _calibration_dir
+
+        meta = json.loads((_calibration_dir() / "en_register_gate.json").read_text(encoding="utf-8"))
+        if isinstance(meta.get("downgrade_confidence_cap"), (int, float)):
+            cap = float(meta["downgrade_confidence_cap"])
+    except Exception:  # noqa: BLE001 — artifact read must never break the guard
+        pass
+    if result.confidence > cap:
+        result.confidence = cap
     return {**EN_FORMAL_DOWNGRADE, "register_score": score}
 
 

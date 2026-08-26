@@ -38,5 +38,7 @@
     "n": 40,
     "false_gate_rate": 0.55,
     "validated_at": "2026-08-26"
-  }
+  },
+  "downgrade_confidence_cap": 0.49,
+  "downgrade_cap_doc": "EN formal register hit: confidence capped below decision threshold (W16); verdict/p_ai preserved for ranking"
 }

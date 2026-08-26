@@ -1,0 +1,34 @@
+_doc: EN formal-register lexical layer (W16). 9/35 template-style probe hit; narrative
+  formal covered only by the (disabled) ML layer. Same edit discipline as formal_zh.yaml.
+threshold: 5
+markers:
+  pursuant to: 3
+  hereby: 2
+  in accordance with: 2
+  We are writing to: 2
+  shall: 1
+  undertake: 2
+  Effective Date: 2
+  Issued by: 2
+  'REGARDING:': 3
+  We hereby affirm: 3
+  notice is issued: 2
+  consumers should stop: 2
+  report to the Commission: 2
+  immediately discontinue: 2
+structure:
+- pattern: (?im)^(FOR IMMEDIATE RELEASE|REGARDING:)
+  weight: 3
+  min_hits: 1
+- pattern: (?im)^To:\s*(Consumers|Customers|Shareholders|Whom)
+  weight: 2
+  min_hits: 1
+- pattern: (?m)^Field:\s*\S
+  weight: 2
+  min_hits: 1
+- pattern: (?m)^\s*(I|II|III|IV)\.\s+[A-Z]
+  weight: 2
+  min_hits: 2
+- pattern: (?i)(recall|termination of|correction of|clarification)
+  weight: 2
+  min_hits: 1
