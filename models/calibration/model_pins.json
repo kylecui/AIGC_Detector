@@ -1,9 +1,10 @@
 {
-  "_doc": "Reproducibility pins: calibration (T=5.645, floor=0.46) and probe baselines are valid ONLY against these revisions. Regenerate via scripts/pin_model_versions.py after any model update.",
+  "_doc": "Reproducibility pins: calibration (T=5.645, floor=0.46) and probe baselines are valid ONLY against these revisions. Regenerate via scripts/pin_model_versions.py after any model update. Roles: models referenced only by src/aigc_detector/data/generator.py (chatglm3-6b, yi-6b-chat) are TRAINING-DATA GENERATORS, not detection runtime - their revisions do not affect calibration validity and are intentionally unpinned.",
   "pinned_at": "2026-08-21",
   "models": {
     "chatglm3-6b": {
-      "registry_name": "chatglm3-6b"
+      "registry_name": "chatglm3-6b",
+      "role": "training-data-generator only; not detection runtime"
     },
     "chinese-roberta-large": {
       "registry_name": "chinese-roberta-large",
@@ -76,7 +77,8 @@
       "size_on_disk_gb": 1.13
     },
     "yi-6b-chat": {
-      "registry_name": "yi-6b-chat"
+      "registry_name": "yi-6b-chat",
+      "role": "training-data-generator only; not detection runtime"
     }
   }
 }

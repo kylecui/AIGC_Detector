@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from pathlib import Path
 
 # Weighted lexical markers (phrase → weight). Hit = substring occurrence.
 _MARKERS_ZH: dict[str, int] = {
@@ -130,7 +131,7 @@ _MARKERS_EN_FORMAL: dict[str, int] = {
     "We hereby affirm": 3, "notice is issued": 2, "consumers should stop": 2,
     "report to the Commission": 2, "immediately discontinue": 2,
 }
-_STRUCTURE_EN_FORMAL: list[tuple["re.Pattern[str]", int, int]] = [
+_STRUCTURE_EN_FORMAL: list[tuple[re.Pattern[str], int, int]] = [
     (re.compile(r"(?im)^(FOR IMMEDIATE RELEASE|REGARDING:)"), 3, 1),
     (re.compile(r"(?im)^To:\s*(Consumers|Customers|Shareholders|Whom)", ), 2, 1),
     (re.compile(r"(?m)^Field:\s*\S"), 2, 1),
@@ -140,13 +141,41 @@ _STRUCTURE_EN_FORMAL: list[tuple["re.Pattern[str]", int, int]] = [
 THRESHOLD_EN_FORMAL = 5
 
 
-def detect_register_en_formal(text: str) -> tuple[bool, int]:
-    """Lexical EN formal-register check (notice/announcement/correction style).
+def _en_ml_gate():
+    """Load the F1 ML register gate (joblib + threshold), if present & enabled.
 
-    Deliberately conservative (threshold 5 with 2+ structure hits implied by
-    weight): the cost of missing formal EN is one normal verdict; the cost
-    of a false gate is wrongly downgrading casual English — measured probe
-    showed 0/20 casual zh false-fires for the zh gate; EN gate aims lower.
+    Trained by scripts/train_en_register_gate.py on W4-EN arms + human
+    probe: narrative-formal recall 26/26, human recall 35/35, AI-casual
+    false-gate 0.9% at threshold 0.30. GATING CAVEAT: the casual negative
+    class is AI-generated; human-casual false-gate rate was NOT yet
+    validated at ship time (one hand-written sample fired at 0.75). The
+    gate therefore ships with "enabled": false in en_register_gate.json;
+    flip to true only after a human-casual validation set (>=30 real
+    reddit/yelp-style comments) shows false-gate <= 5%.
+    """
+    import json
+
+    import joblib
+
+    d = _calibration_dir()
+    try:
+        meta = json.loads((d / "en_register_gate.json").read_text(encoding="utf-8"))
+        if not meta.get("enabled", False):
+            return None
+        clf = joblib.load(d / "en_register_gate.joblib")
+        return clf, float(meta["threshold"])
+    except (OSError, ValueError, KeyError):
+        return None
+
+
+def detect_register_en_formal(text: str) -> tuple[bool, int]:
+    """Lexical-OR-ML EN formal-register check (W16 + F1).
+
+    Layer 1 (lexical): template formal — institutional boilerplate.
+    Layer 2 (ML, when artifacts present): narrative formal — apology
+    letters / incident statements the lexical layer cannot see; logistic
+    gate on the 14 linguistic stylometric features. Reported score: the
+    layer that fired (lexical score, or ML probability x100 as int).
     """
     score = 0
     for m, w in _MARKERS_EN_FORMAL.items():
@@ -155,7 +184,26 @@ def detect_register_en_formal(text: str) -> tuple[bool, int]:
     for pat, w, need in _STRUCTURE_EN_FORMAL:
         if len(pat.findall(text)) >= need:
             score += w
-    return score >= THRESHOLD_EN_FORMAL, score
+    if score >= THRESHOLD_EN_FORMAL:
+        return True, score
+    gate = _en_ml_gate()
+    if gate is not None and len(text) >= 120:
+        import dataclasses
+
+        import numpy as np
+
+        from aigc_detector.detection.linguistic import LinguisticFeatureExtractor
+
+        try:
+            lf = LinguisticFeatureExtractor().extract(text)
+            names = [f.name for f in dataclasses.fields(lf)]
+            x = np.array([[getattr(lf, n) for n in names]], dtype=float)
+            p = float(gate[0].predict_proba(x)[0, 1])
+            if p >= gate[1]:
+                return True, int(p * 100)
+        except Exception:  # noqa: BLE001 — ML layer must never break the gate
+            pass
+    return False, score
 
 
 # Canonical EN-formal downgrade payload (product-level guard, W16).
@@ -193,6 +241,27 @@ FORMAL_ZH_CAVEAT: dict = {
 }
 
 
+def _calibration_dir() -> Path:
+    """Resolve models/calibration for dev-checkout AND installed layouts.
+
+    Order: settings.model_dir (honors MODEL_DIR env; CWD-relative 'models'
+    default matches Docker WORKDIR mount) -> repo-root via parents[3]
+    (editable/dev checkout). The old parents[3]-only resolution broke under
+    a wheel install (site-packages layout shifts the parent chain).
+    """
+    from pathlib import Path
+
+    try:
+        from aigc_detector.config import settings
+
+        d = Path(settings.model_dir) / "calibration"
+        if d.is_dir():
+            return d
+    except Exception:  # noqa: BLE001 — config import must never break loaders
+        pass
+    return Path(__file__).resolve().parents[3] / "models" / "calibration"
+
+
 def formal_temperature() -> float | None:
     """Load the fitted formal-register temperature (W11), if present.
 
@@ -202,9 +271,8 @@ def formal_temperature() -> float | None:
     callers then skip calibration (T=1, behavior unchanged).
     """
     import json
-    from pathlib import Path
 
-    path = Path(__file__).resolve().parents[3] / "models/calibration/global_temperature.json"
+    path = _calibration_dir() / "global_temperature.json"
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -227,9 +295,8 @@ def binoculars_floor() -> dict | None:
     DISABLED; enabling is a human deployment decision after gate review.
     """
     import json
-    from pathlib import Path
 
-    path = Path(__file__).resolve().parents[3] / "models/calibration/binoculars_floor.json"
+    path = _calibration_dir() / "binoculars_floor.json"
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):

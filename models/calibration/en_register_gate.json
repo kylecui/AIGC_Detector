@@ -1,0 +1,42 @@
+{
+  "threshold": 0.3,
+  "human_recall": 1.0,
+  "narrative_recall": 1.0,
+  "casual_false_gate": 0.009009009009009009,
+  "n_train": 2034,
+  "top_features": [
+    [
+      "lexical_diversity_mtld",
+      -6.034
+    ],
+    [
+      "discourse_templating",
+      1.947
+    ],
+    [
+      "paragraph_length_variance",
+      -1.089
+    ],
+    [
+      "sentence_length_gini",
+      0.507
+    ],
+    [
+      "sentence_length_cv",
+      -0.382
+    ],
+    [
+      "syntactic_repetition_rate",
+      0.347
+    ]
+  ],
+  "trained_at": "2026-08-26",
+  "doc": "F1 ML gate: OR-companion to lexical EN gate; catches narrative formal (apology/incident) the lexical gate cannot. Threshold chosen for <=1% casual false-gate on AI-casual arm data.",
+  "enabled": false,
+  "enablement_condition": "human-casual validation set (>=30 real comments) with false-gate <=5%",
+  "human_casual_validation": {
+    "n": 40,
+    "false_gate_rate": 0.55,
+    "validated_at": "2026-08-26"
+  }
+}
