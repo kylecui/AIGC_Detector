@@ -14,7 +14,8 @@ build/
 *.incomplete
 _archive/
 nul
-samples/# Platform skill directories (derived from packs, not source)
+samples/
+# Platform skill directories (derived from packs, not source)
 .opencode/
 .petfish/
 .sisyphus/
@@ -25,3 +26,7 @@ outputs/
 *.new
 *.log
 initialization-report.md
+tmp/
+
+# Deployed calibration artifacts are config, not model weights
+!/models/calibration/
