@@ -260,6 +260,40 @@
         </div>
       </template>
 
+      <template x-if="result.caveat">
+        <div class="caveat-bar">
+          <div class="caveat-title">⚠ 正式文书提示</div>
+          <div class="caveat-message" x-text="result.caveat.message"></div>
+          <div class="caveat-guidance" x-text="result.caveat.action_guidance"></div>
+        </div>
+      </template>
+
+      <template x-if="result.segment_highlights && result.segment_highlights.n_segments > 0">
+        <div class="segment-section">
+          <div class="breakdown-title">局部AI痕迹（辅助信号）</div>
+          <div class="highlights-note">
+            以下段落检测到较强的AI生成特征，供人工复核参考。整体判定与段落信号可能不一致：整体结论反映全文平均水平，段落信号用于定位建议重点核查的位置。在正式文书（如声明、公告、承诺书等）中，整体判定的可靠性较低，建议结合段落信号人工复核。
+          </div>
+          <div class="kv-list compact" style="margin-bottom: 0.5rem;">
+            <div class="kv-row"><span>最高分段落 P(AI)</span><span x-text="formatPercent(result.segment_highlights.max_p_ai)"></span></div>
+            <div class="kv-row"><span>分析段落数</span><span x-text="result.segment_highlights.n_segments"></span></div>
+          </div>
+          <div class="segment-list">
+            <template x-for="seg in result.segment_highlights.top_k_segments" :key="'hl-' + seg.index">
+              <div class="segment-card">
+                <div class="segment-header">
+                  <div class="segment-title-row">
+                    <span class="tag" x-text="'Segment #' + seg.index"></span>
+                    <span class="tag" x-text="'P(AI): ' + formatPercent(seg.p_ai)"></span>
+                  </div>
+                </div>
+                <div class="segment-text" x-text="seg.text_snippet + '……'"></div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
+
       <template x-if="result.segments && result.segments.length > 0">
         <div class="segment-section">
           <div class="breakdown-title">Annotated Text View</div>

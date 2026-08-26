@@ -347,6 +347,50 @@ body {
   letter-spacing: 0.04em;
 }
 
+.highlights-note {
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--warning, #e6a700);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+/* ── Register caveat bar (W3b) ─────────────────────────────── */
+.caveat-bar {
+  background: #fff8e6;
+  border: 1px solid #e6c76a;
+  border-left: 4px solid var(--warning, #e6a700);
+  border-radius: 8px;
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.caveat-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.35rem;
+  color: #7a5c00;
+}
+
+.caveat-message {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: #6b5a1e;
+  margin-bottom: 0.35rem;
+}
+
+.caveat-guidance {
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: #6b5a1e;
+  border-top: 1px dashed #e6c76a;
+  padding-top: 0.35rem;
+}
+
 .breakdown-grid {
   display: grid;
   gap: 0.5rem;
