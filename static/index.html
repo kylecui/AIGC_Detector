@@ -24,7 +24,7 @@
     </p>
 
     <div class="status-row">
-      <button class="btn btn-ghost btn-sm" @click="checkHealth" :disabled="healthLoading">
+      <button type="button" class="btn btn-ghost btn-sm" @click="checkHealth" :disabled="healthLoading">
         <span x-text="healthLoading ? 'Checking...' : 'Check Service Health'"></span>
       </button>
       <template x-if="health">
@@ -37,10 +37,10 @@
     </div>
 
     <div class="example-grid">
-      <button class="example-btn" @click="loadExample('en_human')">English Human Example</button>
-      <button class="example-btn" @click="loadExample('en_ai')">English AI-style Example</button>
-      <button class="example-btn" @click="loadExample('zh_human')">中文人工示例</button>
-      <button class="example-btn" @click="loadExample('zh_ai')">中文 AI 风格示例</button>
+      <button type="button" class="example-btn" @click="loadExample('en_human')">English Human Example</button>
+      <button type="button" class="example-btn" @click="loadExample('en_ai')">English AI-style Example</button>
+      <button type="button" class="example-btn" @click="loadExample('zh_human')">中文人工示例</button>
+      <button type="button" class="example-btn" @click="loadExample('zh_ai')">中文 AI 风格示例</button>
     </div>
 
     <label class="toggle-row">
@@ -53,10 +53,10 @@
   <div class="card">
     <!-- Mode tabs -->
     <div class="mode-tabs">
-      <button class="mode-tab" :class="{ active: mode === 'text' }" @click="switchMode('text')">
+      <button type="button" class="mode-tab" :class="{ active: mode === 'text' }" @click="switchMode('text')">
         粘贴文本
       </button>
-      <button class="mode-tab" :class="{ active: mode === 'file' }" @click="switchMode('file')">
+      <button type="button" class="mode-tab" :class="{ active: mode === 'file' }" @click="switchMode('file')">
         上传文件
       </button>
     </div>
@@ -109,7 +109,7 @@
                   <span x-show="extractedTextLength > 0"> · 已提取 <span x-text="extractedTextLength"></span> 字符</span>
                 </div>
               </div>
-              <button class="btn btn-ghost btn-sm" @click.stop="clearFile()" :disabled="loading">✕</button>
+              <button type="button" class="btn btn-ghost btn-sm" @click.stop="clearFile()" :disabled="loading">✕</button>
             </div>
           </div>
         </template>
@@ -121,30 +121,33 @@
 
       <div class="actions">
         <button
+          type="button"
           class="btn btn-primary"
-        :disabled="!canSubmit"
-        @click="mode === 'file' ? detectFile() : detect()"
-      >
-        <template x-if="loading">
-          <span class="spinner"></span>
-        </template>
-        <span x-text="loading ? 'Detecting...' : 'Detect'"></span>
-      </button>
-      <button
-        class="btn btn-ghost"
-        :disabled="loading"
-        @click="reset"
-      >
-        Clear
-      </button>
-      <button
-        class="btn btn-ghost"
-        :disabled="loading || !result"
-        @click="copyResult"
-      >
-        Copy Result JSON
-      </button>
-    </div>
+          :disabled="!canSubmit"
+          @click="mode === 'file' ? detectFile() : detect()"
+        >
+          <template x-if="loading">
+            <span class="spinner"></span>
+          </template>
+          <span x-text="loading ? 'Detecting...' : 'Detect'"></span>
+        </button>
+        <button
+          type="button"
+          class="btn btn-ghost"
+          :disabled="loading"
+          @click="reset"
+        >
+          Clear
+        </button>
+        <button
+          type="button"
+          class="btn btn-ghost"
+          :disabled="loading || !result"
+          @click="copyResult"
+        >
+          Copy Result JSON
+        </button>
+      </div>
   </div>
 
   <!-- ── Error ───────────────────────────────────────────── -->
