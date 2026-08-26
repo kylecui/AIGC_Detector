@@ -39,7 +39,15 @@ from aigc_detector.utils.hf_cache import is_model_cached
 logger = logging.getLogger(__name__)
 
 # Static files directory (relative to project root)
-STATIC_DIR = Path(__file__).resolve().parent.parent.parent.parent / "static"
+def _resolve_static_dir() -> Path:
+    """Prefer packaged assets (wheel force-include), fall back to repo layout."""
+    pkg_static = Path(__file__).resolve().parent.parent / "static"  # aigc_detector/static
+    if pkg_static.is_dir():
+        return pkg_static
+    return Path(__file__).resolve().parent.parent.parent.parent / "static"
+
+
+STATIC_DIR = _resolve_static_dir()
 
 
 @asynccontextmanager

@@ -18,8 +18,29 @@ class ModelInfo:
 _registry: dict[str, ModelInfo] | None = None
 
 
+def _resolve_registry_path(path: str = "configs/models.yaml") -> str:
+    """Resolve the models registry for both wheel and repo layouts.
+
+    Order: explicit existing path -> packaged copy (aigc_detector/configs/)
+    -> repo-root fallback (CWD-relative, dev checkout behavior preserved).
+    """
+    from pathlib import Path
+
+    p = Path(path)
+    if p.is_file():
+        return str(p)
+    pkg = Path(__file__).resolve().parent.parent / "configs" / p.name
+    if pkg.is_file():
+        return str(pkg)
+    repo = Path(__file__).resolve().parent.parent.parent.parent.parent / path
+    if repo.is_file():
+        return str(repo)
+    return path  # let the original open() raise the familiar error
+
+
 def load_registry(path: str = "configs/models.yaml") -> dict[str, ModelInfo]:
     """Load model definitions from YAML file."""
+    path = _resolve_registry_path(path)
     with open(path, encoding="utf-8") as f:
         data = yaml.safe_load(f)
 

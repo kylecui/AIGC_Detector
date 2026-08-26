@@ -57,6 +57,16 @@ dev = [
     "ruff>=0.3",
 ]
 
+[project.scripts]
+aigc-detector = "aigc_detector.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/aigc_detector"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"static" = "aigc_detector/static"
+"configs" = "aigc_detector/configs"
+
 [[tool.uv.index]]
 name = "pytorch-cu124"
 url = "https://download.pytorch.org/whl/cu124"
