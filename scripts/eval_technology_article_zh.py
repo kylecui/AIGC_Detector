@@ -13,13 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from rich.console import Console
 from rich.table import Table
 
-from src.aigc_detector.config import settings
-from src.aigc_detector.detection.binoculars import BinocularsDetector
-from src.aigc_detector.detection.encoder import EncoderClassifier
-from src.aigc_detector.detection.language import LanguageRouter
 from src.aigc_detector.detection.pipeline import DetectionPipeline
-from src.aigc_detector.detection.statistical import StatisticalClassifier, StatisticalFeatureExtractor
-from src.aigc_detector.models.manager import ModelManager
 
 console = Console()
 
@@ -28,75 +22,14 @@ DEFAULT_OUTPUT = Path("reports/technology_article_zh_baseline_v1.json")
 
 
 def build_pipeline() -> DetectionPipeline:
-    model_manager = ModelManager(max_vram_gb=settings.max_vram_gb)
+    """Delegate to the shared PlanRunner assembly (v0.2a drift fix).
 
-    language_router = LanguageRouter(device=settings.device)
-    language_router.load()
+    This script previously hand-rolled its own pipeline (drifted from the
+    canonical construction: missing linguistic calibration, stale weights).
+    """
+    from evaluate_paired_experiment import build_pipeline as _shared
 
-    statistical_extractors = {
-        "en": StatisticalFeatureExtractor(
-            model_name="openai-community/gpt2-xl",
-            device=settings.device,
-            load_in_4bit=False,
-        ),
-        "zh": StatisticalFeatureExtractor(
-            model_name="IDEA-CCNL/Wenzhong-GPT2-110M",
-            device=settings.device,
-            load_in_4bit=False,
-        ),
-    }
-
-    statistical_classifiers: dict[str, StatisticalClassifier] = {}
-    for lang in ("en", "zh"):
-        clf_path = settings.model_dir / f"statistical-{lang}" / "classifier.joblib"
-        if clf_path.exists():
-            clf = StatisticalClassifier()
-            clf.load(clf_path)
-            cal_path = settings.model_dir / f"statistical-{lang}" / "calibration.json"
-            if cal_path.exists():
-                calibration = json.loads(cal_path.read_text(encoding="utf-8"))
-                if "optimal_threshold" in calibration:
-                    clf.set_threshold(float(calibration["optimal_threshold"]))
-            statistical_classifiers[lang] = clf
-
-    encoder_classifiers = {
-        "en": EncoderClassifier(
-            base_model_name="microsoft/deberta-v3-large",
-            adapter_path=settings.model_dir / "encoder-en",
-            device=settings.device,
-        ),
-        "zh": EncoderClassifier(
-            base_model_name="hfl/chinese-roberta-wwm-ext-large",
-            adapter_path=settings.model_dir / "encoder-zh",
-            device=settings.device,
-        ),
-    }
-
-    binoculars_detectors = {
-        "en": BinocularsDetector(
-            observer_name="tiiuae/falcon-7b",
-            performer_name="tiiuae/falcon-7b-instruct",
-            mode="low-fpr",
-            device=settings.device,
-            load_in_4bit=True,
-        ),
-        "zh": BinocularsDetector(
-            observer_name="Qwen/Qwen2-7B",
-            performer_name="Qwen/Qwen2-7B-Instruct",
-            mode="low-fpr",
-            device=settings.device,
-            load_in_4bit=True,
-        ),
-    }
-
-    return DetectionPipeline(
-        language_router=language_router,
-        statistical_extractors=statistical_extractors,
-        statistical_classifiers=statistical_classifiers,
-        encoder_classifiers=encoder_classifiers,
-        binoculars_detectors=binoculars_detectors,
-        model_manager=model_manager,
-    )
+    return _shared()
 
 
 def load_records(path: Path) -> list[dict]:

@@ -13,7 +13,6 @@ References:
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import threading
@@ -28,12 +27,7 @@ from aigc_detector.api.middleware import log_auth_disabled_once, setup_middlewar
 from aigc_detector.api.routes import metrics_router, router
 from aigc_detector.config import settings
 from aigc_detector.detection.binoculars import BinocularsDetector
-from aigc_detector.detection.encoder import EncoderClassifier
 from aigc_detector.detection.ensemble import EnsembleResult
-from aigc_detector.detection.language import LanguageRouter
-from aigc_detector.detection.linguistic import LinguisticClassifier, LinguisticFeatureExtractor
-from aigc_detector.detection.pipeline import DetectionPipeline
-from aigc_detector.detection.statistical import StatisticalClassifier, StatisticalFeatureExtractor
 from aigc_detector.models.manager import ModelManager
 from aigc_detector.utils.hf_cache import is_model_cached
 
@@ -108,147 +102,16 @@ async def lifespan(app: FastAPI):
         logger.info("Service stopped")
         return
 
-    # Model manager
-    model_manager = ModelManager(max_vram_gb=settings.max_vram_gb)
+    # Model manager + full assembly via the single declarative entry point
+    # (v0.2a: replaces the hand-written construction; see plans/default.yaml)
+    from aigc_detector.plan import PlanRunner
+
+    bundle = PlanRunner.default().build()
+    model_manager = bundle.model_manager
     app.state.model_manager = model_manager
-
-    # Language router (always loaded — ~1 GB)
-    language_router = LanguageRouter(device=settings.device)
-    try:
-        language_router.load()
-        model_manager.load("xlm-roberta-lang-detect", language_router)
-    except Exception:
-        logger.warning("Language detection model failed to load, using heuristic fallback")
-
-    # Build detector wrappers (actual model weights stay lazily loaded until first use)
-    statistical_extractors = {
-        "en": StatisticalFeatureExtractor(
-            model_name="openai-community/gpt2-xl",
-            device=settings.device,
-            load_in_4bit=False,
-        ),
-        "zh": StatisticalFeatureExtractor(
-            model_name="IDEA-CCNL/Wenzhong-GPT2-110M",
-            device=settings.device,
-            load_in_4bit=False,
-        ),
-    }
-    statistical_classifiers: dict[str, StatisticalClassifier] = {}
-    for lang in ("en", "zh"):
-        clf_path = settings.model_dir / f"statistical-{lang}" / "classifier.joblib"
-        if clf_path.exists():
-            clf = StatisticalClassifier()
-            clf.load(clf_path)
-            cal_path = settings.model_dir / f"statistical-{lang}" / "calibration.json"
-            if cal_path.exists():
-                try:
-                    calibration = json.loads(cal_path.read_text(encoding="utf-8"))
-                    if "optimal_threshold" in calibration:
-                        clf.set_threshold(float(calibration["optimal_threshold"]))
-                except Exception:
-                    logger.warning("Failed to load calibration for %s", lang, exc_info=True)
-            statistical_classifiers[lang] = clf
-        else:
-            logger.warning("Statistical classifier missing for %s: %s", lang, clf_path)
-
-    # Linguistic classifiers (CPU-only, no model_manager registration).
-    # Optional: if the artifact is absent for a language, the pipeline simply
-    # skips the linguistic stage for that language.
-    linguistic_classifiers: dict[str, LinguisticClassifier] = {}
-    for lang in ("en", "zh"):
-        clf_path = settings.model_dir / f"linguistic-{lang}" / "classifier.joblib"
-        if clf_path.exists():
-            clf = LinguisticClassifier()
-            clf.load(clf_path)
-            # Linguistic has no calibration file yet, but be forward-compatible:
-            cal_path = settings.model_dir / f"linguistic-{lang}" / "calibration.json"
-            if cal_path.exists():
-                try:
-                    calibration = json.loads(cal_path.read_text(encoding="utf-8"))
-                    if "optimal_threshold" in calibration:
-                        clf.set_threshold(float(calibration["optimal_threshold"]))
-                except Exception:
-                    logger.warning("Failed to load linguistic calibration for %s", lang, exc_info=True)
-            linguistic_classifiers[lang] = clf
-        else:
-            logger.info("Linguistic classifier not found for %s: %s (skipping)", lang, clf_path)
-
-    # Linguistic extractors are pure-CPU and side-effect-free; instantiate one
-    # per language with the default min_text_chars=200.
-    linguistic_extractors: dict[str, LinguisticFeatureExtractor] = {
-        "en": LinguisticFeatureExtractor(),
-        "zh": LinguisticFeatureExtractor(),
-    }
-
-    encoder_classifiers = {
-        "en": EncoderClassifier(
-            base_model_name="microsoft/deberta-v3-large",
-            adapter_path=settings.model_dir / "encoder-en",
-            device=settings.device,
-        ),
-        "zh": EncoderClassifier(
-            base_model_name="hfl/chinese-roberta-wwm-ext-large",
-            adapter_path=settings.model_dir / "encoder-zh",
-            device=settings.device,
-        ),
-    }
-
-    # Binoculars detectors — OPTIONAL zero-shot stage.
-    # Uses large 7B model pairs (~14GB per language). On startup:
-    # - If models are already cached → enable immediately.
-    # - If not cached → start background download thread (non-blocking),
-    #   service runs without Binoculars until download completes.
-    binoculars_detectors: dict[str, object] = {}
-
-    bino_configs = {
-        "en": ("tiiuae/falcon-7b", "tiiuae/falcon-7b-instruct"),
-        "zh": ("Qwen/Qwen2-7B", "Qwen/Qwen2-7B-Instruct"),
-    }
-
-    # Models that need background download
-    missing_binoculars: list[tuple[str, str, str]] = []  # (lang, observer, performer)
-
-    for lang, (observer, performer) in bino_configs.items():
-        if is_model_cached(observer) and is_model_cached(performer):
-            binoculars_detectors[lang] = BinocularsDetector(
-                observer_name=observer,
-                performer_name=performer,
-                mode="low-fpr",
-                device=settings.device,
-                load_in_4bit=True,
-            )
-            logger.info("Binoculars enabled for %s (%s + %s)", lang, observer, performer)
-        else:
-            missing_binoculars.append((lang, observer, performer))
-            logger.info("Binoculars pending for %s — will download in background", lang)
-
-    # Detection pipeline (detectors instantiated here, weights loaded lazily on first use)
-    #
-    # Language-specific ensemble weights (validated 2026-06-17 on Defactify EN + HC3 ZH):
-    # - EN: encoder LoRA trained on project's original domain underperforms on modern
-    #   multi-LLM text (GPT-4o/Llama/Qwen). Linguistic axis is the primary signal.
-    #   See DETECTOR_NOTES_2026-06.md and scripts/tune_en_detector.py for the sweep
-    #   that identified this configuration.
-    # - ZH: encoder LoRA retrained 2026-06-19 with oversampled textbook data (10x).
-    #   Now correctly detects modern LLM text (GPT-4/Claude) with p_ai>0.99.
-    #   Statistical classifier still overfits to HC3 (low weight kept as minor signal).
-    #   See DETECTOR_NOTES_2026-06.md P3 section for the diagnostic and retraining.
-    en_weights = {"linguistic": 0.85, "statistical": 0.15, "encoder": 0.0, "binoculars": 0.0}
-    zh_weights = {"linguistic": 0.10, "statistical": 0.10, "encoder": 0.60, "binoculars": 0.20}
-
-    pipeline = DetectionPipeline(
-        language_router=language_router,
-        statistical_extractors=statistical_extractors,
-        statistical_classifiers=statistical_classifiers,
-        encoder_classifiers=encoder_classifiers,
-        binoculars_detectors=binoculars_detectors,
-        linguistic_extractors=linguistic_extractors,
-        linguistic_classifiers=linguistic_classifiers,
-        model_manager=model_manager,
-        early_exit_threshold=0.99,  # Raised from 0.95 (was too aggressive for modern LLM text)
-        ensemble_weights_by_lang={"en": en_weights, "zh": zh_weights},
-    )
+    pipeline = bundle.pipeline
     app.state.pipeline = pipeline
+    missing_binoculars = bundle.missing_binoculars
 
     # Start background thread to download missing Binoculars models.
     #

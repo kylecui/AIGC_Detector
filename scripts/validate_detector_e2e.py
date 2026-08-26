@@ -22,13 +22,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from aigc_detector.config import settings
-from aigc_detector.detection.encoder import EncoderClassifier
-from aigc_detector.detection.language import LanguageRouter
-from aigc_detector.detection.linguistic import LinguisticClassifier, LinguisticFeatureExtractor
 from aigc_detector.detection.pipeline import DetectionPipeline
-from aigc_detector.detection.statistical import StatisticalClassifier, StatisticalFeatureExtractor
-from aigc_detector.models.manager import ModelManager
 from aigc_detector.training.evaluator import Evaluator
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
@@ -39,78 +33,15 @@ OUT_DIR = Path("models/e2e-validation")
 
 
 def build_pipeline(lang: str) -> DetectionPipeline:
-    """Build the detection pipeline for one language."""
-    model_manager = ModelManager(max_vram_gb=settings.max_vram_gb)
+    """Delegate to the shared PlanRunner assembly (v0.2a drift fix).
 
-    # Language router
-    language_router = LanguageRouter(device=settings.device)
-    try:
-        language_router.load()
-    except Exception:
-        logger.warning("Language model failed to load, using heuristic fallback")
+    Previously hand-rolled with zh:None weights and no linguistic calibration
+    (accidental drift). `lang` retained for call-site compatibility; the full
+    bilingual pipeline is assembled and only `lang` texts validated.
+    """
+    from evaluate_paired_experiment import build_pipeline as _shared
 
-    # Statistical
-    stat_model = "openai-community/gpt2-xl" if lang == "en" else "IDEA-CCNL/Wenzhong-GPT2-110M"
-    statistical_extractors = {
-        lang: StatisticalFeatureExtractor(model_name=stat_model, device=settings.device, load_in_4bit=False),
-    }
-    statistical_classifiers: dict[str, StatisticalClassifier] = {}
-    clf_path = settings.model_dir / f"statistical-{lang}" / "classifier.joblib"
-    if clf_path.exists():
-        clf = StatisticalClassifier()
-        clf.load(clf_path)
-        statistical_classifiers[lang] = clf
-        logger.info("Loaded statistical classifier for %s", lang)
-    else:
-        logger.warning("Statistical classifier missing: %s", clf_path)
-
-    # Linguistic (CPU, no model)
-    linguistic_extractors = {lang: LinguisticFeatureExtractor()}
-    linguistic_classifiers: dict[str, LinguisticClassifier] = {}
-    ling_path = settings.model_dir / f"linguistic-{lang}" / "classifier.joblib"
-    if ling_path.exists():
-        lclf = LinguisticClassifier()
-        lclf.load(ling_path)
-        cal_path = settings.model_dir / f"linguistic-{lang}" / "calibration.json"
-        if cal_path.exists():
-            cal = json.loads(cal_path.read_text(encoding="utf-8"))
-            if "optimal_threshold" in cal:
-                lclf.set_threshold(float(cal["optimal_threshold"]))
-        linguistic_classifiers[lang] = lclf
-        logger.info("Loaded linguistic classifier for %s", lang)
-    else:
-        logger.warning("Linguistic classifier missing: %s", ling_path)
-
-    # Encoder
-    base_model = "microsoft/deberta-v3-large" if lang == "en" else "hfl/chinese-roberta-wwm-ext-large"
-    adapter_path = settings.model_dir / f"encoder-{lang}"
-    encoder_classifiers = {
-        lang: EncoderClassifier(
-            base_model_name=base_model,
-            adapter_path=adapter_path,
-            device=settings.device,
-        ),
-    }
-
-    pipeline = DetectionPipeline(
-        language_router=language_router,
-        statistical_extractors=statistical_extractors,
-        statistical_classifiers=statistical_classifiers,
-        encoder_classifiers=encoder_classifiers,
-        binoculars_detectors={},  # Skip binoculars (models not cached)
-        linguistic_extractors=linguistic_extractors,
-        linguistic_classifiers=linguistic_classifiers,
-        model_manager=model_manager,
-        early_exit_threshold=0.99,  # Raised from 0.95 — was too aggressive for modern LLM text
-        ensemble_weights_by_lang={
-            # EN: encoder LoRA trained on different domain; linguistic is primary signal.
-            # Discovered via scripts/tune_en_detector.py weight sweep on Defactify.
-            "en": {"linguistic": 0.85, "statistical": 0.15, "encoder": 0.0, "binoculars": 0.0},
-            # ZH: encoder works well on HC3 ChatGPT text; keep default weights.
-            "zh": None,  # None = use DEFAULT_WEIGHTS
-        },
-    )
-    return pipeline
+    return _shared()
 
 
 def run_validation(lang: str, n: int) -> dict:

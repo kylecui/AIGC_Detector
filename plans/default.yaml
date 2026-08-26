@@ -1,0 +1,42 @@
+# DetectionPlan: default — the shipped deployment (v0.2a).
+# Expresses EXACTLY the assembly that api/main.py lifespan and
+# evaluate_paired_experiment.build_pipeline hand-coded before unification.
+# Any change here is a deployment change: run probes + verify gate.
+plan: default@0.2a
+
+language:
+  router: papluca/xlm-roberta-base-language-detection
+
+statistical:
+  load_in_4bit: false
+  languages:
+    en: { extractor: openai-community/gpt2-xl }
+    zh: { extractor: IDEA-CCNL/Wenzhong-GPT2-110M }
+
+encoder:
+  languages:
+    en: { base: microsoft/deberta-v3-large, adapter: encoder-en }
+    zh: { base: hfl/chinese-roberta-wwm-ext-large, adapter: encoder-zh }
+
+binoculars:
+  mode: low-fpr
+  load_in_4bit: true
+  require_cached: true          # missing pairs go to background download (API only)
+  pairs:
+    en: { observer: tiiuae/falcon-7b, performer: tiiuae/falcon-7b-instruct }
+    zh: { observer: Qwen/Qwen2-7B, performer: Qwen/Qwen2-7B-Instruct }
+
+# Language-level ensemble weights (validated 2026-06-17/19; see DETECTOR_NOTES_2026-06.md):
+#   EN — encoder LoRA underperforms on modern multi-LLM text; linguistic is primary
+#        (sweep: scripts/tune_en_detector.py).
+#   ZH — encoder retrained with 10x textbook oversampling; statistical kept as
+#        minor signal (HC3 overfit documented).
+weights:
+  en: { linguistic: 0.85, statistical: 0.15, encoder: 0.0, binoculars: 0.0 }
+  zh: { linguistic: 0.10, statistical: 0.10, encoder: 0.60, binoculars: 0.20 }
+
+early_exit_threshold: 0.99      # raised from 0.95 — was too aggressive for modern LLM text
+
+# Register gates / calibration / decision policies remain artifact-driven
+# (models/calibration/*.json with enablement flags) and code-declared
+# (detection/register.py marker tables) until v0.2b lifts them into the plan.

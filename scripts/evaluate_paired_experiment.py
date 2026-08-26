@@ -24,21 +24,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from aigc_detector.config import settings  # noqa: E402
-from aigc_detector.detection.binoculars import BinocularsDetector  # noqa: E402
-from aigc_detector.detection.encoder import EncoderClassifier  # noqa: E402
-from aigc_detector.detection.language import LanguageRouter  # noqa: E402
-from aigc_detector.detection.linguistic import (  # noqa: E402
-    LinguisticClassifier,
-    LinguisticFeatureExtractor,
-)
 from aigc_detector.detection.pipeline import DetectionPipeline  # noqa: E402
-from aigc_detector.detection.statistical import (  # noqa: E402
-    StatisticalClassifier,
-    StatisticalFeatureExtractor,
-)
-from aigc_detector.models.manager import ModelManager  # noqa: E402
-from aigc_detector.utils.hf_cache import is_model_cached  # noqa: E402
 
 DATA_DIR = Path("dataset/paired_generation_v1")
 RECORDS = DATA_DIR / "pilot_records.jsonl"
@@ -47,96 +33,15 @@ SUMMARY = DATA_DIR / "summary.json"
 
 
 def build_pipeline(adapter_zh: Path | None = None) -> DetectionPipeline:
-    """Replicate api/main.py lifespan construction (no FastAPI, no bg download).
+    """Assemble via the single declarative entry point (v0.2a).
 
-    adapter_zh: override the production encoder-zh adapter (candidate gating).
+    Delegates to PlanRunner (plans/default.yaml) — the same assembly the API
+    lifespan uses. adapter_zh overrides the production encoder-zh adapter
+    (candidate gating).
     """
-    model_manager = ModelManager(max_vram_gb=settings.max_vram_gb)
+    from aigc_detector.plan import PlanRunner
 
-    language_router = LanguageRouter(device=settings.device)
-    language_router.load()
-    model_manager.load("xlm-roberta-lang-detect", language_router)
-
-    statistical_extractors = {
-        "en": StatisticalFeatureExtractor(
-            model_name="openai-community/gpt2-xl",
-            device=settings.device,
-            load_in_4bit=False,
-        ),
-        "zh": StatisticalFeatureExtractor(
-            model_name="IDEA-CCNL/Wenzhong-GPT2-110M",
-            device=settings.device,
-            load_in_4bit=False,
-        ),
-    }
-    statistical_classifiers: dict[str, StatisticalClassifier] = {}
-    for lang in ("en", "zh"):
-        clf_path = settings.model_dir / f"statistical-{lang}" / "classifier.joblib"
-        if clf_path.exists():
-            clf = StatisticalClassifier()
-            clf.load(clf_path)
-            cal_path = settings.model_dir / f"statistical-{lang}" / "calibration.json"
-            if cal_path.exists():
-                calibration = json.loads(cal_path.read_text(encoding="utf-8"))
-                if "optimal_threshold" in calibration:
-                    clf.set_threshold(float(calibration["optimal_threshold"]))
-            statistical_classifiers[lang] = clf
-
-    linguistic_classifiers: dict[str, LinguisticClassifier] = {}
-    for lang in ("en", "zh"):
-        clf_path = settings.model_dir / f"linguistic-{lang}" / "classifier.joblib"
-        if clf_path.exists():
-            clf = LinguisticClassifier()
-            clf.load(clf_path)
-            linguistic_classifiers[lang] = clf
-    linguistic_extractors = {
-        "en": LinguisticFeatureExtractor(),
-        "zh": LinguisticFeatureExtractor(),
-    }
-
-    encoder_classifiers = {
-        "en": EncoderClassifier(
-            base_model_name="microsoft/deberta-v3-large",
-            adapter_path=settings.model_dir / "encoder-en",
-            device=settings.device,
-        ),
-        "zh": EncoderClassifier(
-            base_model_name="hfl/chinese-roberta-wwm-ext-large",
-            adapter_path=adapter_zh or settings.model_dir / "encoder-zh",
-            device=settings.device,
-        ),
-    }
-
-    binoculars_detectors: dict[str, object] = {}
-    bino_configs = {
-        "en": ("tiiuae/falcon-7b", "tiiuae/falcon-7b-instruct"),
-        "zh": ("Qwen/Qwen2-7B", "Qwen/Qwen2-7B-Instruct"),
-    }
-    for lang, (observer, performer) in bino_configs.items():
-        if is_model_cached(observer) and is_model_cached(performer):
-            binoculars_detectors[lang] = BinocularsDetector(
-                observer_name=observer,
-                performer_name=performer,
-                mode="low-fpr",
-                device=settings.device,
-                load_in_4bit=True,
-            )
-
-    en_weights = {"linguistic": 0.85, "statistical": 0.15, "encoder": 0.0, "binoculars": 0.0}
-    zh_weights = {"linguistic": 0.10, "statistical": 0.10, "encoder": 0.60, "binoculars": 0.20}
-
-    return DetectionPipeline(
-        language_router=language_router,
-        statistical_extractors=statistical_extractors,
-        statistical_classifiers=statistical_classifiers,
-        encoder_classifiers=encoder_classifiers,
-        binoculars_detectors=binoculars_detectors,
-        linguistic_extractors=linguistic_extractors,
-        linguistic_classifiers=linguistic_classifiers,
-        model_manager=model_manager,
-        early_exit_threshold=0.99,
-        ensemble_weights_by_lang={"en": en_weights, "zh": zh_weights},
-    )
+    return PlanRunner.default().build(adapter_zh=adapter_zh).pipeline
 
 
 def done_ids() -> set[str]:
