@@ -46,7 +46,7 @@
   },
   {
     "Check": "Worktree clean",
-    "Ok": false,
-    "Detail": "1 dirty"
+    "Ok": true,
+    "Detail": "0 dirty"
   }
 ]
