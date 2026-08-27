@@ -190,6 +190,57 @@ FORMAL_ZH_CAVEAT: dict = {
     ),
 }
 
+# ---- Literary-ambiguity band (W17, 2026-08-27) ----
+# Measured basis (dataset/literary_prose_zh, n=40/270): on NON-formal zh
+# text, encoder p_ai in [0.0047, 0.05] combined with LOW sentence-length CV
+# (<=0.45; AI lyrical prose is more uniform than human prose, median 0.40 vs
+# 0.60) marks a zone where literary-AI lives (26% of AI prose lands here,
+# 0% of human prose) but verdicts are unreliable either direction. Rule
+# attaches a CAVEAT (confidence-down), never upgrades the verdict.
+LITERARY_BAND = (0.0047, 0.05)
+LITERARY_CV_MAX = 0.45
+
+LITERARY_AMBIGUITY_CAVEAT: dict = {
+    "code": "literary_ambiguity_zh",
+    "message": (
+        "该文本呈现文学散文特征且处于检测器不可靠区间：系统对AI与人类散文"
+        "在此区间的区分能力有限（实测AI散文检出率约10%）。"
+    ),
+    "action_guidance": (
+        "建议：① 将本次判定视为低可信；"
+        "② 如需确认，请结合创作过程留痕等旁证；"
+        "③ 详见 docs/capability-statement.md 散文灰色地带说明。"
+    ),
+}
+
+
+def detect_literary_ambiguity(encoder_p_ai: float | None, text: str) -> bool:
+    """W17: literary-ambiguity band check (caveat-only rule).
+
+    Fires when: encoder score sits in the ambiguity band AND sentence-length
+    CV indicates AI-like uniformity (callers apply this only when the
+    formal_zh gate did NOT fire — formal text has its own rules). Returns
+    True => attach caveat + compress confidence. Never changes the verdict.
+    Pure function; errors -> False (fail-safe).
+    """
+    try:
+        if encoder_p_ai is None or not (LITERARY_BAND[0] <= encoder_p_ai <= LITERARY_BAND[1]):
+            return False
+        import re as _re
+
+        sents = [s for s in _re.split(r"[。！？\n]+", text) if s.strip()]
+        if not sents:
+            return False
+        lens = [len(s) for s in sents]
+        mean = sum(lens) / len(lens)
+        if mean <= 0:
+            return False
+        var = sum((x - mean) ** 2 for x in lens) / len(lens)
+        cv = var ** 0.5 / mean
+        return cv <= LITERARY_CV_MAX
+    except Exception:  # noqa: BLE001 — caveat must never break detection
+        return False
+
 
 def _calibration_dir() -> Path:
     """Resolve models/calibration for dev-checkout AND installed layouts.
