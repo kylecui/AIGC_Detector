@@ -1028,3 +1028,33 @@ Actions: capability-statement gray-zone entry added; both essays recorded
 as the FN-2 anchor pair (user files, not committed - private WorkBuddy
 material); probe-set literary-prose pair collection queued as candidate
 work (needs user consent for source materials).
+
+---
+
+## FN-2 deep probe: the numbers behind the literary blind spot (2026-08-27)
+
+Direct stage measurements on both essays (post-wrapper-fix, pure pipeline):
+
+| signal | original | watermarked | 人类公文(zibo) | AI casual帖 |
+|---|---|---|---|---|
+| Wenzhong PPL | **5.10** | 5.10 | 2.34 | 3.44 |
+| binoculars raw (zh pair) | ~0.849 | 0.8493 | (low) | (mid) |
+| binoculars mapped p_ai | ~0.505 | 0.5063 | <0.4 | ~0.5-0.6 |
+| encoder p_ai | 0.0087 | 0.0084 | - | - |
+
+Readings:
+1. PPL 5.10 is FAR below human-formal (2.34 is even lower — formal is
+   formulaic) — but crucially BELOW AI-casual too. The essay's token-level
+   predictability sits in an extreme low-entropy band. The xgboost
+   statistical classifier maps this band to 0.003 'human' because HC3's
+   human zh (formal Q&A) also lives at low PPL. Literary AI is
+   indistinguishable from formal human ON PPL ALONE — but distinguishable
+   in DIRECTION: 5.10 vs casual-human-typical 20+ (unmeasured yet, probe
+   gap). The signal exists; the CLASSIFIER's training distribution is the
+   blind spot, not the feature.
+2. Binoculars ~0.505: dead neutral on literary prose (contract arm A/B in
+   W4c showed 0.62-0.68 — the essay is NOT contract text; Qwen2 sees it as
+   mid-band). No rescue available from the floor rule (by design).
+3. Watermark zero-effect confirmed at feature level: PPL identical
+   (5.1016 both), entropy deltas at 3rd decimal. Synonym substitution is
+   below the measurement floor of every stage.
