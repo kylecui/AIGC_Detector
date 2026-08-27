@@ -53,6 +53,13 @@ policy:
     when: register(formal_en)      # gate lexicon: configs/gates/formal_en.yaml (+disabled ML layer)
     artifact: models/calibration/en_register_gate.json   # {downgrade_confidence_cap: 0.49}
     provenance_field: caveat
+# Third-party diagnostic stages (v0.3 stage-contract extension point).
+# Results appear in breakdown as diagnostic_<id> — evidence only, never vote.
+# impl is module:Class, importable from the deployment environment.
+diagnostic_stages:
+  - id: ttr
+    impl: examples.stages.ttr_stage:TTRStage
+
 pins: models/calibration/model_pins.json   # verify gate enforces runtime models ⊆ pins
 
 # Probes (v0.2c): declared acceptance assertions, run via scripts/run_probes.py.

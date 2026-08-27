@@ -35,6 +35,46 @@ class PipelineBundle:
     model_manager: Any
     language_router: Any
     missing_binoculars: list[tuple[str, str, str]] = field(default_factory=list)
+    diagnostic_stages: dict[str, Any] = field(default_factory=dict)
+
+
+class _DiagnosticPipelineWrapper:
+    """Compose diagnostic stages around a DetectionPipeline (zero core changes).
+
+    detect() delegates to the inner pipeline, then appends each diagnostic
+    stage's result to ``EnsembleResult.breakdown["diagnostic_<id>"]`` as
+    auditable evidence. Diagnostic stages never vote and never alter the
+    verdict; a failing stage degrades to a neutral entry (contract).
+    """
+
+    def __init__(self, inner: Any, stages: dict[str, Any]):
+        self._inner = inner
+        self._stages = stages
+        # inner pipeline attributes are resolved via __getattr__ below
+        # (routes/scripts access pipeline.binoculars_detectors etc.)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.__dict__["_inner"], name)
+
+    def detect(self, text: str) -> Any:
+        result = self._inner.detect(text)
+        if not self._stages:
+            return result
+        lang = getattr(result, "detected_language", None)
+        bd = dict(getattr(result, "breakdown", {}) or {})
+        for sid, stage in self._stages.items():
+            try:
+                out = stage.predict(text, lang)
+            except Exception:  # noqa: BLE001 — contract: degrade, never raise
+                from aigc_detector.stages.contract import neutral_result
+
+                out = neutral_result(sid)
+            bd[f"diagnostic_{sid}"] = out
+        try:
+            result.breakdown = bd
+        except Exception:  # noqa: BLE001 — frozen result: skip attach
+            pass
+        return result
 
 
 class PlanRunner:
@@ -211,9 +251,31 @@ class PlanRunner:
                 lang: dict(self.weights[lang]) for lang in ("en", "zh")
             },
         )
+
+        # v0.3: third-party diagnostic stages (declared in plan; zero core changes)
+        diagnostic_stages = self._load_diagnostic_stages()
+        if diagnostic_stages:
+            pipeline = _DiagnosticPipelineWrapper(pipeline, diagnostic_stages)
+
         return PipelineBundle(
             pipeline=pipeline,
             model_manager=model_manager,
             language_router=language_router,
             missing_binoculars=missing_binoculars,
+            diagnostic_stages=diagnostic_stages,
         )
+
+    def _load_diagnostic_stages(self) -> dict:
+        """Instantiate plan-declared diagnostic stages (module:Class spec)."""
+        import importlib
+
+        stages: dict = {}
+        for spec in self.plan.get("diagnostic_stages", []) or []:
+            sid, impl = spec["id"], spec["impl"]
+            mod_name, cls_name = impl.split(":")
+            cls = getattr(importlib.import_module(mod_name), cls_name)
+            stage = cls()
+            stage.load()
+            stages[sid] = stage
+            logger.info("diagnostic stage loaded: %s (%s)", sid, impl)
+        return stages
