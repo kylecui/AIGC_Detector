@@ -1096,3 +1096,36 @@ Needs: (a) literary register gate (the prose equivalents of 公文 markers —
 first-person density + imagery markers; the TTR diagnostic's features are a
 starting point), (b) threshold chosen on this probe with Wilson discipline,
 (c) W12 dual-layer gate + FN-2 anchors as regression.
+
+---
+
+## W17b decision dossier: literary upgrade rule — deployment-side FP stress test (2026-08-27)
+
+The W17 caveat path left the upgrade question open. Dossier
+(scripts/w17b_decision_dossier.py) measures the UPGRADE variant
+(non-formal + encoder band [0.0047,0.05] + CV<=0.45 -> AI verdict) on all
+four deployment-proxy sets:
+
+| set | Variant A (band+cv) | Variant B (+literary-feature precondition) |
+|---|---|---|
+| AI literary (n=270) | 26% CAUGHT | 26% CAUGHT |
+| human literary (n=40) | 0% false-upgrade | 0% |
+| AI casual (n=500) | 10% false-upgrade | **2%** |
+| human formal (n=62) | 0% | 0% |
+
+Variant B's literary-feature precondition (first-person>=0.5/100 AND
+imagery>=1.0/100) preserves the catch rate while cutting casual
+false-upgrades 5x (10%->2%): the casual posts that share the encoder band
+are the ones WITHOUT prose features.
+
+**Decision framing for the user**: this is a verdict-changing rule (unlike
+W17's caveat), so it needs product sign-off. Trade: +26% literary-AI catch
+at the cost of upgrading 2% of casual AI posts that would anyway be caught
+by other paths (they ARE AI - "false-upgrade" here means wrong-path
+correct-verdict, not wrong verdict!) — wait, no: casual_ai are AI texts, so
+upgrading them to AI is CORRECT. The real FP risk is HUMAN casual text,
+which we did NOT measure (no human casual zh probe exists — known gap,
+flagged). On measured human sets (literary+formal): 0/102 false upgrades.
+The unknown is human casual/general zh text in the band: W5-era formal
+humans are 0, but a human-casual probe is the missing piece before any
+deployment. DECISION DEFERRED TO USER pending that gap or risk acceptance.
