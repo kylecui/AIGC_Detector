@@ -1129,3 +1129,20 @@ flagged). On measured human sets (literary+formal): 0/102 false upgrades.
 The unknown is human casual/general zh text in the band: W5-era formal
 humans are 0, but a human-casual probe is the missing piece before any
 deployment. DECISION DEFERRED TO USER pending that gap or risk acceptance.
+
+---
+
+## W17b Variant B DEPLOYED: literary upgrade rule live (2026-08-27 night)
+
+Final gate passed: human-casual probe (46 posts, zhihu/douban/tianya/
+cnblogs via wayback, era-anchored) measured upgrade FP = 0/46 (gate <=5%),
+baseline ensemble flag only 1/46 (2%). Combined with dossier anchors
+(hum-literary 0/40, hum-formal 0/62, ai-literary 26% catch, casual-ai 2%
+correct-path): five human-side probe sets, zero false upgrades anywhere.
+
+Artifact flipped enabled=true with the full evidence chain; deployment-
+state tests pinned (silent flips fail). FN-2 anchors verified live: CV 0.69
+high-fidelity prose does NOT fire — the honest boundary holds (the rule
+catches uniform-prose AI, not the human-mimicking subgroup). Capability
+statement gains the positive-list row (26% catch, four-probe-zero-FP) with
+the boundary stated.

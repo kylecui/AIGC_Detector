@@ -40,8 +40,16 @@ class R:
 
 
 class TestShippedState:
-    def test_artifact_ships_disabled(self):
-        assert reg.literary_upgrade_config() is None, "upgrade must ship enabled=false"
+    def test_artifact_ships_enabled_after_gate(self):
+        """Deployed 2026-08-27 after the casual-probe FP gate (0/46 <= 5%).
+
+        This pins the deployment state so any silent flip (either direction)
+        fails loudly here.
+        """
+        cfg = reg.literary_upgrade_config()
+        assert cfg is not None, "artifact says enabled=true but loader returned None"
+        assert cfg["band"] == (0.0047, 0.05)
+        assert cfg["cv_max"] == 0.45
 
 
 class TestDetector:
@@ -65,8 +73,9 @@ class TestDetector:
         plain = "今天天气不错我们出去玩吧然后吃了饭回来睡觉明天继续上班就这样结束了。"
         assert not detect_literary_upgrade(0.01, plain)
 
-    def test_disabled_never_fires(self):
-        assert not detect_literary_upgrade(0.01, UNIFORM_PROSAIC)
+    def test_live_config_fires(self):
+        """With the deployed (enabled) artifact, the calibrated sample fires."""
+        assert detect_literary_upgrade(0.01, UNIFORM_PROSAIC)
 
 
 class TestRouteRule:

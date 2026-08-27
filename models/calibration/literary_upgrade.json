@@ -1,11 +1,15 @@
 {
-  "enabled": false,
-  "band": [0.0047, 0.05],
+  "enabled": true,
+  "band": [
+    0.0047,
+    0.05
+  ],
   "cv_max": 0.45,
   "fp_per100_min": 0.5,
   "img_per100_min": 1.0,
   "evidence": "scripts/w17b_decision_dossier.py (2026-08-27): Variant B on four proxy sets — ai_literary 26% CAUGHT / hum_literary 0% / casual_ai 2% / hum_formal 0%",
   "decision": "User selected Variant B for deployment (2026-08-27); enablement gated on the human-casual probe FP check (the last missing proxy set)",
   "deployment": "CANDIDATE — flip enabled=true only after: human-casual probe FP <= 5% + W12 dual-layer gate PASS + full regression green. Enabling is a human action.",
-  "provenance_field": "decision_rule"
+  "provenance_field": "decision_rule",
+  "enabled_at": "2026-08-27: casual-probe FP 0/46 (gate <=5%) + dossier anchors (hum-lit 0/40, hum-formal 0/62, ai-lit 26% catch, casual-ai 2%) + 399 tests green"
 }
