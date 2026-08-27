@@ -994,3 +994,37 @@ never-used component risks the entire working stack (Qwen2/DeBERTa/
 all 367 tests) - asymmetric risk for zero current value. Revisit only if
 EN binoculars becomes a requirement: then run a transformers version
 matrix (4.46/4.55/5.x) with full regression, as its own batch.
+
+---
+
+## FN-2: AI literary prose judged Human at 0.98 — the casual-register mirror of FN-1 (2026-08-27)
+
+Case: two AI-written Chinese lyrical essays (台风来临前, ~700 chars,
+first-person literary prose; original + synonym-substitution "watermarked"
+variant with ~10 micro-replacements: 开始→着手/仍然→依旧/晃动→摇摆...).
+User ground truth: both AI-written. Both judged Human-written conf=0.9801.
+
+Stage decomposition (live service :8008): statistical 0.003-0.004,
+linguistic 0.1045, encoder 0.0084-0.0087 (deep-confident human), binoculars
+not reached (agree-skip), TTR diagnostic 0.5066 (neutral, no signal).
+Max segment 0.13-0.14. The watermark variant scores IDENTICALLY (0.0199
+both) — synonym-level paraphrase neither hurts nor helps: the detector has
+no signal to erode in this register.
+
+Root cause: literary/lyrical zh prose is outside every stage's training
+distribution (HC3 = Q&A; Route-B = textbook). The encoder's "formal→human"
+shortcut inverts here as "literary→human" with high confidence. This is
+FN-1's mirror: formal register hid AI drafting; literary register hides AI
+creation. The capability statement's positive list ("一般中文文本…文章…可
+靠") over-promised for this genre — corrected today: lyrical/literary prose
+moves to the gray zone with explicit FPR/FNR warning.
+
+Watermark note: lexical-substitution watermarking is INVISIBLE to this
+detector (zero score delta) — detection neither verifies nor breaks such
+watermarks; watermark robustness claims must rest on the watermark scheme
+itself, not on statistical detection (consistent with the provenance stance).
+
+Actions: capability-statement gray-zone entry added; both essays recorded
+as the FN-2 anchor pair (user files, not committed - private WorkBuddy
+material); probe-set literary-prose pair collection queued as candidate
+work (needs user consent for source materials).

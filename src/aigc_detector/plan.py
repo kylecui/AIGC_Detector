@@ -266,16 +266,28 @@ class PlanRunner:
         )
 
     def _load_diagnostic_stages(self) -> dict:
-        """Instantiate plan-declared diagnostic stages (module:Class spec)."""
+        """Instantiate plan-declared diagnostic stages (module:Class spec).
+
+        Fail-soft by contract: a diagnostic stage that cannot be imported or
+        instantiated is SKIPPED with a warning — third-party evidence must
+        never break service startup (the same never-degrade-the-verdict
+        discipline as predict-time failures).
+        """
         import importlib
 
         stages: dict = {}
         for spec in self.plan.get("diagnostic_stages", []) or []:
             sid, impl = spec["id"], spec["impl"]
-            mod_name, cls_name = impl.split(":")
-            cls = getattr(importlib.import_module(mod_name), cls_name)
-            stage = cls()
-            stage.load()
-            stages[sid] = stage
-            logger.info("diagnostic stage loaded: %s (%s)", sid, impl)
+            try:
+                mod_name, cls_name = impl.split(":")
+                cls = getattr(importlib.import_module(mod_name), cls_name)
+                stage = cls()
+                stage.load()
+                stages[sid] = stage
+                logger.info("diagnostic stage loaded: %s (%s)", sid, impl)
+            except Exception as e:  # noqa: BLE001 — fail-soft, see docstring
+                logger.warning(
+                    "diagnostic stage %s (%s) unavailable, skipping: %s: %s",
+                    sid, impl, type(e).__name__, e,
+                )
         return stages

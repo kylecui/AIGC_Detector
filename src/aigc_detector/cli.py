@@ -68,6 +68,15 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "doctor":
         return _run_doctor()
     if args.cmd == "serve":
+        import os
+        import sys
+
+        # make repo-layout third-party modules (examples/) importable when
+        # serving from the repo root; harmless elsewhere
+        cwd = os.getcwd()
+        if cwd not in sys.path:
+            sys.path.insert(0, cwd)
+
         import uvicorn
 
         uvicorn.run("aigc_detector.api.main:app", host=args.host, port=args.port)
