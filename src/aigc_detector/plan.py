@@ -54,7 +54,12 @@ class _DiagnosticPipelineWrapper:
         # (routes/scripts access pipeline.binoculars_detectors etc.)
 
     def __getattr__(self, name: str) -> Any:
-        return getattr(self.__dict__["_inner"], name)
+        # only called when normal lookup fails; delegate to inner pipeline
+        # (routes/scripts access pipeline.binoculars_detectors etc.)
+        inner = self.__dict__.get("_inner")
+        if inner is None:
+            raise AttributeError(name)
+        return getattr(inner, name)
 
     def detect(self, text: str) -> Any:
         result = self._inner.detect(text)

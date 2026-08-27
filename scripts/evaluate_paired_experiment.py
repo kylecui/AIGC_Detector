@@ -41,7 +41,8 @@ def build_pipeline(adapter_zh: Path | None = None) -> DetectionPipeline:
     """
     from aigc_detector.plan import PlanRunner
 
-    return PlanRunner.default().build(adapter_zh=adapter_zh).pipeline
+    wrapped = PlanRunner.default().build(adapter_zh=adapter_zh).pipeline
+    return wrapped._inner if hasattr(wrapped, "_inner") else wrapped
 
 
 def done_ids() -> set[str]:
