@@ -1058,3 +1058,41 @@ Readings:
 3. Watermark zero-effect confirmed at feature level: PPL identical
    (5.1016 both), entropy deltas at 3rd decimal. Synonym substitution is
    below the measurement floor of every stage.
+
+---
+
+## FN-2 follow-up: literary-prose probe baseline — THE REGISTER IS SEPARABLE (2026-08-27)
+
+Probe set built and fully evaluated (human 40: PD-verified classics 1922-1975
++ modern blog/magazine 2015-2022; AI 270: 3 models x 30 topics x 3 seeds;
+records compacted to the clean 270-job grid after two concurrent generator
+instances produced duplicates — job-key dedup is the analysis unit).
+Artifacts: dataset/literary_prose_zh/, reports/literary_baseline_2026-08.md.
+
+**Headline numbers** (PRELIMINARY n=40/270):
+- Human flag rate 0/40 = 0.0% [0, 8.8%] — the FN-2 fear (literary humans
+  being flagged) did NOT materialize; failure is one-directional.
+- AI miss rate 243/270 = 90.0% [85.8, 93.0] at deployed decision.
+- **Encoder stage separates**: AUC 0.890. Threshold sweep: thr=0.0047 →
+  catch 55% @ 0 human FP; thr=0.002 → catch 70% @ 7.5% human FP. AI encoder
+  median 0.0071 vs human max 0.0047 — the signal EXISTS but sits far below
+  the deployed 0.5 threshold; the ensemble wastes it entirely.
+- statistical AUC 0.598 (dead), linguistic 0.682 (weak), binoculars
+  incomparable (never ran on human side), ensemble AUC 0.850 but catch@0.5
+  only 10%.
+
+**Interpretation — this is NOT another collapsed register.** Unlike
+formal-zh (W4/W4c: AI-inside-human-range, no threshold works) and
+EN-formal (human-inside-AI-range), literary zh has a REAL separation band
+(0.002-0.01) that the current calibration simply doesn't look at. The
+encoder's literary blind spot (FN-2: p_ai 0.008) is INSIDE the AI
+distribution — it looked "human-confident" only because 0.5 was the lens.
+
+**Action implication (recalibration candidate, NOT retraining)**: a
+literary-register gate + encoder-threshold ~0.005 (or register-conditioned
+encoder calibration analogous to W11 temperature) is the first cheap
+countermeasure with measured support: 55% catch @ 0 FP, or 70% @ 7.5% FP.
+Needs: (a) literary register gate (the prose equivalents of 公文 markers —
+first-person density + imagery markers; the TTR diagnostic's features are a
+starting point), (b) threshold chosen on this probe with Wilson discipline,
+(c) W12 dual-layer gate + FN-2 anchors as regression.
