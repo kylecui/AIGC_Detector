@@ -41,6 +41,51 @@ class BinocularsResult:
     mode: str  # "accuracy" or "low-fpr"
 
 
+def _patch_falcon_transformers5(model) -> bool:
+    """Restore the ``get_head_mask`` API removed in transformers 5.x.
+
+    Falcon's remote modeling code (tiiuae/falcon-7b*, trust_remote_code)
+    still calls ``self.get_head_mask(head_mask, num_hidden_layers)`` — an
+    API the transformers 5.x base classes removed, making every EN
+    binoculars forward crash with AttributeError. The old semantics for our
+    call path (head_mask=None) are exactly ``[None] * num_hidden_layers``.
+    Injecting that back into the model class restores compatibility without
+    touching the HF module cache or pinning the whole stack to 4.x
+    (which would risk Qwen2/DeBERTa — the working zh stack).
+    Returns True if a patch was applied.
+    """
+    cls = type(model)
+    if getattr(cls, "get_head_mask", None) is not None:
+        return False
+    cls_name = str(cls.__name__).lower()
+    model_type = str(getattr(model.config, "model_type", "")).lower()
+    if "falcon" not in cls_name and "falcon" not in model_type:
+        return False
+    def get_head_mask(self, head_mask, num_hidden_layers, is_attention_chunked=False):  # noqa: ARG001
+        if head_mask is not None:
+            head_mask = self._convert_head_mask_to_5d(head_mask, num_hidden_layers)  # pragma: no cover — our path is None
+            if is_attention_chunked:  # pragma: no cover
+                head_mask = head_mask.unsqueeze(-1)
+        else:
+            head_mask = [None] * num_hidden_layers
+        return head_mask
+
+    patched = False
+    for target in (model, getattr(model, "transformer", None), getattr(model, "model", None)):
+        if target is None:
+            continue
+        tcls = type(target)
+        tname = str(tcls.__name__).lower()
+        ttype = str(getattr(target.config, "model_type", "")).lower()
+        if "falcon" not in tname and "falcon" not in ttype:
+            continue
+        if getattr(tcls, "get_head_mask", None) is None:
+            tcls.get_head_mask = get_head_mask
+            logger.info("Patched %s.get_head_mask (transformers 5.x compatibility)", tcls.__name__)
+            patched = True
+    return patched
+
+
 class BinocularsDetector:
     """Binoculars zero-shot AI text detector.
 
@@ -113,10 +158,12 @@ class BinocularsDetector:
 
         logger.info("Loading Binoculars observer: %s", self.observer_name)
         self._observer = AutoModelForCausalLM.from_pretrained(self.observer_name, **load_kwargs)
+        _patch_falcon_transformers5(self._observer)
         self._observer.eval()
 
         logger.info("Loading Binoculars performer: %s", self.performer_name)
         self._performer = AutoModelForCausalLM.from_pretrained(self.performer_name, **load_kwargs)
+        _patch_falcon_transformers5(self._performer)
         self._performer.eval()
 
         # Use observer tokenizer (same family, shared tokenizer)
