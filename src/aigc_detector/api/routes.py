@@ -36,6 +36,7 @@ from aigc_detector.detection.register import (
     LITERARY_AMBIGUITY_CAVEAT,
     binoculars_floor,
     detect_literary_ambiguity,
+    detect_literary_upgrade,
     detect_register_en_formal,
     detect_register_zh,
     formal_temperature,
@@ -150,6 +151,35 @@ def _en_formal_downgrade(result, text: str) -> dict | None:
     if result.confidence > cap:
         result.confidence = cap
     return {**EN_FORMAL_DOWNGRADE, "register_score": score}
+
+
+def _apply_literary_upgrade(result, caveat: dict | None, text: str) -> dict | None:
+    """W17b Variant B: literary-AI upgrade (artifact-gated, verdict-changing).
+
+    Consulted only when no register caveat fired. Fires per
+    detect_literary_upgrade (encoder band + low sentence-CV + literary
+    features); on fire the verdict is upgraded to AI-generated with
+    provenance — the verdict-changing counterpart of the W17 caveat.
+    Fail-safe on any error.
+    """
+    if caveat is not None:
+        return None
+    try:
+        enc = (result.breakdown or {}).get("encoder")
+        enc_p = enc.get("p_ai") if isinstance(enc, dict) else None
+        if enc_p is None or not detect_literary_upgrade(float(enc_p), text):
+            return None
+        if result.predicted_label != "AI-generated":
+            result.predicted_label = "AI-generated"
+            result.p_ai = max(result.p_ai, float(enc_p))
+            result.confidence = float(enc_p)
+        return {
+            "rule": "literary_upgrade_zh",
+            "encoder_p_ai": round(float(enc_p), 4),
+            "note": "文学散文特征+AI式句式均匀性命中升级规则（依据散文探针集标定，详见能力边界文档）",
+        }
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def _literary_ambiguity_caveat(result, caveat: dict | None, text: str) -> dict | None:
@@ -385,9 +415,10 @@ async def detect_text(request: Request, data: DetectionRequest) -> DetectionResp
         en_downgrade = _en_formal_downgrade(result, data.text)
         if en_downgrade:
             caveat = en_downgrade
-        if caveat is None:
+        literary_rule = _apply_literary_upgrade(result, caveat, data.text)
+        if caveat is None and literary_rule is None:
             caveat = _literary_ambiguity_caveat(result, caveat, data.text)
-        decision_rule = _apply_binoculars_floor(result, caveat if not en_downgrade else None, data.text, pipeline)
+        decision_rule = literary_rule or _apply_binoculars_floor(result, caveat if not en_downgrade else None, data.text, pipeline)
         confidence, calibration = _calibrate_confidence(caveat, result.confidence, result.p_ai)
         status_code = 200
         return DetectionResponse(
@@ -642,9 +673,10 @@ async def detect_file(
         en_downgrade = _en_formal_downgrade(result, text)
         if en_downgrade:
             caveat = en_downgrade
-        if caveat is None:
+        literary_rule = _apply_literary_upgrade(result, caveat, text)
+        if caveat is None and literary_rule is None:
             caveat = _literary_ambiguity_caveat(result, caveat, text)
-        decision_rule = _apply_binoculars_floor(result, caveat if not en_downgrade else None, text, pipeline)
+        decision_rule = literary_rule or _apply_binoculars_floor(result, caveat if not en_downgrade else None, text, pipeline)
         confidence, calibration = _calibrate_confidence(caveat, result.confidence, result.p_ai)
         status_code = 200
         return DetectionResponse(

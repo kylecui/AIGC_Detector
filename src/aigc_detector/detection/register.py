@@ -214,6 +214,70 @@ LITERARY_AMBIGUITY_CAVEAT: dict = {
 }
 
 
+# Literary imagery markers shared by the upgrade rule (W17b Variant B).
+_LITERARY_IMAGERY = ("像", "仿佛", "宛如", "好似", "月亮", "月光", "星空", "风", "雨", "雪",
+                     "夜", "黄昏", "清晨", "光", "影", "云", "海", "山", "树", "花", "叶",
+                     "梦", "泪", "心", "温柔", "寂静", "岁月", "时光", "回忆", "思念")
+
+
+def _sent_cv(text: str) -> float:
+    import re as _re
+
+    sents = [s for s in _re.split(r"[。！？\n]+", text) if s.strip()]
+    if not sents:
+        return 1.0
+    lens = [len(s) for s in sents]
+    m = sum(lens) / len(lens)
+    return (sum((x - m) ** 2 for x in lens) / len(lens)) ** 0.5 / m if m > 0 else 1.0
+
+
+def literary_upgrade_config() -> dict | None:
+    """Load the W17b upgrade-rule artifact, if enabled (models/calibration/literary_upgrade.json)."""
+    import json
+
+    try:
+        data = json.loads((_calibration_dir() / "literary_upgrade.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not data.get("enabled"):
+        return None
+    try:
+        return {
+            "band": (float(data["band"][0]), float(data["band"][1])),
+            "cv_max": float(data["cv_max"]),
+            "fp_min": float(data["fp_per100_min"]),
+            "img_min": float(data["img_per100_min"]),
+        }
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def detect_literary_upgrade(encoder_p_ai: float | None, text: str) -> bool:
+    """W17b Variant B: literary-AI upgrade rule (verdict-changing, gated).
+
+    Fires when ALL hold: formal_zh gate did NOT fire (caller ensures),
+    encoder p_ai in the ambiguity band, sentence-CV low (AI-like uniformity),
+    AND literary features present (first-person + imagery density — the
+    precondition that cut casual false-upgrades 5x in the dossier).
+    Measured: 26% AI-literary catch, 0/40 human-literary, 2% casual-AI,
+    0/62 human-formal. Fail-safe: errors -> False.
+    """
+    try:
+        cfg = literary_upgrade_config()
+        if cfg is None or encoder_p_ai is None:
+            return False
+        if not (cfg["band"][0] <= float(encoder_p_ai) <= cfg["band"][1]):
+            return False
+        if _sent_cv(text) > cfg["cv_max"]:
+            return False
+        n = max(1, len(text))
+        fp = (text.count("我") + text.count("我们")) * 100 / n
+        img = sum(text.count(w) for w in _LITERARY_IMAGERY) * 100 / n
+        return fp >= cfg["fp_min"] and img >= cfg["img_min"]
+    except Exception:  # noqa: BLE001 — upgrade must never break detection
+        return False
+
+
 def detect_literary_ambiguity(encoder_p_ai: float | None, text: str) -> bool:
     """W17: literary-ambiguity band check (caveat-only rule).
 
