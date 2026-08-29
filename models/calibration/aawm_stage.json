@@ -1,0 +1,9 @@
+{
+  "enabled": false,
+  "key": "path/to/aawm/key.json",
+  "registry": "path/to/aawm/registry.json",
+  "calibration": "path/to/aawm/calibration.json",
+  "session_salt": null,
+  "_doc": "AAWM watermark-verification diagnostic stage. Flip enabled=true and fill real credential paths to activate; examples/stages/aawm_stage.py implements the stage contract. Watermark evidence joins every detection response as diagnostic_aawm (evidence-only, never votes). This is the provenance-thesis integration: statistical detection screens, watermark trace confirms.",
+  "_fn2_note": "The FN-2 watermarked essay (台风来临前_水印.md) carries AAWM anchor substitutions (颜色→色彩/雨点→雨滴/醒来→苏醒 — each anchor encodes 1 UID bit via key-derived synonym choice). With credentials configured, diagnostic_aawm would return authoritative agent-attribution for this text even though every statistical stage scores it deep-human (0.98)."
+}

@@ -1146,3 +1146,27 @@ high-fidelity prose does NOT fire — the honest boundary holds (the rule
 catches uniform-prose AI, not the human-mimicking subgroup). Capability
 statement gains the positive-list row (26% catch, four-probe-zero-FP) with
 the boundary stated.
+
+---
+
+## FN-2 watermarked-essay correction + AAWM integration (2026-08-27 late)
+
+Correction: the earlier note described the watermarked essay as carrying
+"synonym-substitution paraphrase (watermark-style replacement)". The user
+clarified: the substitutions ARE an acrostic-agent-watermark (AAWM,
+github.com/kylecui/acrostic-agent-watermark) — key-derived anchor positions,
+each encoding 1 UID bit via synonym choice (颜色→色彩/雨点→雨滴/醒来→苏醒
+are anchors, not paraphrase). The zero-score-delta finding still holds and
+gains precision: AAWM-embedded text is statistically indistinguishable
+from the original to our detector (every stage) — by design (light-touch
+synonym swaps at semantic-equivalent positions).
+
+Integration delivered: examples/stages/aawm_stage.py — AAWM trace as a
+stage-contract diagnostic stage (evidence-only). With operator credentials
+(models/calibration/aawm_stage.json, ships disabled) every detection
+response gains diagnostic_aawm: watermark presence (key-verified existence
+score) + agent attribution (UID) — authoritative provenance evidence that
+outclasses statistical detection exactly where statistics fail (the FN-2
+essay: statistics 0.98-human-confident, watermark trace would positively
+attribute with the key). This is the paper provenance thesis as product
+code: statistical detection screens; watermark trace confirms. 405 tests.
